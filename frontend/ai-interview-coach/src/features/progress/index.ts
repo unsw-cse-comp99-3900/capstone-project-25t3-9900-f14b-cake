@@ -1,2 +1,2 @@
-// User feature exports
+// Progress feature exports
 export * from "./services";

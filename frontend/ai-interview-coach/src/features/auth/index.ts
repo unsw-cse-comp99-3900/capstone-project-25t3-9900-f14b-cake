@@ -1,2 +1,2 @@
-// User feature exports
+// Auth feature exports
 export * from "./services";
