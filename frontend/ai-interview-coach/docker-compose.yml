@@ -1,0 +1,38 @@
+services:
+  # 开发环境服务
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    ports:
+      - "0.0.0.0:3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    profiles:
+      - dev
+
+  # 生产环境服务
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:3000:3000"
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - prod
+
+  # 构建服务（用于构建镜像）
+  app-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles:
+      - build
