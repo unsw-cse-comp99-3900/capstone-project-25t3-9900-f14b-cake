@@ -7,7 +7,6 @@ from .exceptions import GPTAccessError, InvalidTokenError, RequestFailedError
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-
 class GPTAccessClient:
     """Encapsulates interaction with the GPT_ACCESS API."""
 
@@ -50,3 +49,5 @@ class GPTAccessClient:
             raise GPTAccessError("Method not allowed. Use HTTPS + POST.")
         else:
             raise RequestFailedError(f"Unexpected HTTP {response.status_code}: {response.text}")
+
+

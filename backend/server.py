@@ -45,7 +45,6 @@ def server_home():
             }
         ]
     """
-    
     token = str(request.args.get("token"))
     ret = get_home_dashboard(token)
     return {
