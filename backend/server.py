@@ -1,144 +1,105 @@
-from flask import Flask, request, render_template
-from flask_cors import CORS
+# server.py
+from fastapi import FastAPI, HTTPException, Request, status, Header, Query
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import uvicorn
 import config
-import os
-from json import dumps
+
 from auth import login, logout
 from home import get_home_dashboard
 from interview import interview_start, interview_text_answer, interview_feedback
 
-def defaultHandler(err):
-    response = err.get_response()
-    print('response', err, err.get_response())
-    response.data = dumps({
-        "code": err.code,
+# Models
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    token: str
+
+class QuestionRequest(BaseModel):
+    token: str
+    job_description: str
+
+class FeedbackRequest(BaseModel):
+    token: str
+    interview_question: str
+    interview_answer: str
+
+
+# App Setup
+app = FastAPI(title="Interview API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Error Handling
+@app.exception_handler(Exception)
+async def default_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        code = exc.status_code
+        message = exc.detail
+    else:
+        code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        message = "Internal Server Error"
+
+    payload = {
+        "code": code,
         "name": "System Error",
-        "message": err.get_description(),
-    })
-    response.content_type = 'application/json'
-    return response
+        "message": message,
+    }
+    return JSONResponse(status_code=code, content=payload)
 
-APP = Flask(__name__)
-CORS(APP)
-
-APP.config['TRAP_HTTP_EXCEPTIONS'] = True
-APP.register_error_handler(Exception, defaultHandler)
-
-dummy_token = 0
-
-@APP.route("/home", methods=['GET'])
-def server_home():
-    """ get the home dashboard
-    Args:
-        token: string
-    
-    Returns:
-        interviews: [
-            {
-                interview_id: int,
-                type: string,
-                question: string,
-                answer: string,
-                feedback: string,
-                score: [int],
-                date: int (unix timestamp)
-            }
-        ]
-    """
-    
-    token = str(request.args.get("token"))
+# Routes
+@app.get("/home", summary="Get Home Dashboard")
+async def server_home(token: str = Header(...)):
     ret = get_home_dashboard(token)
     return {
-        'home_interview': ret["home_interview"],
+        "interview_ids": ret["interview_ids"]
     }
 
-@APP.route("/login", methods=['POST'])
-def server_auth_login():
-    """ existing user login
-    Args:
-        email: string
-        password: string
-
-    Returns:
-        user_id: int
-        token: string
-    """
-    
-    data = request.get_json()
-    ret = login(data['email'], data['password'])
+@app.post("/login", summary="User Login")
+async def server_auth_login(payload: LoginRequest):
+    ret = login(payload.email, payload.password)
     return {
-        'user_id': ret['user_id'],
-        'token': ret['token']
+        "user_id": ret["user_id"],
+        "token": ret["token"]
     }
 
-@APP.route("/logout", methods=['POST'])
-def server_auth_logout():
-    """ logged in user logout
-    Args:
-        token: string
-
-    Returns:
-        None
-    """
-    
-    data = request.get_json()
-    ret = logout(data['token'])
+@app.post("/logout", summary="User Logout")
+async def server_auth_logout(payload: Token):
+    logout(payload.token)
     return {}
 
-@APP.route("/interview/start", methods=['POST'])
-def server_interview_start():
-    """generate interview questions for user
-    Args:
-        token: string
-
-    Returns:
-        interview_questions: [
-            {
-                interview_id: int,
-                type: string,
-                question: string,
-            }
-        ]
-    """
-    
-    data = request.get_json()
-    ret = interview_start(data['token'])
+@app.post("/interview/start", summary="Start Interview")
+async def server_interview_start(payload: QuestionRequest):
+    ret = interview_start(payload.token, payload.job_description)
     return {
-        'interview_questions': ret["interview_questions"],
+        "interview_questions": ret["interview_questions"]
     }
 
-@APP.route("/interview/answer", methods=['POST'])
-def server_interview_answer():
-    """answer interview question
-    Args:
-        token: string
-
-    Returns:
-        interview_answer: string
-    """
-    data = request.get_json()
-    ret = interview_text_answer(data['token'])
+@app.post("/interview/answer", summary="Answer Interview Question")
+async def server_interview_answer(payload: Token):
+    ret = interview_text_answer(payload.token)
     return {
-        'interview_answer': ret["interview_answer"],
+        "interview_answer": ret["interview_answer"]
     }
 
-@APP.route("/interview/feedback", methods=['POST'])
-def server_interview_answer():
-    """generate interview questions for user
-    Args:
-        token: string
-        interview_question: string
-        interview_answer: string
-
-    Returns:
-        interview_feedback: string
-    """
-    data = request.get_json()
-    ret = interview_feedback(data['token'], data['interview_question'], data['interview_answer'])
+@app.post("/interview/feedback", summary="Generate Interview Feedback")
+async def server_interview_feedback(payload: FeedbackRequest):
+    ret = interview_feedback(payload.token, payload.interview_question, payload.interview_answer)
     return {
-        'interview_feedback': ret["interview_feedback"],
-        'interview_score': ret["interview_score"]
+        "interview_feedback": ret["interview_feedback"],
+        "interview_score": ret["interview_score"],
     }
 
+# Local Dev
 if __name__ == "__main__":
-    APP.run(debug=True, port=config.port)
+    uvicorn.run("server:app", host="0.0.0.0", port=config.port, reload=True)
