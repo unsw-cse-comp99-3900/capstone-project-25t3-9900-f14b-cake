@@ -1,7 +1,6 @@
 import json
-from api_gateway.gpt_access import GPTAccessClient
-from api_gateway.faq_access import FAQAccessClient
-from prompt_builder import build_question_prompt, build_feedback_prompt, build_score_prompt
+from api_gateway import GPTAccessClient, FAQAccessClient
+from prompt_builder import build_question_prompt, build_feedback_prompt, build_score_prompt, build_answer_prompt
 
 
 # JWT Token
@@ -45,12 +44,22 @@ def test_gpt():
     # print("Analysis:\n", final_answer["Analysis"]) # final_answer["Analysis"] with keys as (clarity, logic, technical depth, communication, and role fit) (May need to be processed like json or dict).
     # print("Suggestions:\n", final_answer["Suggestions"]) # final_answer["Suggestions"] is a list of suggestions.
 
-    ask_GPT_question = build_score_prompt(question=question, answer=answer, job_description=job_description)
+    # ask_GPT_question = build_score_prompt(question=question, answer=answer, job_description=job_description)
+    # result = gpt_client.send_prompt(ask_GPT_question)
+    # raw_answer = result["answer"]
+    # parsed = json.loads(raw_answer)
+    # final_answer = parsed["answer"]  # final_answer return a string of number (it may need to use str() function).
+    # print(final_answer)
+
+    ask_GPT_question = build_answer_prompt(question=question, answer=answer, job_description=job_description)
     result = gpt_client.send_prompt(ask_GPT_question)
     raw_answer = result["answer"]
     parsed = json.loads(raw_answer)
-    final_answer = parsed["answer"]  # final_answer return a string of number (it may need to use str() function).
-    print(final_answer)
+    final_answer = parsed["answer"]
+    print(final_answer)  # final_answer return a string (it may need to use str() function).
+
+
+
 
 def test_faq():
     client = FAQAccessClient(JWT_TOKEN)
