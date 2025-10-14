@@ -9,3 +9,7 @@ class InvalidTokenError(GPTAccessError):
 class RequestFailedError(GPTAccessError):
     """Raised when a network or HTTP error occurs."""
     pass
+
+class FAQAccessError(Exception):
+    """Base exception for FAQ_ACCESS errors."""
+    pass

@@ -2,7 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import json
-from gpt_access import GPTAccessClient
+# from gpt_access import GPTAccessClient
 from pprint import pprint
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
@@ -60,8 +60,17 @@ def test_gpt():
     final_answer = parsed["answer"]
     print(final_answer)
 
+def test_faq():
+    API_URL = "https://jobgen.ai/version-test/api/1.1/wf/jobgen_faq"
+    headers = {"Authorization": f"Bearer {JWT_TOKEN}", "Content-Type": "application/json"}
+    resp = requests.post(API_URL, headers=headers, json={})
+    if resp.ok:
+        result = resp.json()["response"]
+        print(result)
+
 
 if __name__ == "__main__":
     # test_gpt_access()
     # print(API_URL)
-    test_gpt()
+    # test_gpt()
+    test_faq()
