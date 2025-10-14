@@ -7,8 +7,8 @@ from pprint import pprint
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-API_URL = os.getenv("GPT_ACCESS_URL")
-# API_URL = "https://jobgen.ai/version-test/api/1.1/wf/jobgen_gpt_access"  
+# API_URL = os.getenv("GPT_ACCESS_URL")
+API_URL = "https://jobgen.ai/version-test/api/1.1/wf/jobgen_gpt_access"  
 
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
@@ -70,7 +70,7 @@ def test_faq():
 
 
 if __name__ == "__main__":
-    # test_gpt_access()
+    test_gpt_access()
     # print(API_URL)
     # test_gpt()
-    test_faq()
+    # test_faq()
