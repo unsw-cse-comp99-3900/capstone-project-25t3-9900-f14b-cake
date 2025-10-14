@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import Navbar from "@/components/Navbar";
 
 export default function InterviewPage() {
+  const router = useRouter();
   const [jobDescription, setJobDescription] = useState("");
   const [questionType, setQuestionType] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -88,14 +90,32 @@ export default function InterviewPage() {
               Do you prefer to answer the questions in audio or in text?
             </p>
 
-            <div className="flex justify-around">
-              <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                audio
-              </button>
-              <button className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                text
-              </button>
-            </div>
+             <div className="flex justify-around">
+               <button 
+                 onClick={() => {
+                   const params = new URLSearchParams();
+                   if (jobDescription.trim()) params.set("job", jobDescription.trim());
+                   params.set("type", questionType);
+                   params.set("mode", "audio");
+                   router.push(`/interview/answering?${params.toString()}`);
+                 }}
+                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+               >
+                 audio
+               </button>
+               <button 
+                 onClick={() => {
+                   const params = new URLSearchParams();
+                   if (jobDescription.trim()) params.set("job", jobDescription.trim());
+                   params.set("type", questionType);
+                   params.set("mode", "text");
+                   router.push(`/interview/answering?${params.toString()}`);
+                 }}
+                 className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+               >
+                 text
+               </button>
+             </div>
           </div>
         </div>
       )}
