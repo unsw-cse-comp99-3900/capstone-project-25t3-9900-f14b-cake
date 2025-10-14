@@ -25,6 +25,7 @@ class QuestionRequest(BaseModel):
         description="Detailed job description for the interview",
         example="Senior Python Developer with 5+ years experience in FastAPI, PostgreSQL, and AWS"
     )
+    question_type: str = Field(description="Type of interview question", example="technical.")
 
 class FeedbackRequest(BaseModel):
     token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
@@ -147,7 +148,7 @@ async def server_auth_logout(payload: LogoutRequest):
     tags=["Interview"]
 )
 async def server_interview_start(payload: QuestionRequest):
-    ret = interview_start(payload.token, payload.job_description)
+    ret = interview_start(payload.token, payload.job_description, payload.question_type)
     return {
         "interview_questions": ret["interview_questions"]
     }
