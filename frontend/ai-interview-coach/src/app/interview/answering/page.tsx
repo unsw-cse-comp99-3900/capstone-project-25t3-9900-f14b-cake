@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PlayIcon, StopIcon, MicrophoneIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
@@ -14,6 +15,15 @@ export default function AnsweringPage() {
   const questionType = searchParams.get("type") || "behavioural";
   const mode = searchParams.get("mode") || "text";
 
+  const questionText =
+    "Please describe the most challenging situation you encountered at work and how you addressed it. Explain your thought process, actions taken, and the final outcome.";
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const chunksRef = useState<Blob[]>([])[0];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeElapsed((prev) => prev + 1);
@@ -21,6 +31,77 @@ export default function AnsweringPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Cleanup any ongoing speech on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handlePlayQuestion = () => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+    const synth = window.speechSynthesis;
+
+    if (synth.speaking) {
+      synth.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(questionText);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    synth.speak(utterance);
+  };
+
+  const startRecording = async () => {
+    if (isRecording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.length = 0;
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(url);
+        setIsRecording(false);
+        // stop tracks
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      recorder.start();
+      setMediaRecorder(recorder);
+      setRecordedUrl(null);
+      setIsRecording(true);
+    } catch (err) {
+      // permission denied or not supported
+      console.error('Failed to start recording', err);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+    }
+  };
+
+  const reRecord = () => {
+    if (recordedUrl) {
+      URL.revokeObjectURL(recordedUrl);
+      setRecordedUrl(null);
+    }
+    startRecording();
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -74,12 +155,22 @@ export default function AnsweringPage() {
 
           {/* Current question */}
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Current question
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              Please describe the most challenging situation you encountered at work and how you addressed it. Explain your thought process, actions taken, and the final outcome.
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Current question</h2>
+              <button
+                onClick={handlePlayQuestion}
+                className="px-3 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center"
+                aria-label="Play question"
+                title={isSpeaking ? "Stop" : "Play"}
+              >
+                {isSpeaking ? (
+                  <StopIcon className="h-5 w-5" />
+                ) : (
+                  <PlayIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            <p className="text-gray-700 leading-relaxed">{questionText}</p>
           </div>
 
           {/* Answer area */}
@@ -90,17 +181,40 @@ export default function AnsweringPage() {
             
             {mode === "audio" ? (
               <div className="space-y-4">
+                {/* Controls */}
                 <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
-                    <span>Start recording</span>
-                  </button>
-                  <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                    Stop recording
-                  </button>
+                  {!isRecording && !recordedUrl && (
+                    <button
+                      onClick={startRecording}
+                      className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      <MicrophoneIcon className="h-5 w-5" />
+                      <span>Start recording</span>
+                    </button>
+                  )}
+                  {isRecording && (
+                    <button
+                      onClick={stopRecording}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      Stop recording
+                    </button>
+                  )}
+                  {recordedUrl && !isRecording && (
+                    <>
+                      <audio src={recordedUrl} controls className="h-10" />
+                      <button
+                        onClick={reRecord}
+                        className="flex items-center space-x-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                      >
+                        <ArrowPathIcon className="h-5 w-5" />
+                        <span>Re-record</span>
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Recording duration: 00:00
+                  {isRecording ? 'Recording...' : recordedUrl ? 'Recorded audio ready' : 'Click start to record'}
                 </div>
               </div>
             ) : (
