@@ -7,7 +7,7 @@ def build_score_prompt(
     job_description: str | None = None
 ) -> str:
     """
-    Build a prompt asking GPT_ACCESS to evaluate a candidate's answer and give a numeric score (0–100).
+    Build a prompt asking GPT_ACCESS to evaluate a candidate's answer and give a numeric score (0-100).
 
     Args:
         question: The interview question.
