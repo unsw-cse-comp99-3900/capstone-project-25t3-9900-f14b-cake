@@ -1,143 +1,171 @@
-from flask import Flask, request, render_template
-from flask_cors import CORS
+# server.py
+from fastapi import FastAPI, HTTPException, Request, status, Header, Query
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from typing import List
+import uvicorn
 import config
-import os
-from json import dumps
+
 from auth import login, logout
 from home import get_home_dashboard
-from interview import interview_start, interview_text_answer, interview_feedback
+from interview import interview_start, interview_feedback
 
-def defaultHandler(err):
-    response = err.get_response()
-    print('response', err, err.get_response())
-    response.data = dumps({
-        "code": err.code,
-        "name": "System Error",
-        "message": err.get_description(),
-    })
-    response.content_type = 'application/json'
-    return response
+# Request Models
+class LoginRequest(BaseModel):
+    email: str = Field(description="User's email address", example="user@example.com")
+    password: str = Field(description="User's password", example="mypassword123")
 
-APP = Flask(__name__)
-CORS(APP)
+class LogoutRequest(BaseModel):
+    token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
 
-APP.config['TRAP_HTTP_EXCEPTIONS'] = True
-APP.register_error_handler(Exception, defaultHandler)
+class QuestionRequest(BaseModel):
+    token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    job_description: str = Field(
+        description="Detailed job description for the interview",
+        example="Senior Python Developer with 5+ years experience in FastAPI, PostgreSQL, and AWS"
+    )
 
-dummy_token = 0
+class FeedbackRequest(BaseModel):
+    token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    interview_question: str = Field(
+        description="The interview question that was asked",
+        example="Explain the difference between async and sync functions in Python"
+    )
+    interview_answer: str = Field(
+        description="The candidate's answer to the question",
+        example="Async functions allow for non-blocking operations..."
+    )
 
-@APP.route("/home", methods=['GET'])
-def server_home():
-    """ get the home dashboard
-    Args:
-        token: string
-    
-    Returns:
-        interviews: [
-            {
-                interview_id: int,
-                type: string,
-                question: string,
-                answer: string,
-                feedback: string,
-                score: [int],
-                date: int (unix timestamp)
-            }
+# Response Models
+class HomeResponse(BaseModel):
+    interview_ids: List[str] = Field(
+        description="List of interview session IDs",
+        example=["int_123", "int_456", "int_789"]
+    )
+
+class LoginResponse(BaseModel):
+    user_id: str = Field(description="Unique user identifier", example="user_123")
+    token: str = Field(description="JWT authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+
+class InterviewStartResponse(BaseModel):
+    interview_questions: List[str] = Field(
+        description="List of generated interview questions",
+        example=[
+            "Tell me about your experience with Python and FastAPI",
+            "How do you handle error handling in REST APIs?",
+            "What's your approach to database optimization?"
         ]
-    """
-    token = str(request.args.get("token"))
+    )
+
+class InterviewFeedbackResponse(BaseModel):
+    interview_feedback: str = Field(
+        description="Detailed feedback on the candidate's answer",
+        example="Your answer demonstrated a solid understanding of asynchronous programming concepts. You correctly explained the non-blocking nature of async functions and provided relevant examples."
+    )
+    interview_score: List[int] = Field(
+        description="List of interview score, out of 5",
+        example=[4, 3, 5],
+    )
+
+
+# App Setup
+app = FastAPI(
+    title="Interview API",
+    version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Error Handling
+@app.exception_handler(Exception)
+async def default_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        code = exc.status_code
+        message = exc.detail
+    else:
+        code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        message = "Internal Server Error"
+
+    payload = {
+        "code": code,
+        "name": "System Error",
+        "message": message,
+    }
+    return JSONResponse(status_code=code, content=payload)
+
+# Routes
+@app.get(
+    "/home",
+    summary="Get Home Dashboard",
+    description="Retrieves the user's home dashboard containing all their interview IDs",
+    response_model=HomeResponse,
+    tags=["Dashboard"]
+)
+async def server_home(token: str = Header(description="Authentication token for the user")):
     ret = get_home_dashboard(token)
     return {
-        'home_interview': ret["home_interview"],
+        "interview_ids": ret["interview_ids"]
     }
 
-@APP.route("/login", methods=['POST'])
-def server_auth_login():
-    """ existing user login
-    Args:
-        email: string
-        password: string
-
-    Returns:
-        user_id: int
-        token: string
-    """
-    
-    data = request.get_json()
-    ret = login(data['email'], data['password'])
+@app.post(
+    "/login",
+    summary="User Login",
+    description="Authenticates a user with email and password, returns a token for subsequent requests",
+    response_model=LoginResponse,
+    tags=["Authentication"]
+)
+async def server_auth_login(payload: LoginRequest):
+    ret = login(payload.email, payload.password)
     return {
-        'user_id': ret['user_id'],
-        'token': ret['token']
+        "user_id": ret["user_id"],
+        "token": ret["token"]
     }
 
-@APP.route("/logout", methods=['POST'])
-def server_auth_logout():
-    """ logged in user logout
-    Args:
-        token: string
-
-    Returns:
-        None
-    """
-    
-    data = request.get_json()
-    ret = logout(data['token'])
+@app.post(
+    "/logout",
+    summary="User Logout",
+    description="Invalidates the user's authentication token",
+    tags=["Authentication"]
+)
+async def server_auth_logout(payload: LogoutRequest):
+    logout(payload.token)
     return {}
 
-@APP.route("/interview/start", methods=['POST'])
-def server_interview_start():
-    """generate interview questions for user
-    Args:
-        token: string
-
-    Returns:
-        interview_questions: [
-            {
-                interview_id: int,
-                type: string,
-                question: string,
-            }
-        ]
-    """
-    
-    data = request.get_json()
-    ret = interview_start(data['token'])
+@app.post(
+    "/interview/start",
+    summary="Start Interview",
+    description="Initiates a new interview session based on the provided job description. Generates relevant interview questions.",
+    response_model=InterviewStartResponse,
+    tags=["Interview"]
+)
+async def server_interview_start(payload: QuestionRequest):
+    ret = interview_start(payload.token, payload.job_description)
     return {
-        'interview_questions': ret["interview_questions"],
+        "interview_questions": ret["interview_questions"]
     }
 
-@APP.route("/interview/answer", methods=['POST'])
-def server_interview_answer():
-    """answer interview question
-    Args:
-        token: string
-
-    Returns:
-        interview_answer: string
-    """
-    data = request.get_json()
-    ret = interview_text_answer(data['token'])
+@app.post(
+    "/interview/feedback",
+    summary="Generate Interview Feedback",
+    description="Analyzes the candidate's answer to an interview question and provides detailed feedback along with a score",
+    response_model=InterviewFeedbackResponse,
+    tags=["Interview"]
+)
+async def server_interview_feedback(payload: FeedbackRequest):
+    ret = interview_feedback(payload.token, payload.interview_question, payload.interview_answer)
     return {
-        'interview_answer': ret["interview_answer"],
+        "interview_feedback": ret["interview_feedback"],
+        "interview_score": ret["interview_score"],
     }
 
-@APP.route("/interview/feedback", methods=['POST'])
-def server_interview_answer():
-    """generate interview questions for user
-    Args:
-        token: string
-        interview_question: string
-        interview_answer: string
-
-    Returns:
-        interview_feedback: string
-    """
-    data = request.get_json()
-    ret = interview_feedback(data['token'], data['interview_question'], data['interview_answer'])
-    return {
-        'interview_feedback': ret["interview_feedback"],
-        'interview_score': ret["interview_score"]
-    }
-
+# Local Dev
 if __name__ == "__main__":
-    APP.run(debug=True, port=config.port)
+    uvicorn.run("server:app", host="127.0.0.1", port=config.port, reload=True)
