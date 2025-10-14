@@ -10,5 +10,6 @@ def build_question_prompt(job_description: str, question_type: str) -> str:
     return (
         f"Generate 3 {question_type} interview questions based on the following job description:\n\n"
         f"{job_description}\n\n"
-        "The question should be clear, relevant, and help evaluate the candidate's suitability for the role."
+        "These questions should be clear, relevant, and helpful in assessing the candidate's suitability for the position."
+        "These questions should be separated by @ and not numbered."
     )
