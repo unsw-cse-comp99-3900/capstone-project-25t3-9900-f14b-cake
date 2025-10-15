@@ -5,6 +5,8 @@ import { PlayIcon, StopIcon, MicrophoneIcon, ArrowPathIcon } from "@heroicons/re
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { interviewService } from "@/features/interview/services";
+import { speechToTextService } from "@/utils/speechToText";
+import "./type";
 
 export default function AnsweringPage() {
   const searchParams = useSearchParams();
@@ -33,6 +35,11 @@ export default function AnsweringPage() {
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
   const [feedbackScores, setFeedbackScores] = useState<number[] | null>(null);
   const [feedbackError, setFeedbackError] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+  const [isRecordingForTranscription, setIsRecordingForTranscription] = useState(false);
+  const [transcriptionRecorder, setTranscriptionRecorder] = useState<MediaRecorder | null>(null);
+  const [showTranscriptionModal, setShowTranscriptionModal] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,6 +48,14 @@ export default function AnsweringPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Clear feedback when switching questions
+  useEffect(() => {
+    setShowFeedback(false);
+    setFeedbackText(null);
+    setFeedbackScores(null);
+    setFeedbackError(false);
+  }, [currentQuestionIndex]);
 
   // Fetch questions when page loads
   useEffect(() => {
@@ -98,52 +113,100 @@ export default function AnsweringPage() {
 
   const startRecording = async () => {
     if (isRecording) return;
+    
+    // Start real-time transcription instead of recording
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      chunksRef.length = 0;
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.push(e.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        setRecordedUrl(url);
-        setIsRecording(false);
-        // stop tracks
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      recorder.start();
-      setMediaRecorder(recorder);
-      setRecordedUrl(null);
-      setIsRecording(true);
+      setShowTranscriptionModal(true);
+      setIsTranscribing(true);
+      
+      const result = await speechToTextService.transcribeWithWebSpeech();
+      setCurrentAnswer({ transcribedText: result.transcript });
+      setShowTranscriptionModal(false);
+      setIsTranscribing(false);
     } catch (err) {
-      // permission denied or not supported
-      console.error('Failed to start recording', err);
-      setIsRecording(false);
+      console.error('Failed to start transcription', err);
+      setShowTranscriptionModal(false);
+      setIsTranscribing(false);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-    }
+    // Stop the speech recognition
+    speechToTextService.stop();
+    setShowTranscriptionModal(false);
+    setIsTranscribing(false);
   };
 
   const reRecord = () => {
-    if (recordedUrl) {
-      URL.revokeObjectURL(recordedUrl);
-      setRecordedUrl(null);
-    }
+    // Clear previous transcription and start new one
+    setCurrentAnswer({ transcribedText: null });
     startRecording();
   };
 
-  const [textAnswer, setTextAnswer] = useState("");
+  const [answers, setAnswers] = useState<Record<number, { textAnswer: string; transcribedText: string | null }>>({});
+
+  // Helper functions to get/set current question's answer
+  const getCurrentAnswer = () => {
+    return answers[currentQuestionIndex] || { textAnswer: "", transcribedText: null };
+  };
+
+  const setCurrentAnswer = (updates: Partial<{ textAnswer: string; transcribedText: string | null }>) => {
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestionIndex]: {
+        ...prev[currentQuestionIndex],
+        textAnswer: "",
+        transcribedText: null,
+        ...updates
+      }
+    }));
+  };
+
+  const startRealTimeTranscription = async (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!speechToTextService.isSupported()) {
+        reject(new Error('Speech recognition not supported in this browser'));
+        return;
+      }
+
+      setShowTranscriptionModal(true);
+      setIsTranscribing(true);
+
+      // Start real-time speech recognition
+      speechToTextService.transcribeWithWebSpeech()
+        .then((result) => {
+          setCurrentAnswer({ transcribedText: result.transcript });
+          setShowTranscriptionModal(false);
+          setIsTranscribing(false);
+          resolve(result.transcript);
+        })
+        .catch((error) => {
+          console.warn('Real-time transcription failed:', error);
+          setShowTranscriptionModal(false);
+          setIsTranscribing(false);
+          reject(error);
+        });
+    });
+  };
 
   const handleSubmitAnswer = async () => {
     if (!questions.length) return;
-    const answer = mode === "audio" ? (recordedUrl ? "[audio answer submitted]" : "") : textAnswer.trim();
-    if (!answer) return;
+    
+    let answer = "";
+    
+    if (mode === "audio") {
+      if (!getCurrentAnswer().transcribedText) {
+        setFeedbackText("Please record your answer first.");
+        setShowFeedback(true);
+        setFeedbackError(true);
+        return;
+      }
+      answer = getCurrentAnswer().transcribedText!;
+    } else {
+      answer = getCurrentAnswer().textAnswer.trim();
+      if (!answer) return;
+    }
+
     try {
       setFeedbackLoading(true);
       const res = await interviewService.feedback({
@@ -154,6 +217,9 @@ export default function AnsweringPage() {
       setFeedbackScores(res.interview_score);
       setShowFeedback(true);
       setFeedbackError(false);
+      
+      // Mark current question as answered
+      setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]));
     } catch (e) {
       setFeedbackText("Failed to generate feedback. Please try again.");
       setShowFeedback(true);
@@ -167,6 +233,14 @@ export default function AnsweringPage() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const allQuestionsAnswered = questions.length > 0 && answeredQuestions.size === questions.length;
+
+  const handleCompleteInterview = () => {
+    // Navigate back to home or show completion message
+    router.push('/home');
   };
 
   return (
@@ -247,12 +321,26 @@ export default function AnsweringPage() {
             >
               Previous
             </button>
-            <button
-              onClick={() => setCurrentQuestionIndex((q) => Math.min(q + 1, Math.max(0, questions.length - 1)))}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Next
-            </button>
+            {!isLastQuestion ? (
+              <button
+                onClick={() => setCurrentQuestionIndex((q) => Math.min(q + 1, Math.max(0, questions.length - 1)))}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={handleCompleteInterview}
+                disabled={!allQuestionsAnswered}
+                className={`px-6 py-2 rounded-lg transition-colors ${
+                  allQuestionsAnswered
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Complete
+              </button>
+            )}
           </div>
 
           {/* Current question */}
@@ -286,7 +374,7 @@ export default function AnsweringPage() {
                   <div className="space-y-4">
                     {/* Controls */}
                     <div className="flex items-center space-x-4">
-                      {!isRecording && !recordedUrl && (
+                      {!getCurrentAnswer().transcribedText && !isTranscribing && (
                         <button
                           onClick={startRecording}
                           className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
@@ -295,43 +383,46 @@ export default function AnsweringPage() {
                           <span>Start recording</span>
                         </button>
                       )}
-                      {isRecording && (
+                      {isTranscribing && (
                         <button
                           onClick={stopRecording}
                           className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                         >
-                          Stop recording
+                          Recording...
                         </button>
                       )}
-                      {recordedUrl && !isRecording && (
-                        <>
-                          <audio src={recordedUrl} controls className="h-10" />
-                          <button
-                            onClick={reRecord}
-                            className="flex items-center space-x-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                          >
-                            <ArrowPathIcon className="h-5 w-5" />
-                            <span>Re-record</span>
-                          </button>
-                        </>
+                      {getCurrentAnswer().transcribedText && !isTranscribing && (
+                        <button
+                          onClick={reRecord}
+                          className="flex items-center space-x-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          <ArrowPathIcon className="h-5 w-5" />
+                          <span>Re-record</span>
+                        </button>
                       )}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {isRecording ? 'Recording...' : recordedUrl ? 'Recorded audio ready' : 'Click start to record'}
+                      {isTranscribing ? 'Recording...' : getCurrentAnswer().transcribedText ? 'Transcription ready' : 'Click start to record'}
                     </div>
+                    {getCurrentAnswer().transcribedText && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <h4 className="text-sm font-medium text-gray-600 mb-2">Transcribed Answer:</h4>
+                        <p className="text-sm text-gray-700">{getCurrentAnswer().transcribedText}</p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <textarea
                     placeholder="Type your answer here..."
-                    value={textAnswer}
-                    onChange={(e) => setTextAnswer(e.target.value)}
+                    value={getCurrentAnswer().textAnswer}
+                    onChange={(e) => setCurrentAnswer({ textAnswer: e.target.value })}
                     className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 )}
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={handleSubmitAnswer}
-                    disabled={feedbackLoading || (!recordedUrl && mode === 'audio') || (mode === 'text' && !textAnswer.trim())}
+                    disabled={feedbackLoading || (mode === 'audio' && !getCurrentAnswer().transcribedText) || (mode === 'text' && !getCurrentAnswer().textAnswer.trim())}
                     className={`px-6 py-2 rounded-lg text-white ${feedbackLoading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
                   >
                     {feedbackLoading ? 'Submitting...' : 'Submit'}
@@ -341,6 +432,12 @@ export default function AnsweringPage() {
             ) : (
               <>
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Feedback</h3>
+                {mode === "audio" && getCurrentAnswer().transcribedText && (
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-600 mb-2">Transcribed Answer:</h4>
+                    <p className="text-sm text-gray-700">{getCurrentAnswer().transcribedText}</p>
+                  </div>
+                )}
                 <p className="text-gray-700 whitespace-pre-line mb-4">{feedbackText || 'No feedback'}</p>
                 {feedbackScores && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -385,6 +482,37 @@ export default function AnsweringPage() {
               >
                 cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transcription Modal */}
+      {showTranscriptionModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-2xl p-8 shadow-lg w-96 relative border border-blue-100">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <MicrophoneIcon className="w-8 h-8 text-blue-600 animate-pulse" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Listening...</h3>
+                <p className="text-gray-600 text-sm">
+                  Please speak your answer clearly. The system will automatically stop when you finish speaking.
+                </p>
+              </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    speechToTextService.stop();
+                    setShowTranscriptionModal(false);
+                    setIsTranscribing(false);
+                  }}
+                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Stop Listening
+                </button>
+              </div>
             </div>
           </div>
         </div>
