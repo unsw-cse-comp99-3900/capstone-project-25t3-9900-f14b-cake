@@ -35,7 +35,6 @@ export default function AnsweringPage() {
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
   const [feedbackScores, setFeedbackScores] = useState<number[] | null>(null);
   const [feedbackError, setFeedbackError] = useState(false);
-  const [transcribedText, setTranscribedText] = useState<string | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
   const [isRecordingForTranscription, setIsRecordingForTranscription] = useState(false);
@@ -49,6 +48,14 @@ export default function AnsweringPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Clear feedback when switching questions
+  useEffect(() => {
+    setShowFeedback(false);
+    setFeedbackText(null);
+    setFeedbackScores(null);
+    setFeedbackError(false);
+  }, [currentQuestionIndex]);
 
   // Fetch questions when page loads
   useEffect(() => {
@@ -113,7 +120,7 @@ export default function AnsweringPage() {
       setIsTranscribing(true);
       
       const result = await speechToTextService.transcribeWithWebSpeech();
-      setTranscribedText(result.transcript);
+      setCurrentAnswer({ transcribedText: result.transcript });
       setShowTranscriptionModal(false);
       setIsTranscribing(false);
     } catch (err) {
@@ -132,11 +139,28 @@ export default function AnsweringPage() {
 
   const reRecord = () => {
     // Clear previous transcription and start new one
-    setTranscribedText(null);
+    setCurrentAnswer({ transcribedText: null });
     startRecording();
   };
 
-  const [textAnswer, setTextAnswer] = useState("");
+  const [answers, setAnswers] = useState<Record<number, { textAnswer: string; transcribedText: string | null }>>({});
+
+  // Helper functions to get/set current question's answer
+  const getCurrentAnswer = () => {
+    return answers[currentQuestionIndex] || { textAnswer: "", transcribedText: null };
+  };
+
+  const setCurrentAnswer = (updates: Partial<{ textAnswer: string; transcribedText: string | null }>) => {
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestionIndex]: {
+        ...prev[currentQuestionIndex],
+        textAnswer: "",
+        transcribedText: null,
+        ...updates
+      }
+    }));
+  };
 
   const startRealTimeTranscription = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -151,7 +175,7 @@ export default function AnsweringPage() {
       // Start real-time speech recognition
       speechToTextService.transcribeWithWebSpeech()
         .then((result) => {
-          setTranscribedText(result.transcript);
+          setCurrentAnswer({ transcribedText: result.transcript });
           setShowTranscriptionModal(false);
           setIsTranscribing(false);
           resolve(result.transcript);
@@ -171,15 +195,15 @@ export default function AnsweringPage() {
     let answer = "";
     
     if (mode === "audio") {
-      if (!transcribedText) {
+      if (!getCurrentAnswer().transcribedText) {
         setFeedbackText("Please record your answer first.");
         setShowFeedback(true);
         setFeedbackError(true);
         return;
       }
-      answer = transcribedText;
+      answer = getCurrentAnswer().transcribedText!;
     } else {
-      answer = textAnswer.trim();
+      answer = getCurrentAnswer().textAnswer.trim();
       if (!answer) return;
     }
 
@@ -350,7 +374,7 @@ export default function AnsweringPage() {
                   <div className="space-y-4">
                     {/* Controls */}
                     <div className="flex items-center space-x-4">
-                      {!transcribedText && !isTranscribing && (
+                      {!getCurrentAnswer().transcribedText && !isTranscribing && (
                         <button
                           onClick={startRecording}
                           className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
@@ -367,7 +391,7 @@ export default function AnsweringPage() {
                           Recording...
                         </button>
                       )}
-                      {transcribedText && !isTranscribing && (
+                      {getCurrentAnswer().transcribedText && !isTranscribing && (
                         <button
                           onClick={reRecord}
                           className="flex items-center space-x-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
@@ -378,27 +402,27 @@ export default function AnsweringPage() {
                       )}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {isTranscribing ? 'Recording...' : transcribedText ? 'Transcription ready' : 'Click start to record'}
+                      {isTranscribing ? 'Recording...' : getCurrentAnswer().transcribedText ? 'Transcription ready' : 'Click start to record'}
                     </div>
-                    {transcribedText && (
+                    {getCurrentAnswer().transcribedText && (
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-600 mb-2">Transcribed Answer:</h4>
-                        <p className="text-sm text-gray-700">{transcribedText}</p>
+                        <p className="text-sm text-gray-700">{getCurrentAnswer().transcribedText}</p>
                       </div>
                     )}
                   </div>
                 ) : (
                   <textarea
                     placeholder="Type your answer here..."
-                    value={textAnswer}
-                    onChange={(e) => setTextAnswer(e.target.value)}
+                    value={getCurrentAnswer().textAnswer}
+                    onChange={(e) => setCurrentAnswer({ textAnswer: e.target.value })}
                     className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 )}
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={handleSubmitAnswer}
-                    disabled={feedbackLoading || (mode === 'audio' && !transcribedText) || (mode === 'text' && !textAnswer.trim())}
+                    disabled={feedbackLoading || (mode === 'audio' && !getCurrentAnswer().transcribedText) || (mode === 'text' && !getCurrentAnswer().textAnswer.trim())}
                     className={`px-6 py-2 rounded-lg text-white ${feedbackLoading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
                   >
                     {feedbackLoading ? 'Submitting...' : 'Submit'}
@@ -408,10 +432,10 @@ export default function AnsweringPage() {
             ) : (
               <>
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Feedback</h3>
-                {mode === "audio" && transcribedText && (
+                {mode === "audio" && getCurrentAnswer().transcribedText && (
                   <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-600 mb-2">Transcribed Answer:</h4>
-                    <p className="text-sm text-gray-700">{transcribedText}</p>
+                    <p className="text-sm text-gray-700">{getCurrentAnswer().transcribedText}</p>
                   </div>
                 )}
                 <p className="text-gray-700 whitespace-pre-line mb-4">{feedbackText || 'No feedback'}</p>
