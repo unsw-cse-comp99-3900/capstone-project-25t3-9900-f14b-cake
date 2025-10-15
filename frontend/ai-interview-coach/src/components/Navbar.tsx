@@ -42,10 +42,10 @@ export default function Navbar({
               <span className="text-gray-900 text-lg font-semibold">AI Interview Coach</span>
             </button>
             {[
-              { label: 'home', href: '/home' },
-              { label: 'game', href: '/game' },
-              { label: 'progress', href: '/progress' },
-              { label: 'bank', href: '/bank' },
+              { label: 'Home', href: '/home' },
+              { label: 'Game', href: '/game' },
+              { label: 'Progress', href: '/progress' },
+              { label: 'Bank', href: '/bank' },
             ].map(({ label, href }) => {
               const isActive = pathname === href;
               return (
