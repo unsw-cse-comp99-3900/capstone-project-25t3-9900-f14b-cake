@@ -2,36 +2,53 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetcher } from '@/lib/fetcher';
+import { authService } from '@/features/auth/services';
 
 export default function LoginPage() {
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
 
-    // Simulating user authentication logic
-    if (name && password) {
-      // Randomly generate a mock token
-      const fakeToken = 'token_' + Math.random().toString(36).substring(2);
-
-      // Saving to localStorage
-      localStorage.setItem('auth_token', fakeToken);
-
-      // If remember me, also save the username
-      if (remember) {
-        localStorage.setItem('username', name);
-      } else {
-        localStorage.removeItem('username');
+    try {
+      if (!email || !password) {
+        setError('Please enter both email and password');
+        return;
       }
 
-      alert(`Logged in as ${name}\nToken: ${fakeToken}`);
+      // Call the actual login API
+      const response = await authService.login({
+        email,
+        password,
+      });
+
+      // Use fetcher to set token with remember me option
+      fetcher.setToken(response.token, remember);
+      
+      // Save user info separately
+      if (response.user) {
+        if (remember) {
+          localStorage.setItem('username', response.user.name || response.user.email);
+          localStorage.setItem('userEmail', response.user.email);
+        } else {
+          sessionStorage.setItem('username', response.user.name || response.user.email);
+          sessionStorage.setItem('userEmail', response.user.email);
+        }
+      }
 
       router.push('/home');
-    } else {
-      alert('Please enter both name and password');
+    } catch (error: any) {
+      setError(error.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,12 +59,17 @@ export default function LoginPage() {
           Login
         </h2>
         <form onSubmit={handleLogin}>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
           <div className="mb-6">
             <input
-              type="text"
-              placeholder="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              type="email"
+              placeholder="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-colors"
             />
@@ -65,9 +87,10 @@ export default function LoginPage() {
           <div className="flex items-center justify-between mb-8">
             <button
               type="submit"
-              className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-base"
+              disabled={isLoading}
+              className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors text-base"
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
             <label className="text-base flex items-center cursor-pointer">
               <input
