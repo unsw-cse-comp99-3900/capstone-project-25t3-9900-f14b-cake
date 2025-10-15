@@ -90,68 +90,68 @@ export interface AppSettings {
  * XP等级配置
  */
 export const XP_LEVELS: XPLevel[] = [
-    { level: 1, minXP: 0, maxXP: 99, title: "新手", color: "text-gray-500" },
+    { level: 1, minXP: 0, maxXP: 99, title: "Novice", color: "text-gray-500" },
     {
         level: 2,
         minXP: 100,
         maxXP: 249,
-        title: "学徒",
+        title: "Apprentice",
         color: "text-green-500",
     },
     {
         level: 3,
         minXP: 250,
         maxXP: 499,
-        title: "熟练者",
+        title: "Practitioner",
         color: "text-blue-500",
     },
     {
         level: 4,
         minXP: 500,
         maxXP: 999,
-        title: "专家",
+        title: "Expert",
         color: "text-purple-500",
     },
     {
         level: 5,
         minXP: 1000,
         maxXP: 1999,
-        title: "大师",
+        title: "Master",
         color: "text-orange-500",
     },
     {
         level: 6,
         minXP: 2000,
         maxXP: 3999,
-        title: "宗师",
+        title: "Grandmaster",
         color: "text-red-500",
     },
     {
         level: 7,
         minXP: 4000,
         maxXP: 7999,
-        title: "传奇",
+        title: "Legend",
         color: "text-pink-500",
     },
     {
         level: 8,
         minXP: 8000,
         maxXP: 15999,
-        title: "神话",
+        title: "Mythical",
         color: "text-indigo-500",
     },
     {
         level: 9,
         minXP: 16000,
         maxXP: 31999,
-        title: "史诗",
+        title: "Epic",
         color: "text-yellow-500",
     },
     {
         level: 10,
         minXP: 32000,
         maxXP: Infinity,
-        title: "至尊",
+        title: "Supreme",
         color: "text-gradient",
     },
 ];
@@ -160,53 +160,53 @@ export const XP_LEVELS: XPLevel[] = [
  * XP奖励配置
  */
 export const XP_REWARDS: Record<string, XPReward> = {
-    // 基础答题奖励
+    // Basic Answer Rewards
     ANSWER_CORRECT: {
         action: "ANSWER_CORRECT",
         baseXP: 10,
-        description: "正确回答问题",
+        description: "Answer question correctly",
     },
     ANSWER_PARTIAL: {
         action: "ANSWER_PARTIAL",
         baseXP: 5,
-        description: "部分正确回答",
+        description: "Partially correct answer",
     },
 
-    // 会话完成奖励
+    // Session Completion Rewards
     COMPLETE_SESSION: {
         action: "COMPLETE_SESSION",
         baseXP: 50,
-        description: "完成面试会话",
+        description: "Complete interview session",
     },
     PERFECT_SESSION: {
         action: "PERFECT_SESSION",
         baseXP: 100,
-        description: "完美完成会话（90%+分数）",
+        description: "Perfect session completion (90%+ score)",
     },
 
-    // 连续登录奖励
+    // Login Streak Rewards
     DAILY_LOGIN: {
         action: "DAILY_LOGIN",
         baseXP: 5,
         multiplier: 1,
-        description: "每日登录",
+        description: "Daily login",
     },
     STREAK_BONUS: {
         action: "STREAK_BONUS",
         baseXP: 10,
-        description: "连续登录奖励",
+        description: "Login streak bonus",
     },
 
-    // 特殊成就奖励
+    // Special Achievement Rewards
     FIRST_SESSION: {
         action: "FIRST_SESSION",
         baseXP: 25,
-        description: "第一次面试会话",
+        description: "First interview session",
     },
     CATEGORY_MASTERY: {
         action: "CATEGORY_MASTERY",
         baseXP: 200,
-        description: "掌握某个类别",
+        description: "Master a category",
     },
 };
 
@@ -223,130 +223,130 @@ export const BADGE_CONFIGS: Record<
         category: "xp" | "answers" | "login" | "category" | "special";
     }
 > = {
-    // XP徽章
+    // XP Badges
     [BadgeType.FIRST_XP]: {
-        name: "初出茅庐",
-        description: "获得第一个经验值",
+        name: "First Steps",
+        description: "Earn your first experience point",
         icon: "⭐",
         requirement: 1,
         category: "xp",
     },
     [BadgeType.XP_100]: {
-        name: "经验新手",
-        description: "累计获得100经验值",
+        name: "XP Novice",
+        description: "Accumulate 100 experience points",
         icon: "🏆",
         requirement: 100,
         category: "xp",
     },
     [BadgeType.XP_500]: {
-        name: "经验达人",
-        description: "累计获得500经验值",
+        name: "XP Expert",
+        description: "Accumulate 500 experience points",
         icon: "🥇",
         requirement: 500,
         category: "xp",
     },
     [BadgeType.XP_1000]: {
-        name: "经验大师",
-        description: "累计获得1000经验值",
+        name: "XP Master",
+        description: "Accumulate 1000 experience points",
         icon: "👑",
         requirement: 1000,
         category: "xp",
     },
 
-    // 答题徽章
+    // Answer Badges
     [BadgeType.FIRST_ANSWER]: {
-        name: "破冰者",
-        description: "回答第一个问题",
+        name: "Ice Breaker",
+        description: "Answer your first question",
         icon: "🎯",
         requirement: 1,
         category: "answers",
     },
     [BadgeType.ANSWER_10]: {
-        name: "答题新手",
-        description: "回答10个问题",
+        name: "Answer Rookie",
+        description: "Answer 10 questions",
         icon: "📝",
         requirement: 10,
         category: "answers",
     },
     [BadgeType.ANSWER_50]: {
-        name: "答题达人",
-        description: "回答50个问题",
+        name: "Answer Expert",
+        description: "Answer 50 questions",
         icon: "📚",
         requirement: 50,
         category: "answers",
     },
     [BadgeType.ANSWER_100]: {
-        name: "答题专家",
-        description: "回答100个问题",
+        name: "Answer Master",
+        description: "Answer 100 questions",
         icon: "🎓",
         requirement: 100,
         category: "answers",
     },
 
-    // 连续登录徽章
+    // Login Streak Badges
     [BadgeType.LOGIN_STREAK_3]: {
-        name: "坚持者",
-        description: "连续登录3天",
+        name: "Persistent",
+        description: "Log in for 3 consecutive days",
         icon: "🔥",
         requirement: 3,
         category: "login",
     },
     [BadgeType.LOGIN_STREAK_7]: {
-        name: "持之以恒",
-        description: "连续登录7天",
+        name: "Dedicated",
+        description: "Log in for 7 consecutive days",
         icon: "⚡",
         requirement: 7,
         category: "login",
     },
     [BadgeType.LOGIN_STREAK_30]: {
-        name: "不懈努力",
-        description: "连续登录30天",
+        name: "Relentless",
+        description: "Log in for 30 consecutive days",
         icon: "💪",
         requirement: 30,
         category: "login",
     },
 
-    // 类别大师徽章
+    // Category Master Badges
     [BadgeType.BEHAVIORAL_MASTER]: {
-        name: "行为面试大师",
-        description: "在行为面试中表现优异",
+        name: "Behavioral Interview Master",
+        description: "Excel in behavioral interviews",
         icon: "🎭",
         requirement: 80,
         category: "category",
     },
     [BadgeType.TECHNICAL_MASTER]: {
-        name: "技术面试大师",
-        description: "在技术面试中表现优异",
+        name: "Technical Interview Master",
+        description: "Excel in technical interviews",
         icon: "💻",
         requirement: 80,
         category: "category",
     },
     [BadgeType.PSYCHOMETRIC_MASTER]: {
-        name: "心理测评大师",
-        description: "在心理测评中表现优异",
+        name: "Psychometric Assessment Master",
+        description: "Excel in psychometric assessments",
         icon: "🧠",
         requirement: 80,
         category: "category",
     },
 
-    // 特殊成就徽章
+    // Special Achievement Badges
     [BadgeType.PERFECTIONIST]: {
-        name: "完美主义者",
-        description: "连续5次获得满分",
+        name: "Perfectionist",
+        description: "Achieve perfect scores 5 times in a row",
         icon: "💎",
         requirement: 5,
         category: "special",
     },
     [BadgeType.IMPROVER]: {
-        name: "进步之星",
-        description: "分数持续提升",
+        name: "Rising Star",
+        description: "Show continuous score improvement",
         icon: "📈",
         requirement: 1,
         category: "special",
     },
     [BadgeType.DEDICATED]: {
-        name: "专注达人",
-        description: "坚持练习30天",
+        name: "Dedicated Practitioner",
+        description: "Practice consistently for 30 days",
         icon: "🌟",
         requirement: 30,
         category: "special",
@@ -378,14 +378,14 @@ export const DEFAULT_CONFIG = {
  * 每日励志语录
  */
 export const DAILY_QUOTES = [
-    "今天的努力是明天的实力！",
-    "每一次练习都是向成功迈进的一步。",
-    "坚持不懈，你一定能达到目标！",
-    "相信自己，你比想象中更强大。",
-    "成功属于那些永不放弃的人。",
-    "今天的你比昨天更优秀！",
-    "机会总是留给有准备的人。",
-    "持续改进，追求卓越。",
-    "每个专家都曾是初学者。",
-    "进步不在于速度，而在于坚持。",
+    "Today's effort is tomorrow's strength!",
+    "Every practice session is a step toward success.",
+    "Stay persistent, and you will reach your goals!",
+    "Believe in yourself, you are stronger than you think.",
+    "Success belongs to those who never give up.",
+    "Today's you is better than yesterday's!",
+    "Opportunities are always reserved for those who are prepared.",
+    "Continuous improvement, pursue excellence.",
+    "Every expert was once a beginner.",
+    "Progress is not about speed, but about persistence.",
 ];
