@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { UserIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 interface NavbarProps {
   showBackButton?: boolean;
@@ -15,53 +15,49 @@ export default function Navbar({
   showUserButton = true 
 }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-10 py-4 border-b border-gray-300 bg-white">
-      <div className="flex items-center space-x-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 md:px-10 py-3 border-b border-blue-100 bg-white/80 backdrop-blur shadow-sm">
+      <div className="flex items-center gap-6">
         {showBackButton && (
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-full hover:bg-blue-50 text-blue-700 transition-colors"
           >
-            <ArrowLeftIcon className="w-6 h-6 text-gray-700" />
+            <span className="material-symbols-outlined" style={{ fontSize: 24 }}>arrow_back</span>
           </button>
         )}
         {title && (
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
         )}
         {!showBackButton && !title && (
-          <div className="flex space-x-8 text-lg font-medium text-gray-800">
+          <div className="flex items-center gap-6 text-base font-medium text-gray-800">
             <button 
               onClick={() => router.push('/home')}
-              className="hover:text-blue-600 transition-colors"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              aria-label="Home"
             >
-              logo
+              <span className="material-symbols-outlined text-blue-700" style={{ fontSize: 28 }}>smart_toy</span>
+              <span className="text-gray-900 text-lg font-semibold">AI Interview Coach</span>
             </button>
-            <button 
-              onClick={() => router.push('/home')}
-              className="hover:text-blue-600 transition-colors"
-            >
-              home
-            </button>
-            <button 
-              onClick={() => router.push('/game')}
-              className="hover:text-blue-600 transition-colors"
-            >
-              game
-            </button>
-            <button 
-              onClick={() => router.push('/progress')}
-              className="hover:text-blue-600 transition-colors"
-            >
-              progress
-            </button>
-            <button 
-              onClick={() => router.push('/bank')}
-              className="hover:text-blue-600 transition-colors"
-            >
-              bank
-            </button>
+            {[
+              { label: 'home', href: '/home' },
+              { label: 'game', href: '/game' },
+              { label: 'progress', href: '/progress' },
+              { label: 'bank', href: '/bank' },
+            ].map(({ label, href }) => {
+              const isActive = pathname === href;
+              return (
+                <button
+                  key={href}
+                  onClick={() => router.push(href)}
+                  className={`px-3 py-1.5 rounded-full transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'}`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -69,9 +65,10 @@ export default function Navbar({
       {showUserButton && (
         <button
           onClick={() => router.push('/profile')}
-          className="p-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors"
+          className="hover:text-blue-700 transition-colors"
+          aria-label="Profile"
         >
-          <UserIcon className="w-6 h-6 text-gray-700" />
+          <span className="material-symbols-outlined text-gray-700" style={{ fontSize: 35 }}>account_circle</span>
         </button>
       )}
     </nav>
