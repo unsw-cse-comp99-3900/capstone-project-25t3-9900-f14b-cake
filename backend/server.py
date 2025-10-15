@@ -1,7 +1,7 @@
-# server.py
-from fastapi import FastAPI, HTTPException, Request, status, Header, Query
+from fastapi import FastAPI, HTTPException, Request, status, Header, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import List
 import uvicorn
@@ -11,16 +11,18 @@ from auth import login, logout
 from home import get_home_dashboard
 from interview import interview_start, interview_feedback
 
+# Security
+security = HTTPBearer()
+
+def get_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    return credentials.credentials
+
 # Request Models
 class LoginRequest(BaseModel):
     email: str = Field(description="User's email address", example="user@example.com")
     password: str = Field(description="User's password", example="mypassword123")
 
-class LogoutRequest(BaseModel):
-    token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-
 class QuestionRequest(BaseModel):
-    token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     job_description: str = Field(
         description="Detailed job description for the interview",
         example="Senior Python Developer with 5+ years experience in FastAPI, PostgreSQL, and AWS"
@@ -28,7 +30,6 @@ class QuestionRequest(BaseModel):
     question_type: str = Field(description="Type of interview question", example="technical")
 
 class FeedbackRequest(BaseModel):
-    token: str = Field(description="Authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     interview_question: str = Field(
         description="The interview question that was asked",
         example="Explain the difference between async and sync functions in Python"
@@ -110,7 +111,7 @@ async def default_exception_handler(request: Request, exc: Exception):
     response_model=HomeResponse,
     tags=["Dashboard"]
 )
-async def server_home(token: str = Header(description="Authentication token for the user")):
+async def server_home(token: str = Depends(get_token)):
     ret = get_home_dashboard(token)
     return {
         "interview_ids": ret["interview_ids"]
@@ -136,8 +137,8 @@ async def server_auth_login(payload: LoginRequest):
     description="Invalidates the user's authentication token",
     tags=["Authentication"]
 )
-async def server_auth_logout(payload: LogoutRequest):
-    logout(payload.token)
+async def server_auth_logout(token: str = Depends(get_token)):
+    logout(token)
     return {}
 
 @app.post(
@@ -147,8 +148,8 @@ async def server_auth_logout(payload: LogoutRequest):
     response_model=InterviewStartResponse,
     tags=["Interview"]
 )
-async def server_interview_start(payload: QuestionRequest):
-    ret = interview_start(payload.token, payload.job_description, payload.question_type)
+async def server_interview_start(payload: QuestionRequest, token: str = Depends(get_token)):
+    ret = interview_start(token, payload.job_description, payload.question_type)
     return {
         "interview_questions": ret["interview_questions"]
     }
@@ -160,8 +161,8 @@ async def server_interview_start(payload: QuestionRequest):
     response_model=InterviewFeedbackResponse,
     tags=["Interview"]
 )
-async def server_interview_feedback(payload: FeedbackRequest):
-    ret = interview_feedback(payload.token, payload.interview_question, payload.interview_answer)
+async def server_interview_feedback(payload: FeedbackRequest, token: str = Depends(get_token)):
+    ret = interview_feedback(token, payload.interview_question, payload.interview_answer)
     return {
         "interview_feedback": ret["interview_feedback"],
         "interview_score": ret["interview_score"],
