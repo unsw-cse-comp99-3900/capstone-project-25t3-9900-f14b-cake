@@ -12,21 +12,17 @@ export default function InterviewPage() {
   const [showModal, setShowModal] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-white to-blue-50">
       <Navbar />
 
       <main className="flex-1 p-5 pt-24 flex flex-col items-center space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
-            AI Interview
-          </h2>
-          <p className="text-lg text-gray-600">
-            Start your AI-powered mock interview
-          </p>
+          <h2 className="text-4xl font-extrabold text-blue-700 mb-2">AI Interview</h2>
+          <p className="text-lg text-gray-600">Start your AI-powered mock interview</p>
         </div>
 
-        <div className="w-full max-w-md mx-auto space-y-8">
-          <div>
+        <div className="w-full max-w-2xl mx-auto">
+          <div className="bg-white/80 backdrop-blur rounded-2xl border border-blue-100 shadow-sm p-6 space-y-6">
             <FormControl fullWidth>
               <InputLabel id="question-type-label">
                 Please select question type
@@ -43,9 +39,6 @@ export default function InterviewPage() {
                 <MenuItem value="psychometric">psychometric</MenuItem>
               </Select>
             </FormControl>
-          </div>
-
-          <div>
             <label
               htmlFor="jobDescription"
               className="block text-sm font-medium text-gray-700 mb-2"
@@ -57,7 +50,7 @@ export default function InterviewPage() {
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste the job description here (optional)"
-              className="w-full h-48 resize-y border border-gray-400 rounded-md p-4 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full h-48 resize-y border border-blue-200 rounded-xl p-4 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/90"
             />
           </div>
         </div>
@@ -78,10 +71,10 @@ export default function InterviewPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl p-8 shadow-lg w-96 relative border border-gray-200">
+          <div className="bg-white rounded-2xl p-8 shadow-lg w-96 relative border border-blue-100">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-3 right-4 text-gray-500 hover:text-gray-700 text-xl"
+              className="absolute top-3 right-4 text-gray-400 hover:text-blue-600 text-xl"
             >
               x
             </button>
@@ -90,7 +83,7 @@ export default function InterviewPage() {
               Do you prefer to answer the questions in audio or in text?
             </p>
 
-             <div className="flex justify-around">
+            <div className="flex justify-around">
                <button 
                  onClick={() => {
                    const params = new URLSearchParams();
@@ -99,7 +92,7 @@ export default function InterviewPage() {
                    params.set("mode", "audio");
                    router.push(`/interview/answering?${params.toString()}`);
                  }}
-                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                >
                  audio
                </button>
@@ -111,7 +104,7 @@ export default function InterviewPage() {
                    params.set("mode", "text");
                    router.push(`/interview/answering?${params.toString()}`);
                  }}
-                 className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                >
                  text
                </button>
