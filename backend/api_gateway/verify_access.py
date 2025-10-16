@@ -31,8 +31,6 @@ class VerifyAccessClient:
 
     def token_verify(self) -> Dict[str, Any]:
         """Send a question to Token_Verify and return parsed response."""
-        if not (self.google_jwt or self.apple_jwt):
-            raise TokenVerifyError("One of Google_jwt and Apple_jwt must exist.")
         try:
             response = requests.post(self.api_url, headers=self.headers, json={}, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
@@ -42,14 +40,15 @@ class VerifyAccessClient:
             data = response.json()
             if data.get("status") == "success":
                 return {
-                    "status": "OK",
-                    "outcome": data["response"].get("outcome"),
-                    "answer": data["response"].get("answer")
+                    "status": data["response"].get("status"),
+                    "jwt_token": data["response"].get("jwt_token"),
                 }
             else:
                 raise TokenVerifyError(f"Unexpected response format: {data}")
         elif response.status_code == 400:
-            raise InvalidTokenError("Missing Apple/ Google JWT not found.")
+            info = response.json()
+            error_info = info.get("error")
+            raise InvalidTokenError(f"{error_info}")
         elif response.status_code == 401:
             raise InvalidTokenError("Profile mismatch or unauthorized access.")
         else:

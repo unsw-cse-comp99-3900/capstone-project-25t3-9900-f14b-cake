@@ -1,11 +1,36 @@
 import json
 from api_gateway import GPTAccessClient, FAQAccessClient
-from prompt_builder import build_question_prompt, build_feedback_prompt, build_score_prompt, build_multicrit_score_prompt, build_answer_prompt
 from typing import List, Optional, Any, Dict
+from prompt_builder import (
+    build_question_prompt, 
+    build_feedback_prompt, 
+    build_multicrit_feedback_prompt, 
+    build_score_prompt, 
+    build_multicrit_score_prompt, 
+    build_answer_prompt
+    )
 
 
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
+
+question = "Can you explain the differences between Python 2 and Python 3, and why it is important to use Python 3 for new projects?"
+answer = '''
+The key differences between Python 2 and Python 3 center on string handling, the print statement, and division.
+Strings/Encoding:
+    Python 2: Strings are default bytes, leading to messy Unicode errors.
+    Python 3: Strings are Unicode by default (for text), cleanly separated from bytes (for data), which resolves encoding issues.
+Syntax:
+    Python 2: print is a statement (print "hello").
+    Python 3: print() is a function (print("hello")).
+Division:
+    Python 2: Integer division results in an integer (5 / 2 = 2).
+    Python 3: Division results in a float (5 / 2 = 2.5).
+Why is Python 3 mandatory for new projects?
+    Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability.
+'''
+
+
 
 def test_gpt():
     job_description = "We are looking for a passionate and skilled Python Developer to join our technical team. You will be responsible for designing, developing, testing, and deploying efficient, scalable, and reliable software solutions. If you are familiar with the Python ecosystem, have a deep understanding of backend development, and enjoy collaborating with cross-functional teams, we encourage you to apply."
@@ -20,21 +45,7 @@ def test_gpt():
     # final_answer = parsed["answer"]
     # questions = str(final_answer).split("@")
     # print(questions)
-    question = "Can you explain the differences between Python 2 and Python 3, and why it is important to use Python 3 for new projects?"
-    answer = '''
-        The key differences between Python 2 and Python 3 center on string handling, the print statement, and division.
-        Strings/Encoding:
-            Python 2: Strings are default bytes, leading to messy Unicode errors.
-            Python 3: Strings are Unicode by default (for text), cleanly separated from bytes (for data), which resolves encoding issues.
-        Syntax:
-            Python 2: print is a statement (print "hello").
-            Python 3: print() is a function (print("hello")).
-        Division:
-            Python 2: Integer division results in an integer (5 / 2 = 2).
-            Python 3: Division results in a float (5 / 2 = 2.5).
-        Why is Python 3 mandatory for new projects?
-            Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability.
-    '''
+    
     # ask_GPT_question = build_feedback_prompt(question=question, answer=answer, job_description=job_description)
     # print(ask_GPT_question)
     # result = gpt_client.send_prompt(ask_GPT_question)
@@ -60,14 +71,21 @@ def test_gpt():
     # final_answer = parsed["answer"]
     # print(final_answer)  # final_answer return a string (it may need to use str() function).
 
-    ask_GPT_question = build_multicrit_score_prompt(question=question, answer=answer, job_description=job_description)
+    # ask_GPT_question = build_multicrit_score_prompt(question=question, answer=answer, job_description=job_description)
+    # result = gpt_client.send_prompt(ask_GPT_question)
+    # # print(result)
+    # raw_answer = result["answer"]
+    # # print(raw_answer)
+    # # print(type(raw_answer))
+    # parsed = json.loads(raw_answer) 
+    # print(parsed) # here is list of int
+
+    ask_GPT_question = build_multicrit_feedback_prompt(question=question, answer=answer, job_description=job_description)
+    # print(ask_GPT_question)
     result = gpt_client.send_prompt(ask_GPT_question)
-    # print(result)
     raw_answer = result["answer"]
-    # print(raw_answer)
-    # print(type(raw_answer))
-    parsed = json.loads(raw_answer) 
-    print(parsed) # here is list of int
+    parsed = json.loads(raw_answer)
+    print(parsed)
 
 
 

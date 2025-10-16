@@ -71,16 +71,19 @@ def test_token_verify():
     API_URL = os.getenv("Token_Verify_URL")
     headers = {
         "Content-Type": "application/json", 
-        "Email": "lyf47744922@gmail.com",
-        "Google_jwt": "",
-        "Apple_jwt": ""
         }
-    resp = requests.post(API_URL, headers=headers, json={})
+
+    payload = {
+        "email": "lyf47744922@gmail.com",
+        "google_jwt": "xwz",
+        "apple_jwt": "xwz"
+    }
+
+    resp = requests.post(API_URL, headers=headers, json=payload)
     if resp.ok:
         result = resp.json()["response"]
         print(result)
     else:
-        print("fail")
         print(resp)
 
 
