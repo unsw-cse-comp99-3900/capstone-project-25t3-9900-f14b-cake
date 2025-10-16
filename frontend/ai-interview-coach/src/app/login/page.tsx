@@ -17,17 +17,15 @@ export default function LoginPage() {
       // Randomly generate a mock token
       const fakeToken = 'token_' + Math.random().toString(36).substring(2);
 
-      // Saving to localStorage
-      localStorage.setItem('auth_token', fakeToken);
-
-      // If remember me, also save the username
+      // Only save to localStorage if "remember me" is checked
       if (remember) {
+        localStorage.setItem('auth_token', fakeToken);
         localStorage.setItem('username', name);
       } else {
-        localStorage.removeItem('username');
+        // For session-only login, store in sessionStorage instead
+        sessionStorage.setItem('auth_token', fakeToken);
+        sessionStorage.setItem('username', name);
       }
-
-      alert(`Logged in as ${name}\nToken: ${fakeToken}`);
 
       router.push('/home');
     } else {
@@ -36,7 +34,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+      {/* Page Title */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-blue-700 mb-2">AI Interview Coach</h1>
+        <p className="text-gray-600 text-center">Your personal interview preparation assistant</p>
+      </div>
+      
       <div className="bg-white p-16 rounded-2xl shadow-lg w-126">
         <h2 className="text-center text-3xl font-bold mb-10 text-gray-800">
           Login
