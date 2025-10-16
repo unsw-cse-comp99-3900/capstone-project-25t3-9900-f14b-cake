@@ -29,12 +29,14 @@ export default function AnsweringPage() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const chunksRef = useState<Blob[]>([])[0];
 
-  // Feedback state for current question
+  // Feedback state for all questions
+  const [feedbacks, setFeedbacks] = useState<Record<number, {
+    text: string | null;
+    scores: number[] | null;
+    error: boolean;
+    loading: boolean;
+  }>>({});
   const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const [feedbackText, setFeedbackText] = useState<string | null>(null);
-  const [feedbackScores, setFeedbackScores] = useState<number[] | null>(null);
-  const [feedbackError, setFeedbackError] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
   const [isRecordingForTranscription, setIsRecordingForTranscription] = useState(false);
@@ -49,12 +51,10 @@ export default function AnsweringPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Clear feedback when switching questions
+  // Show feedback when switching to a question that has feedback
   useEffect(() => {
-    setShowFeedback(false);
-    setFeedbackText(null);
-    setFeedbackScores(null);
-    setFeedbackError(false);
+    const currentFeedback = getCurrentFeedback();
+    setShowFeedback(!!currentFeedback.text || currentFeedback.error);
   }, [currentQuestionIndex]);
 
   // Fetch questions when page loads
@@ -162,6 +162,25 @@ export default function AnsweringPage() {
     }));
   };
 
+  // Helper functions to get/set current question's feedback
+  const getCurrentFeedback = () => {
+    return feedbacks[currentQuestionIndex] || { text: null, scores: null, error: false, loading: false };
+  };
+
+  const setCurrentFeedback = (updates: Partial<{ text: string | null; scores: number[] | null; error: boolean; loading: boolean }>) => {
+    setFeedbacks(prev => ({
+      ...prev,
+      [currentQuestionIndex]: {
+        ...prev[currentQuestionIndex],
+        text: null,
+        scores: null,
+        error: false,
+        loading: false,
+        ...updates
+      }
+    }));
+  };
+
   const startRealTimeTranscription = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (!speechToTextService.isSupported()) {
@@ -196,9 +215,8 @@ export default function AnsweringPage() {
     
     if (mode === "audio") {
       if (!getCurrentAnswer().transcribedText) {
-        setFeedbackText("Please record your answer first.");
+        setCurrentFeedback({ text: "Please record your answer first.", error: true });
         setShowFeedback(true);
-        setFeedbackError(true);
         return;
       }
       answer = getCurrentAnswer().transcribedText!;
@@ -208,24 +226,28 @@ export default function AnsweringPage() {
     }
 
     try {
-      setFeedbackLoading(true);
+      setCurrentFeedback({ loading: true });
       const res = await interviewService.feedback({
         interview_question: questionText,
         interview_answer: answer,
       });
-      setFeedbackText(res.interview_feedback);
-      setFeedbackScores(res.interview_score);
+      setCurrentFeedback({ 
+        text: res.interview_feedback, 
+        scores: res.interview_score, 
+        error: false, 
+        loading: false 
+      });
       setShowFeedback(true);
-      setFeedbackError(false);
       
       // Mark current question as answered
       setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]));
     } catch (e) {
-      setFeedbackText("Failed to generate feedback. Please try again.");
+      setCurrentFeedback({ 
+        text: "Failed to generate feedback. Please try again.", 
+        error: true, 
+        loading: false 
+      });
       setShowFeedback(true);
-      setFeedbackError(true);
-    } finally {
-      setFeedbackLoading(false);
     }
   };
 
@@ -422,10 +444,10 @@ export default function AnsweringPage() {
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={handleSubmitAnswer}
-                    disabled={feedbackLoading || (mode === 'audio' && !getCurrentAnswer().transcribedText) || (mode === 'text' && !getCurrentAnswer().textAnswer.trim())}
-                    className={`px-6 py-2 rounded-lg text-white ${feedbackLoading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
+                    disabled={getCurrentFeedback().loading || (mode === 'audio' && !getCurrentAnswer().transcribedText) || (mode === 'text' && !getCurrentAnswer().textAnswer.trim())}
+                    className={`px-6 py-2 rounded-lg text-white ${getCurrentFeedback().loading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
                   >
-                    {feedbackLoading ? 'Submitting...' : 'Submit'}
+                    {getCurrentFeedback().loading ? 'Submitting...' : 'Submit'}
                   </button>
                 </div>
               </>
@@ -438,16 +460,56 @@ export default function AnsweringPage() {
                     <p className="text-sm text-gray-700">{getCurrentAnswer().transcribedText}</p>
                   </div>
                 )}
-                <p className="text-gray-700 whitespace-pre-line mb-4">{feedbackText || 'No feedback'}</p>
-                {feedbackScores && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span className="font-semibold">Scores:</span>
-                    {feedbackScores.map((s, i) => (
-                      <span key={i} className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{s}</span>
-                    ))}
+                <p className="text-gray-700 whitespace-pre-line mb-6">{getCurrentFeedback().text || 'No feedback'}</p>
+                {getCurrentFeedback().scores && (
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Performance Scores</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { name: "Clarity & Structure", description: "How clear and well-structured your answer is", score: getCurrentFeedback().scores![0] },
+                        { name: "Relevance to Question/Job", description: "How relevant your answer is to the question and job", score: getCurrentFeedback().scores![1] },
+                        { name: "Keyword & Skill Alignment", description: "How well you used relevant keywords and skills", score: getCurrentFeedback().scores![2] },
+                        { name: "Confidence & Delivery", description: "How confident and well-delivered your answer was", score: getCurrentFeedback().scores![3] },
+                        { name: "Conciseness & Focus", description: "How concise and focused your answer was", score: getCurrentFeedback().scores![4] }
+                      ].map((item, index) => (
+                        <div key={index} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-medium text-gray-800 text-sm">{item.name}</h5>
+                            <div className="flex items-center">
+                              <span className={`text-lg font-bold px-3 py-1 rounded-full ${
+                                item.score >= 4 ? 'bg-green-100 text-green-800' :
+                                item.score >= 3 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {item.score}/5
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-600">{item.description}</p>
+                          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                item.score >= 4 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                                item.score >= 3 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                                'bg-gradient-to-r from-red-400 to-red-500'
+                              }`}
+                              style={{ width: `${(item.score / 5) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-blue-800">Overall Performance</span>
+                        <span className="text-lg font-bold text-blue-900">
+                          {Math.round(getCurrentFeedback().scores!.reduce((a, b) => a + b, 0) / getCurrentFeedback().scores!.length)}/5
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
-                {feedbackError && (
+                {getCurrentFeedback().error && (
                   <div className="mt-6 flex justify-end">
                     <button
                       onClick={() => setShowFeedback(false)}
