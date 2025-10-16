@@ -67,7 +67,7 @@ class InterviewFeedbackResponse(BaseModel):
     )
     interview_score: List[int] = Field(
         description="Five scores (1–5) in order: [Clarity & Structure, Relevance, Keyword Alignment, Confidence, Conciseness]",
-        example=[4, 3, 5],
+        example=[4, 3, 5, 5, 5],
     )
 
 
