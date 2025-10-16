@@ -14,17 +14,13 @@ export default function LoginPage() {
 
     // Simulating user authentication logic
     if (name && password) {
-      // Randomly generate a mock token
-      const fakeToken = 'token_' + Math.random().toString(36).substring(2);
-
-      // Only save to localStorage if "remember me" is checked
+      // Store username for display purposes
       if (remember) {
-        localStorage.setItem('auth_token', fakeToken);
         localStorage.setItem('username', name);
+        localStorage.setItem('auth_token', 'authenticated'); // Add auth marker
       } else {
-        // For session-only login, store in sessionStorage instead
-        sessionStorage.setItem('auth_token', fakeToken);
         sessionStorage.setItem('username', name);
+        sessionStorage.setItem('auth_token', 'authenticated'); // Add auth marker
       }
 
       router.push('/home');

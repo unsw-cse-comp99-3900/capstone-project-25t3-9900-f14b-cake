@@ -151,9 +151,49 @@ def interview_start(token: str, job_description: str, question_type: str) -> Dic
     # print("some questions to choose")
     return {"interview_questions": items}
 
+def _coerce_five_scores_1_to_5(seq: List[Any]) -> Optional[List[int]]:
+    """
+    Validate: must be exactly 5 integers, each in [1,5].
+    Coerce numeric-like strings; clamp out-of-range just in case.
+    """
+    if not isinstance(seq, list) or len(seq) != 5:
+        return None
+    out: List[int] = []
+    for x in seq:
+        try:
+            n = int(x)
+        except Exception:
+            return None
+        # clamp defensively
+        if n < 1: n = 1
+        if n > 5: n = 5
+        out.append(n)
+    return out
+
+def _try_parse_scores_array(raw: str) -> Optional[List[int]]:
+    """
+    First try strict JSON parsing. If that fails, fallback to regex extracting 5 numbers 1–5.
+    """
+    # 1) strict JSON
+    try:
+        parsed = json.loads(raw)
+        coerced = _coerce_five_scores_1_to_5(parsed)
+        if coerced:
+            return coerced
+    except Exception:
+        pass
+
+    # 2) fallback: pull five 1–5 integers from text in order
+    nums = [int(n) for n in re.findall(r"\b([1-5])\b", raw)]
+    if len(nums) >= 5:
+        return _coerce_five_scores_1_to_5(nums[:5])
+
+    return None
+
 def interview_feedback(token: str, interview_question: str, interview_answer: str) -> Dict[str, Any]:
     """
-    Generate both structured feedback text and numeric score.
+    Generate textual feedback and a 5-element list of 1–5 scores in this order:
+    [Clarity & Structure, Relevance, Keyword Alignment, Confidence, Conciseness]
     """
     # Fetch user's profile from FAQ_ACCESS to enrich feedback
     user_info: Dict[str, Any] = {}
@@ -162,10 +202,9 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
         faq_result = faq_client.get_profile()
         user_info = (faq_result or {}).get("response", {}) or {}
     except Exception:
-        # Silently continue if FAQ access fails; feedback will still be generated
         user_info = {}
 
-    # Build feedback prompt with user_info context
+    # Build feedback prompt (unchanged)
     feedback_prompt = build_feedback_prompt(
         question=interview_question,
         answer=interview_answer,
@@ -177,20 +216,27 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
     feedback_raw_api = (feedback_result or {}).get("answer", "").strip()
     feedback_text = _unwrap_api_answer(feedback_raw_api)
 
-    # Build score prompt and parse a 0-100 numeric score
+    # Build multi-criteria score prompt (NEW)
+    # If you have JD available at call-site, pass it here; otherwise omit.
     score_prompt = build_score_prompt(
         question=interview_question,
-        answer=interview_answer
+        answer=interview_answer,
+        # job_description=optional_jd
     )
     score_result = gpt.send_prompt(score_prompt)
     score_raw_api = (score_result or {}).get("answer", "").strip()
     score_text = _unwrap_api_answer(score_raw_api)
-    m = re.search(r"\b(100|\d{1,2})\b", score_text)
-    interview_score: Optional[int] = int(m.group(1)) if m else None
 
+    scores = _try_parse_scores_array(score_text)
+
+    # Final safety: if parsing failed for any reason, provide a neutral default
+    if not scores:
+        scores = [3, 3, 3, 3, 3]
+
+    # Return shape matches FastAPI model: List[int]
     return {
         "interview_feedback": feedback_text,
-        "interview_score": interview_score
+        "interview_score": scores,
     }
 
 if __name__ == "__main__":

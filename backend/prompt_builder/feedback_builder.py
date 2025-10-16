@@ -36,6 +36,4 @@ def build_feedback_prompt(
 
     Please output:
     Summary: A concise overall summary
-    Analysis: Multi-dimensional analysis (clarity, logic, technical depth, communication, and role fit)
-    Suggestions: Provide some specific and feasible suggestions for improvement based on the candidate's profile in the form of a list
     """).strip()
