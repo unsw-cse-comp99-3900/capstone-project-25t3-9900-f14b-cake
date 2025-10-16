@@ -12,6 +12,7 @@ from api_gateway import GPTAccessClient, FAQAccessClient
 from prompt_builder import (
     build_question_prompt,
     build_feedback_prompt,
+    build_multicrit_feedback_prompt,
     build_score_prompt
 )
 
@@ -166,7 +167,7 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
         user_info = {}
 
     # Build feedback prompt with user_info context
-    feedback_prompt = build_feedback_prompt(
+    feedback_prompt = build_multicrit_feedback_prompt(
         question=interview_question,
         answer=interview_answer,
         user_info=user_info
@@ -177,20 +178,19 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
     feedback_raw_api = (feedback_result or {}).get("answer", "").strip()
     feedback_text = _unwrap_api_answer(feedback_raw_api)
 
-    # Build score prompt and parse a 0-100 numeric score
-    score_prompt = build_score_prompt(
-        question=interview_question,
-        answer=interview_answer
-    )
-    score_result = gpt.send_prompt(score_prompt)
-    score_raw_api = (score_result or {}).get("answer", "").strip()
-    score_text = _unwrap_api_answer(score_raw_api)
-    m = re.search(r"\b(100|\d{1,2})\b", score_text)
-    interview_score: Optional[int] = int(m.group(1)) if m else None
+    # # Build score prompt and parse a 0-100 numeric score
+    # score_prompt = build_score_prompt(
+    #     question=interview_question,
+    #     answer=interview_answer
+    # )
+    # score_result = gpt.send_prompt(score_prompt)
+    # score_raw_api = (score_result or {}).get("answer", "").strip()
+    # score_text = _unwrap_api_answer(score_raw_api)
+    # m = re.search(r"\b(100|\d{1,2})\b", score_text)
+    # interview_score: Optional[int] = int(m.group(1)) if m else None
 
     return {
-        "interview_feedback": feedback_text,
-        "interview_score": interview_score
+        "interview_feedback": json.loads(feedback_text)
     }
 
 if __name__ == "__main__":
