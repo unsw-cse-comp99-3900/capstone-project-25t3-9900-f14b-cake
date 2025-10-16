@@ -70,7 +70,7 @@ def test_faq():
 
 
 if __name__ == "__main__":
-    # test_gpt_access()
+    test_gpt_access()
     # print(API_URL)
     # test_gpt()
-    test_faq()
+    # test_faq()
