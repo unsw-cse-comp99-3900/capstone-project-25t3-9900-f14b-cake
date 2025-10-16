@@ -66,7 +66,7 @@ class InterviewFeedbackResponse(BaseModel):
         example="Your answer demonstrated a solid understanding of asynchronous programming concepts. You correctly explained the non-blocking nature of async functions and provided relevant examples."
     )
     interview_score: List[int] = Field(
-        description="List of interview score, out of 5",
+        description="Five scores (1–5) in order: [Clarity & Structure, Relevance, Keyword Alignment, Confidence, Conciseness]",
         example=[4, 3, 5],
     )
 
