@@ -74,18 +74,20 @@ def test_gpt():
     # ask_GPT_question = build_multicrit_score_prompt(question=question, answer=answer, job_description=job_description)
     # result = gpt_client.send_prompt(ask_GPT_question)
     # # print(result)
-    # raw_answer = result["answer"]
-    # # print(raw_answer)
-    # # print(type(raw_answer))
-    # parsed = json.loads(raw_answer) 
-    # print(parsed) # here is list of int
+    # load_answer = result["answer"]
+    # # print(load_answer)
+    # # print(type(load_answer))
+    # scores = json.loads(load_answer) 
+    # print(type(scores)) # <class 'list'>
+    # print(scores) # [5, 5, 5, 5, 5]
 
     ask_GPT_question = build_multicrit_feedback_prompt(question=question, answer=answer, job_description=job_description)
     # print(ask_GPT_question)
     result = gpt_client.send_prompt(ask_GPT_question)
     raw_answer = result["answer"]
     parsed = json.loads(raw_answer)
-    print(parsed)
+    print(parsed) # {'clarity_structure_score': 5, 'clarity_structure_feedback': "The candidate's response is extremely clear and follows a logical flow, effectively outlining the differences between Python 2 and Python 3.", 'relevance_score': 5, 'relevance_feedback': 'The answer is fully relevant, directly addressing the question and tying back to the importance of using Python 3 for new projects, which aligns well with the job description.', 'keyword_alignment_score': 4, 'keyword_alignment_feedback': 'The candidate uses relevant keywords related to Python development, though there could be more specific terms related to backend development.', 'confidence_score': 4, 'confidence_feedback': 'The delivery is generally confident with minor pauses, suggesting familiarity with the topic.', 'conciseness_score': 4, 'conciseness_feedback': 'The response is mostly focused and succinct, though it could be slightly more concise in some areas.', 'overall_summary': 'Overall, the candidate demonstrates a strong understanding of the differences between Python versions and articulates the importance of Python 3 effectively. To improve, they could enhance their use of specific backend-related keywords and aim for greater conciseness in their explanations.'}
+
 
 
 
