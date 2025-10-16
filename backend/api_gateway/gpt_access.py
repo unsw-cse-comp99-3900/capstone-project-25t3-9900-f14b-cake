@@ -44,9 +44,9 @@ class GPTAccessClient:
             else:
                 raise GPTAccessError(f"Unexpected response format: {data}")
         elif response.status_code == 401:
-            raise InvalidTokenError("Unauthorized. Check your JWT token.")
-        elif response.status_code == 405:
-            raise GPTAccessError("Method not allowed. Use HTTPS + POST.")
+            raise GPTAccessError("Profile mismatch or unauthorized access")
+        elif response.status_code == 403:
+            raise GPTAccessError("User not found or Token Expired")
         else:
             raise RequestFailedError(f"Unexpected HTTP {response.status_code}: {response.text}")
 

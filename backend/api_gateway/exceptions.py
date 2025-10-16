@@ -13,3 +13,7 @@ class RequestFailedError(GPTAccessError):
 class FAQAccessError(Exception):
     """Base exception for FAQ_ACCESS errors."""
     pass
+
+class TokenVerifyError(Exception):
+    """Base exception for Token_Verify errors."""
+    pass

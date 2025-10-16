@@ -1,0 +1,58 @@
+import os
+import json
+import requests
+from dotenv import load_dotenv
+from typing import Dict, Any
+from .exceptions import TokenVerifyError, InvalidTokenError, RequestFailedError
+
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+
+class VerifyAccessClient:
+    """Encapsulates interaction with the Token_Verify API."""
+
+    def __init__(self, email: str, google_jwt: str | None = None, apple_jwt: str | None = None):
+        self.api_url = os.getenv("Token_Verify_URL")
+        self.timeout = int(os.getenv("ACCESS_TIMEOUT", "15"))
+        self.email = email
+        self.google_jwt = google_jwt
+        self.apple_jwt = apple_jwt
+
+        if not self.api_url:
+            raise GPTAccessError("Token_Verify missing in .env file.")
+        if not self.email:
+            raise InvalidTokenError("Email must be provided when initializing GPTAccessClient.")
+
+        self.headers = {
+            "Content-Type": "application/json",
+            "Email": self.email,
+            "Google_jwt": self.google_jwt,
+            "Apple_jwt": self.apple_jwt
+        }
+
+    def token_verify(self) -> Dict[str, Any]:
+        """Send a question to Token_Verify and return parsed response."""
+        if not (self.google_jwt or self.apple_jwt):
+            raise TokenVerifyError("One of Google_jwt and Apple_jwt must exist.")
+        try:
+            response = requests.post(self.api_url, headers=self.headers, json={}, timeout=self.timeout)
+        except requests.exceptions.RequestException as e:
+            raise RequestFailedError(f"Network error: {e}")
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "success":
+                return {
+                    "status": "OK",
+                    "outcome": data["response"].get("outcome"),
+                    "answer": data["response"].get("answer")
+                }
+            else:
+                raise TokenVerifyError(f"Unexpected response format: {data}")
+        elif response.status_code == 400:
+            raise InvalidTokenError("Missing Apple/ Google JWT not found.")
+        elif response.status_code == 401:
+            raise InvalidTokenError("Profile mismatch or unauthorized access.")
+        else:
+            raise RequestFailedError(f"Unexpected HTTP {response.status_code}: {response.text}")
+
+
