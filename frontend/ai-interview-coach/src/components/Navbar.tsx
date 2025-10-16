@@ -38,7 +38,13 @@ export default function Navbar({
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               aria-label="Home"
             >
-              <span className="material-symbols-outlined text-blue-700" style={{ fontSize: 28 }}>smart_toy</span>
+              <Image 
+                src="/icon.png" 
+                alt="AI Interview Coach" 
+                width={32} 
+                height={32}
+                className="rounded-lg"
+              />
               <span className="text-gray-900 text-lg font-semibold">AI Interview Coach</span>
             </button>
             {[
