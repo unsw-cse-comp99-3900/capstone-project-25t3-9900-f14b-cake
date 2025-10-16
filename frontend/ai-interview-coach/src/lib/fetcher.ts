@@ -2,9 +2,21 @@ import axios from "axios";
 import { API_BASE_URL } from "@/lib/constants";
 import type { RequestConfig } from "@/lib/type";
 
-// Fixed token injected into every request
-const FIXED_TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU";
+// Get token from storage (localStorage for persistent, sessionStorage for session-only)
+const getAuthToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+
+  // Try localStorage first (for "remember me" users)
+  const persistentToken = localStorage.getItem("auth_token");
+  if (persistentToken) return persistentToken;
+
+  // Fall back to sessionStorage (for session-only users)
+  const sessionToken = sessionStorage.getItem("auth_token");
+  if (sessionToken) return sessionToken;
+
+  // Fallback to fixed token for development
+  return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU";
+};
 
 const instance = axios.create({
   baseURL: API_BASE_URL,
@@ -14,11 +26,12 @@ const instance = axios.create({
 // Attach Authorization header to every request
 instance.interceptors.request.use((config: any) => {
   const headers = config.headers ?? {};
+  const token = getAuthToken();
   return {
     ...config,
     headers: {
       ...headers,
-      Authorization: `Bearer ${FIXED_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
   } as any;
 });
