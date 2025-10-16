@@ -147,12 +147,6 @@ def interview_start(token: str, job_description: str, question_type: str) -> Dic
     # Minimum fill to 3
     while len(items) < 3:
         items.append("")
-
-    # questions = [
-    #     {"interview_id": i + 1, "type": question_type, "question": q}
-    #     for i, q in enumerate(items[:3])
-    # ]
-    # return {"interview_questions": questions}
         
     # print("some questions to choose")
     return {"interview_questions": items}
@@ -218,5 +212,5 @@ if __name__ == "__main__":
         Why is Python 3 mandatory for new projects?
         Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability.
     '''
-    print(interview_start(token=JWT_TOKEN, job_description=job_description, question_type=question_type))
-    # print(interview_feedback(token=JWT_TOKEN, interview_question=interview_question, interview_answer=interview_answer))
+    # print(interview_start(token=JWT_TOKEN, job_description=job_description, question_type=question_type))
+    print(interview_feedback(token=JWT_TOKEN, interview_question=interview_question, interview_answer=interview_answer))
