@@ -167,7 +167,7 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
         user_info = {}
 
     # Build feedback prompt with user_info context
-    feedback_prompt = build_multicrit_feedback_prompt(
+    feedback_prompt = build_feedback_prompt(
         question=interview_question,
         answer=interview_answer,
         user_info=user_info

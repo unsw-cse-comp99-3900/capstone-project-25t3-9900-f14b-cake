@@ -1,4 +1,5 @@
 import json
+from textwrap import dedent
 from api_gateway import GPTAccessClient, FAQAccessClient
 from typing import List, Optional, Any, Dict
 from prompt_builder import (
@@ -16,19 +17,19 @@ JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4OD
 
 question = "Can you explain the differences between Python 2 and Python 3, and why it is important to use Python 3 for new projects?"
 answer = '''
-The key differences between Python 2 and Python 3 center on string handling, the print statement, and division.
-Strings/Encoding:
-    Python 2: Strings are default bytes, leading to messy Unicode errors.
-    Python 3: Strings are Unicode by default (for text), cleanly separated from bytes (for data), which resolves encoding issues.
-Syntax:
-    Python 2: print is a statement (print "hello").
-    Python 3: print() is a function (print("hello")).
-Division:
-    Python 2: Integer division results in an integer (5 / 2 = 2).
-    Python 3: Division results in a float (5 / 2 = 2.5).
-Why is Python 3 mandatory for new projects?
-    Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability.
-'''
+    The key differences between Python 2 and Python 3 center on string handling, the print statement, and division.
+    Strings/Encoding:
+        Python 2: Strings are default bytes, leading to messy Unicode errors.
+        Python 3: Strings are Unicode by default (for text), cleanly separated from bytes (for data), which resolves encoding issues.
+    Syntax:
+        Python 2: print is a statement (print "hello").
+        Python 3: print() is a function (print("hello")).
+    Division:
+        Python 2: Integer division results in an integer (5 / 2 = 2).
+        Python 3: Division results in a float (5 / 2 = 2.5).
+    Why is Python 3 mandatory for new projects?
+        Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability.
+'''.strip()
 
 
 
@@ -47,15 +48,25 @@ def test_gpt():
     # print(questions)
     
     # ask_GPT_question = build_feedback_prompt(question=question, answer=answer, job_description=job_description)
-    # print(ask_GPT_question)
+    # # print(ask_GPT_question)
     # result = gpt_client.send_prompt(ask_GPT_question)
     # raw_answer = result["answer"]
     # parsed = json.loads(raw_answer)
-    # final_answer = parsed["answer"]
-    # print(final_answer)
-    # print("Summary:\n", final_answer["Summary"])  # final_answer["Summary"] is a string (it may need to use str() function).
-    # print("Analysis:\n", final_answer["Analysis"]) # final_answer["Analysis"] with keys as (clarity, logic, technical depth, communication, and role fit) (May need to be processed like json or dict).
-    # print("Suggestions:\n", final_answer["Suggestions"]) # final_answer["Suggestions"] is a list of suggestions.
+    # for k, v in parsed.items():
+    #     print(k + ":", v)
+    # """
+    # clarity_structure_score: 5
+    # clarity_structure_feedback: The response is well-organized and presents information in a logical flow, making it easy to follow.
+    # relevance_score: 5
+    # relevance_feedback: The answer directly addresses the question and aligns well with the requirements of the Python Developer role.
+    # keyword_alignment_score: 5
+    # keyword_alignment_feedback: The candidate effectively uses relevant terminology and concepts related to Python development.
+    # confidence_score: 4
+    # confidence_feedback: The candidate displays a solid understanding of the topic, though a slightly more assertive tone could enhance the overall confidence.
+    # conciseness_score: 4
+    # conciseness_feedback: The answer is mostly concise, but could be trimmed slightly to improve brevity without losing essential information.
+    # overall_summary: Overall, the candidate demonstrates a strong grasp of the differences between Python 2 and 3, highlighting significant points that are relevant to the role. To improve, they could work on conveying their responses with more assertiveness and focus on brevity while maintaining clarity.
+    # """
 
     # ask_GPT_question = build_score_prompt(question=question, answer=answer, job_description=job_description)
     # result = gpt_client.send_prompt(ask_GPT_question)
@@ -81,12 +92,12 @@ def test_gpt():
     # print(type(scores)) # <class 'list'>
     # print(scores) # [5, 5, 5, 5, 5]
 
-    ask_GPT_question = build_multicrit_feedback_prompt(question=question, answer=answer, job_description=job_description)
-    # print(ask_GPT_question)
-    result = gpt_client.send_prompt(ask_GPT_question)
-    raw_answer = result["answer"]
-    parsed = json.loads(raw_answer)
-    print(parsed) # {'clarity_structure_score': 5, 'clarity_structure_feedback': "The candidate's response is extremely clear and follows a logical flow, effectively outlining the differences between Python 2 and Python 3.", 'relevance_score': 5, 'relevance_feedback': 'The answer is fully relevant, directly addressing the question and tying back to the importance of using Python 3 for new projects, which aligns well with the job description.', 'keyword_alignment_score': 4, 'keyword_alignment_feedback': 'The candidate uses relevant keywords related to Python development, though there could be more specific terms related to backend development.', 'confidence_score': 4, 'confidence_feedback': 'The delivery is generally confident with minor pauses, suggesting familiarity with the topic.', 'conciseness_score': 4, 'conciseness_feedback': 'The response is mostly focused and succinct, though it could be slightly more concise in some areas.', 'overall_summary': 'Overall, the candidate demonstrates a strong understanding of the differences between Python versions and articulates the importance of Python 3 effectively. To improve, they could enhance their use of specific backend-related keywords and aim for greater conciseness in their explanations.'}
+    # ask_GPT_question = build_multicrit_feedback_prompt(question=question, answer=answer, job_description=job_description)
+    # # print(ask_GPT_question)
+    # result = gpt_client.send_prompt(ask_GPT_question)
+    # raw_answer = result["answer"]
+    # parsed = json.loads(raw_answer)
+    # print(parsed) # {'clarity_structure_score': 5, 'clarity_structure_feedback': "The candidate's response is extremely clear and follows a logical flow, effectively outlining the differences between Python 2 and Python 3.", 'relevance_score': 5, 'relevance_feedback': 'The answer is fully relevant, directly addressing the question and tying back to the importance of using Python 3 for new projects, which aligns well with the job description.', 'keyword_alignment_score': 4, 'keyword_alignment_feedback': 'The candidate uses relevant keywords related to Python development, though there could be more specific terms related to backend development.', 'confidence_score': 4, 'confidence_feedback': 'The delivery is generally confident with minor pauses, suggesting familiarity with the topic.', 'conciseness_score': 4, 'conciseness_feedback': 'The response is mostly focused and succinct, though it could be slightly more concise in some areas.', 'overall_summary': 'Overall, the candidate demonstrates a strong understanding of the differences between Python versions and articulates the importance of Python 3 effectively. To improve, they could enhance their use of specific backend-related keywords and aim for greater conciseness in their explanations.'}
 
 
 

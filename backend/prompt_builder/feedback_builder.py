@@ -9,7 +9,16 @@ CRITERIA_ORDER: List[str] = [
     "Conciseness & Focus",
 ]
 
-RUBRIC_TEXT = dedent("""
+SHORT_RUBRIC = """ 
+    Scoring Guide: 5 = Excellent, 4 = Good, 3 = Average, 2 = Weak, 1 = Poor.
+    - Clarity & Structure: logical flow and organization
+    - Relevance: how well it answers the question and matches the job
+    - Keyword Alignment: presence of role-related skills or terms
+    - Confidence: tone, pacing, and fluency
+    - Conciseness: focus and brevity
+""".strip()
+
+RUBRIC_TEXT = """
     Criterion
     5 (Excellent)
     4 (Good)
@@ -51,7 +60,7 @@ RUBRIC_TEXT = dedent("""
     - 3: Average length; occasional repetition.
     - 2: Overly long or repetitive; loses focus.
     - 1: Rambling; off-topic; unclear message.
-    """).strip()
+    """.strip()
 
 def build_feedback_prompt(
     question: str,
@@ -70,7 +79,8 @@ def build_feedback_prompt(
         str: A formatted prompt string.
     """
     user_info = user_info or {}
-    jd_text = f"\n\nJob Description:\n{job_description}" if job_description else ""
+    jd_text = job_description if job_description else "Unknown"
+    rubric = SHORT_RUBRIC
 
     return dedent(f"""
     Act as an experienced interviewer. Analyze the candidate's response and provide structured feedback.
@@ -79,6 +89,8 @@ def build_feedback_prompt(
     - Skills: {user_info.get('skills', 'Unknown')}
     - Education: {user_info.get('education', 'Unknown')}
     - Experience: {user_info.get('experience', 'Unknown')}
+    
+    Job Description
     {jd_text}
 
     Interview Question:
@@ -87,11 +99,26 @@ def build_feedback_prompt(
     Candidate Answer:
     {answer}
 
-    Please output:
-    Summary: A concise overall summary
-    Analysis: Multi-dimensional analysis (clarity, logic, technical depth, communication, and role fit)
-    Suggestions: Provide some specific and feasible suggestions for improvement based on the candidate's profile in the form of a list
+    Rubric:
+    {rubric}
+    
+    For each dimension, provide both a score and a brief feedback sentence(One or two sentences).
+    Finally, write an overall_summary paragraph describing the overall impression of the answer and top improvement suggestions.
+
+    Return the result in the following JSON format exactly:
+    {{"clarity_structure_score": "int",
+    "clarity_structure_feedback": "string",
+    "relevance_score": "int",
+    "relevance_feedback": "string",
+    "keyword_alignment_score": "int",
+    "keyword_alignment_feedback": "string",
+    "confidence_score": "int",
+    "confidence_feedback": "string",
+    "conciseness_score": "int",
+    "conciseness_feedback": "string",
+    "overall_summary": "string"}}
     """).strip()
+
 
 def build_multicrit_feedback_prompt(
     question: str,
@@ -111,41 +138,43 @@ def build_multicrit_feedback_prompt(
         str: A formatted prompt string.
     """
     user_info = user_info or {}
-    jd_text = f"\nJob Description:\n{job_description}" if job_description else ""
+    jd_text = job_description if job_description else "Unknown"
     # criteria = "\n".join([f"- {c}" for c in CRITERIA_ORDER])
 
     return dedent(f"""
-Act as an experienced interviewer. Analyze the candidate's response and provide structured feedback.
+    Act as an experienced interviewer. Analyze the candidate's response and provide structured feedback.
 
-Candidate Info:
-- Skills: {user_info.get('skills', 'Unknown')}
-- Education: {user_info.get('education', 'Unknown')}
-- Experience: {user_info.get('experience', 'Unknown')}
-{jd_text}
+    Candidate Info:
+    - Skills: {user_info.get('skills', 'Unknown')}
+    - Education: {user_info.get('education', 'Unknown')}
+    - Experience: {user_info.get('experience', 'Unknown')}
+    
+    Job Description
+    {jd_text}
 
-Interview Question:
-{question}
+    Interview Question:
+    {question}
 
-Candidate Answer:
-{answer}
+    Candidate Answer:
+    {answer}
 
-Rubric (1=Poor, 5=Excellent):
-{RUBRIC_TEXT}
+    Rubric (1=Poor, 5=Excellent):
+    {RUBRIC_TEXT}
 
-For each dimension, provide both a score and a brief feedback sentence(One or two sentences).
-Finally, write an overall_summary paragraph describing the overall impression of the answer and top improvement suggestions.
+    For each dimension, provide both a score and a brief feedback sentence(One or two sentences).
+    Finally, write an overall_summary paragraph describing the overall impression of the answer and top improvement suggestions.
 
-Return the result in the following JSON format exactly:
-{{"clarity_structure_score": "int",
-"clarity_structure_feedback": "string",
-"relevance_score": "int",
-"relevance_feedback": "string",
-"keyword_alignment_score": "int",
-"keyword_alignment_feedback": "string",
-"confidence_score": "int",
-"confidence_feedback": "string",
-"conciseness_score": "int",
-"conciseness_feedback": "string",
-"overall_summary": "string"}}
+    Return the result in the following JSON format exactly:
+    {{"clarity_structure_score": "int",
+    "clarity_structure_feedback": "string",
+    "relevance_score": "int",
+    "relevance_feedback": "string",
+    "keyword_alignment_score": "int",
+    "keyword_alignment_feedback": "string",
+    "confidence_score": "int",
+    "confidence_feedback": "string",
+    "conciseness_score": "int",
+    "conciseness_feedback": "string",
+    "overall_summary": "string"}}
     """).strip()
 
