@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [name, setName] = useState('');
@@ -14,20 +15,14 @@ export default function LoginPage() {
 
     // Simulating user authentication logic
     if (name && password) {
-      // Randomly generate a mock token
-      const fakeToken = 'token_' + Math.random().toString(36).substring(2);
-
-      // Saving to localStorage
-      localStorage.setItem('auth_token', fakeToken);
-
-      // If remember me, also save the username
+      // Store username for display purposes
       if (remember) {
         localStorage.setItem('username', name);
+        localStorage.setItem('auth_token', 'authenticated'); // Add auth marker
       } else {
-        localStorage.removeItem('username');
+        sessionStorage.setItem('username', name);
+        sessionStorage.setItem('auth_token', 'authenticated'); // Add auth marker
       }
-
-      alert(`Logged in as ${name}\nToken: ${fakeToken}`);
 
       router.push('/home');
     } else {
@@ -36,56 +31,84 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="bg-white p-16 rounded-2xl shadow-lg w-126">
-        <h2 className="text-center text-3xl font-bold mb-10 text-gray-800">
-          Login
-        </h2>
-        <form onSubmit={handleLogin}>
-          <div className="mb-6">
+    <div className="min-h-screen flex flex-col items-center justify-center">
+      {/* Page Title */}
+      <div className="mb-12 text-center">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+            <Image 
+              src="/icon.png" 
+              alt="AI Interview Coach" 
+              width={32} 
+              height={32}
+              className="rounded-lg"
+            />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900">AI Interview Coach</h1>
+        </div>
+        <p className="text-gray-600 text-lg">Your personal interview preparation assistant</p>
+      </div>
+      
+      <div className="modern-card p-12 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+          <p className="text-gray-600">Sign in to continue your interview preparation</p>
+        </div>
+        
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
             <input
               type="text"
-              placeholder="name"
+              placeholder="Enter your username"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 text-base border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
           </div>
-          <div className="mb-6">
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
             <input
               type="password"
-              placeholder="password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 text-base border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
           </div>
-          <div className="flex items-center justify-between mb-8">
-            <button
-              type="submit"
-              className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-base"
-            >
-              Login
-            </button>
-            <label className="text-base flex items-center cursor-pointer">
+          
+          <div className="flex items-center justify-between">
+            <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
                 className="mr-2 scale-125"
               />
-              remember me
+              <span className="text-sm text-gray-600">Remember me</span>
             </label>
           </div>
+          
+          <button
+            type="submit"
+            className="w-full btn-primary py-3 text-lg"
+          >
+            Sign In
+          </button>
         </form>
-        <button
-          onClick={() => router.push('/register')}
-          className="w-full py-4 border-2 border-gray-300 rounded-lg bg-white hover:bg-gray-50 hover:border-blue-500 transition-colors text-base font-medium"
-        >
-          go to register
-        </button>
+        
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-4">Don't have an account?</p>
+          <button
+            onClick={() => router.push('/register')}
+            className="btn-secondary w-full"
+          >
+            Create Account
+          </button>
+        </div>
       </div>
     </div>
   );
