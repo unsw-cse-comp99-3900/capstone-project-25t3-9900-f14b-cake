@@ -17,6 +17,17 @@ export enum InterviewCategory {
 }
 
 /**
+ * 评分维度枚举（从 interview_score 数组的 5 个维度）
+ */
+export enum ScoreDimension {
+    CLARITY_STRUCTURE = "CLARITY_STRUCTURE", // 清晰度和结构 (index 0)
+    RELEVANCE = "RELEVANCE", // 相关性 (index 1)
+    KEYWORD_ALIGNMENT = "KEYWORD_ALIGNMENT", // 关键词匹配 (index 2)
+    CONFIDENCE_DELIVERY = "CONFIDENCE_DELIVERY", // 自信表达 (index 3)
+    CONCISENESS_FOCUS = "CONCISENESS_FOCUS", // 简洁专注 (index 4)
+}
+
+/**
  * 会话状态枚举
  */
 export enum SessionStatus {
@@ -125,6 +136,17 @@ export interface CategoryPerformance {
     sessionsCount: number; // 该类别的会话次数
     lastPracticed: string; // 最后练习时间
     recommendations: string[]; // 针对性建议
+}
+
+/**
+ * 维度表现详情（新增：对应 API 返回的 5 个评分维度）
+ */
+export interface DimensionPerformance {
+    dimension: ScoreDimension; // 维度类型
+    dimensionName: string; // 维度显示名称
+    averageScore: number; // 平均分数 (1-5)
+    percentage: number; // 百分比 (0-100)
+    isStrength: boolean; // 是否为优势项（>= 75%）
 }
 
 // ===============================

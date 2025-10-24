@@ -4,7 +4,7 @@
  */
 
 import { BadgeType, XPLevel, XPReward } from "./gamification";
-import { InterviewCategory, DifficultyLevel } from "./progress";
+import { InterviewCategory, DifficultyLevel, ScoreDimension } from "./progress";
 
 // ===============================
 // 通用工具类型
@@ -360,6 +360,64 @@ export const CATEGORY_THRESHOLDS = {
     WEAK_AREA_THRESHOLD: 60, // 弱项阈值（低于此分数视为弱项）
     MASTERY_THRESHOLD: 80, // 掌握阈值（高于此分数视为掌握）
     EXCELLENT_THRESHOLD: 90, // 优秀阈值（高于此分数视为优秀）
+};
+
+/**
+ * 评分维度配置（对应 interview_score 数组的 5 个维度）
+ */
+export const SCORE_DIMENSION_CONFIGS: Record<
+    ScoreDimension,
+    {
+        name: string;
+        description: string;
+        index: number; // 在 interview_score 数组中的索引
+        color: string; // 用于图表显示的颜色
+        icon: string; // 图标
+    }
+> = {
+    [ScoreDimension.CLARITY_STRUCTURE]: {
+        name: "Clarity & Structure",
+        description: "How clear and well-structured your answer is",
+        index: 0,
+        color: "#3b82f6", // blue
+        icon: "📝",
+    },
+    [ScoreDimension.RELEVANCE]: {
+        name: "Relevance to Question/Job",
+        description: "How relevant your answer is to the question and job",
+        index: 1,
+        color: "#8b5cf6", // purple
+        icon: "🎯",
+    },
+    [ScoreDimension.KEYWORD_ALIGNMENT]: {
+        name: "Keyword & Skill Alignment",
+        description: "How well you used relevant keywords and skills",
+        index: 2,
+        color: "#ec4899", // pink
+        icon: "🔑",
+    },
+    [ScoreDimension.CONFIDENCE_DELIVERY]: {
+        name: "Confidence & Delivery",
+        description: "How confident and well-delivered your answer was",
+        index: 3,
+        color: "#f59e0b", // amber
+        icon: "💪",
+    },
+    [ScoreDimension.CONCISENESS_FOCUS]: {
+        name: "Conciseness & Focus",
+        description: "How concise and focused your answer was",
+        index: 4,
+        color: "#10b981", // green
+        icon: "✨",
+    },
+};
+
+/**
+ * 维度分数阈值（基于百分比）
+ */
+export const DIMENSION_THRESHOLDS = {
+    STRENGTH_THRESHOLD: 75, // 优势项阈值（>= 75% 为优势）
+    WEAKNESS_THRESHOLD: 75, // 弱项阈值（< 75% 为弱项）
 };
 
 /**
