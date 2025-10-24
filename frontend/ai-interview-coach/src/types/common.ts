@@ -307,9 +307,9 @@ export const BADGE_CONFIGS: Record<
     },
 
     // Category Master Badges
-    [BadgeType.BEHAVIORAL_MASTER]: {
-        name: "Behavioral Interview Master",
-        description: "Excel in behavioral interviews",
+    [BadgeType.BEHAVIOURAL_MASTER]: {
+        name: "Behavioural Interview Master",
+        description: "Excel in behavioural interviews",
         icon: "🎭",
         requirement: 80,
         category: "category",

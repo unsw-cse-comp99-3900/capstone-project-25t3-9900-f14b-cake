@@ -38,38 +38,38 @@ const mockLoginData = [
 const mockCategoryPerformance = [
     {
         dimension: ScoreDimension.CLARITY_STRUCTURE,
-        dimensionName: "Clarity & Structure",
-        averageScore: 4.2,
+        dimension_name: "Clarity & Structure",
+        average_score: 4.2,
         percentage: 84,
-        isStrength: true,
+        is_strength: true,
     },
     {
         dimension: ScoreDimension.RELEVANCE,
-        dimensionName: "Relevance to Question/Job",
-        averageScore: 3.8,
+        dimension_name: "Relevance to Question/Job",
+        average_score: 3.8,
         percentage: 76,
-        isStrength: true,
+        is_strength: true,
     },
     {
         dimension: ScoreDimension.KEYWORD_ALIGNMENT,
-        dimensionName: "Keyword & Skill Alignment",
-        averageScore: 3.1,
+        dimension_name: "Keyword & Skill Alignment",
+        average_score: 3.1,
         percentage: 62,
-        isStrength: false,
+        is_strength: false,
     },
     {
         dimension: ScoreDimension.CONFIDENCE_DELIVERY,
-        dimensionName: "Confidence & Delivery",
-        averageScore: 3.5,
+        dimension_name: "Confidence & Delivery",
+        average_score: 3.5,
         percentage: 70,
-        isStrength: false,
+        is_strength: false,
     },
     {
         dimension: ScoreDimension.CONCISENESS_FOCUS,
-        dimensionName: "Conciseness & Focus",
-        averageScore: 4.0,
+        dimension_name: "Conciseness & Focus",
+        average_score: 4.0,
         percentage: 80,
-        isStrength: true,
+        is_strength: true,
     },
 ];
 
@@ -304,24 +304,24 @@ export default function ProgressPage() {
                                                     }
                                                 </span>
                                                 <span className="text-sm font-medium text-gray-700">
-                                                    {dim.dimensionName}
+                                                    {dim.dimension_name}
                                                 </span>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <span className="text-xs text-gray-600">
-                                                    {dim.averageScore}/5
+                                                    {dim.average_score}/5
                                                 </span>
                                                 <span className="text-sm font-bold">
                                                     {dim.percentage}%
                                                 </span>
                                                 <span
                                                     className={`text-xs px-2 py-1 rounded-full ${
-                                                        dim.isStrength
+                                                        dim.is_strength
                                                             ? "bg-green-100 text-green-700"
                                                             : "bg-orange-100 text-orange-700"
                                                     }`}
                                                 >
-                                                    {dim.isStrength
+                                                    {dim.is_strength
                                                         ? "Strength"
                                                         : "Needs Work"}
                                                 </span>
@@ -330,7 +330,7 @@ export default function ProgressPage() {
                                         <div className="w-full bg-gray-200 rounded-full h-2">
                                             <div
                                                 className={`h-2 rounded-full transition-all ${
-                                                    dim.isStrength
+                                                    dim.is_strength
                                                         ? "bg-green-500"
                                                         : "bg-orange-500"
                                                 }`}
@@ -422,7 +422,7 @@ export default function ProgressPage() {
                                             }
                                         </span>
                                         <h4 className="font-semibold text-gray-800">
-                                            {dim.dimensionName}
+                                            {dim.dimension_name}
                                         </h4>
                                     </div>
                                     <p className="text-sm text-gray-600 mb-2">
@@ -434,17 +434,17 @@ export default function ProgressPage() {
                                     </p>
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-gray-700">
-                                            Average Score: {dim.averageScore}/5
+                                            Average Score: {dim.average_score}/5
                                             ({dim.percentage}%)
                                         </span>
                                         <span
                                             className={`text-sm px-3 py-1 rounded-full font-medium ${
-                                                dim.isStrength
+                                                dim.is_strength
                                                     ? "bg-green-100 text-green-700"
                                                     : "bg-orange-100 text-orange-700"
                                             }`}
                                         >
-                                            {dim.isStrength
+                                            {dim.is_strength
                                                 ? "Strength - Keep it up!"
                                                 : "Needs Work - Practice more"}
                                         </span>
