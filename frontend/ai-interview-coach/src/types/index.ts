@@ -21,6 +21,7 @@ export type {
     SessionRecord,
     CategoryScores,
     CategoryPerformance,
+    DimensionPerformance,
     UserProgress,
     ReadinessScorePoint,
     ChartDataPoint,
@@ -29,6 +30,7 @@ export type {
 
 export {
     InterviewCategory,
+    ScoreDimension,
     SessionStatus,
     DifficultyLevel,
     TimeRange,
@@ -48,6 +50,8 @@ export {
     XP_REWARDS,
     BADGE_CONFIGS,
     CATEGORY_THRESHOLDS,
+    SCORE_DIMENSION_CONFIGS,
+    DIMENSION_THRESHOLDS,
     DEFAULT_CONFIG,
     DAILY_QUOTES,
 } from "./common";

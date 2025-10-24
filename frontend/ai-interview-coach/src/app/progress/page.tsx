@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import { InterviewCategory, TimeRange } from "@/types";
+import { ScoreDimension, TimeRange } from "@/types";
+import { SCORE_DIMENSION_CONFIGS } from "@/types/common";
 
 // Mock data for development - backend will provide real data
 const mockReadinessData = [
@@ -35,9 +36,41 @@ const mockLoginData = [
 ];
 
 const mockCategoryPerformance = [
-    { category: InterviewCategory.BEHAVIORAL, score: 85, isStrength: true },
-    { category: InterviewCategory.TECHNICAL, score: 62, isStrength: false },
-    { category: InterviewCategory.PSYCHOMETRIC, score: 78, isStrength: true },
+    {
+        dimension: ScoreDimension.CLARITY_STRUCTURE,
+        dimensionName: "Clarity & Structure",
+        averageScore: 4.2,
+        percentage: 84,
+        isStrength: true,
+    },
+    {
+        dimension: ScoreDimension.RELEVANCE,
+        dimensionName: "Relevance to Question/Job",
+        averageScore: 3.8,
+        percentage: 76,
+        isStrength: true,
+    },
+    {
+        dimension: ScoreDimension.KEYWORD_ALIGNMENT,
+        dimensionName: "Keyword & Skill Alignment",
+        averageScore: 3.1,
+        percentage: 62,
+        isStrength: false,
+    },
+    {
+        dimension: ScoreDimension.CONFIDENCE_DELIVERY,
+        dimensionName: "Confidence & Delivery",
+        averageScore: 3.5,
+        percentage: 70,
+        isStrength: false,
+    },
+    {
+        dimension: ScoreDimension.CONCISENESS_FOCUS,
+        dimensionName: "Conciseness & Focus",
+        averageScore: 4.0,
+        percentage: 80,
+        isStrength: true,
+    },
 ];
 
 export default function ProgressPage() {
@@ -241,11 +274,11 @@ export default function ProgressPage() {
                             </div>
                         </div>
 
-                        {/* Weakness vs. Strength Areas */}
+                        {/* Performance Dimensions Analysis */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-bold text-gray-800">
-                                    Weakness vs. Strength Areas
+                                    Performance Dimensions Analysis
                                 </h3>
                                 <button
                                     onClick={() => setShowCategoryDetails(true)}
@@ -256,49 +289,63 @@ export default function ProgressPage() {
                             </div>
 
                             <div className="space-y-4">
-                                {mockCategoryPerformance.map((category) => (
+                                {mockCategoryPerformance.map((dim) => (
                                     <div
-                                        key={category.category}
+                                        key={dim.dimension}
                                         className="space-y-2"
                                     >
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-medium text-gray-700">
-                                                {category.category
-                                                    .replace("_", " ")
-                                                    .toLowerCase()
-                                                    .replace(/\b\w/g, (l) =>
-                                                        l.toUpperCase()
-                                                    )}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">
+                                                    {
+                                                        SCORE_DIMENSION_CONFIGS[
+                                                            dim.dimension
+                                                        ].icon
+                                                    }
+                                                </span>
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    {dim.dimensionName}
+                                                </span>
+                                            </div>
                                             <div className="flex items-center space-x-2">
+                                                <span className="text-xs text-gray-600">
+                                                    {dim.averageScore}/5
+                                                </span>
                                                 <span className="text-sm font-bold">
-                                                    {category.score}%
+                                                    {dim.percentage}%
                                                 </span>
                                                 <span
                                                     className={`text-xs px-2 py-1 rounded-full ${
-                                                        category.isStrength
+                                                        dim.isStrength
                                                             ? "bg-green-100 text-green-700"
-                                                            : "bg-red-100 text-red-700"
+                                                            : "bg-orange-100 text-orange-700"
                                                     }`}
                                                 >
-                                                    {category.isStrength
+                                                    {dim.isStrength
                                                         ? "Strength"
-                                                        : "Weakness"}
+                                                        : "Needs Work"}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-2">
                                             <div
-                                                className={`h-2 rounded-full ${
-                                                    category.isStrength
+                                                className={`h-2 rounded-full transition-all ${
+                                                    dim.isStrength
                                                         ? "bg-green-500"
-                                                        : "bg-red-500"
+                                                        : "bg-orange-500"
                                                 }`}
                                                 style={{
-                                                    width: `${category.score}%`,
+                                                    width: `${dim.percentage}%`,
                                                 }}
                                             />
                                         </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {
+                                                SCORE_DIMENSION_CONFIGS[
+                                                    dim.dimension
+                                                ].description
+                                            }
+                                        </p>
                                     </div>
                                 ))}
                             </div>
@@ -358,28 +405,50 @@ export default function ProgressPage() {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
                         <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                            Category Performance Details
+                            Performance Dimension Details
                         </h3>
                         <div className="space-y-4 mb-6">
-                            {mockCategoryPerformance.map((category) => (
+                            {mockCategoryPerformance.map((dim) => (
                                 <div
-                                    key={category.category}
+                                    key={dim.dimension}
                                     className="bg-gray-50 rounded-lg p-4"
                                 >
-                                    <h4 className="font-semibold text-gray-800 mb-2">
-                                        {category.category
-                                            .replace("_", " ")
-                                            .toLowerCase()
-                                            .replace(/\b\w/g, (l) =>
-                                                l.toUpperCase()
-                                            )}
-                                    </h4>
-                                    <p className="text-sm text-gray-600">
-                                        Score: {category.score}% -{" "}
-                                        {category.isStrength
-                                            ? "This is your strength area"
-                                            : "Focus on improving this area"}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-2xl">
+                                            {
+                                                SCORE_DIMENSION_CONFIGS[
+                                                    dim.dimension
+                                                ].icon
+                                            }
+                                        </span>
+                                        <h4 className="font-semibold text-gray-800">
+                                            {dim.dimensionName}
+                                        </h4>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                        {
+                                            SCORE_DIMENSION_CONFIGS[
+                                                dim.dimension
+                                            ].description
+                                        }
                                     </p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-700">
+                                            Average Score: {dim.averageScore}/5
+                                            ({dim.percentage}%)
+                                        </span>
+                                        <span
+                                            className={`text-sm px-3 py-1 rounded-full font-medium ${
+                                                dim.isStrength
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-orange-100 text-orange-700"
+                                            }`}
+                                        >
+                                            {dim.isStrength
+                                                ? "Strength - Keep it up!"
+                                                : "Needs Work - Practice more"}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
