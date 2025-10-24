@@ -15,18 +15,19 @@ CREATE_TABLE_INTERVIEW_DETAIL = """
 CREATE TABLE IF NOT EXISTS interviews (
     interview_id SERIAL PRIMARY KEY,    
     questions JSONB DEFAULT '[]',                                              
-    date TIMESTAMP DEFAULT NOW(),      
+    date TIMESTAMP DEFAULT NOW()
 );
 """
 
 CREATE_TABLE_QUESTION_DETAIL = """
 CREATE TABLE IF NOT EXISTS questions (
     question_id SERIAL PRIMARY KEY,
-    type VARCHAR(100) NOT NULL,       
-    answer TEXT,                         
-    feedback JSONB DEFAULT {},                                   
+    type VARCHAR(100) NOT NULL,
+    answer TEXT,
+    feedback JSONB DEFAULT '{}'::jsonb
 );
 """
+
 
 CREATE_TABLE_USER_INTERVIEW = """
 CREATE TABLE IF NOT EXISTS user_interview (  

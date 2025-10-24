@@ -15,9 +15,9 @@ connection_pool = psycopg2.pool.SimpleConnectionPool(
     maxconn=10,
     host='localhost',
     port='5432',
-    database='postgres',
-    user='postgres',
-    password='root'
+    database='mydb',
+    user='admin',
+    password='123456'
 )
 
 conn = connection_pool.getconn()
