@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PlayIcon, StopIcon, MicrophoneIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -42,6 +42,8 @@ export default function AnsweringPage() {
   const [isRecordingForTranscription, setIsRecordingForTranscription] = useState(false);
   const [transcriptionRecorder, setTranscriptionRecorder] = useState<MediaRecorder | null>(null);
   const [showTranscriptionModal, setShowTranscriptionModal] = useState(false);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,6 +52,40 @@ export default function AnsweringPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Manage webcam preview when the transcription modal is open
+  useEffect(() => {
+    let active = true;
+    const startPreview = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        if (!active) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        setPreviewStream(stream);
+        if (videoRef.current) {
+          // @ts-ignore - srcObject is supported in modern browsers
+          videoRef.current.srcObject = stream as any;
+        }
+      } catch (e) {
+        // If camera permission denied, silently ignore and keep modal without preview
+      }
+    };
+
+    if (showTranscriptionModal) {
+      startPreview();
+    } else {
+      if (previewStream) {
+        previewStream.getTracks().forEach((t) => t.stop());
+        setPreviewStream(null);
+      }
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [showTranscriptionModal]);
 
   // Show feedback when switching to a question that has feedback
   useEffect(() => {
@@ -552,11 +588,11 @@ export default function AnsweringPage() {
       {/* Transcription Modal */}
       {showTranscriptionModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl p-8 shadow-lg w-96 relative border border-blue-100">
+          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg w-[28rem] max-w-[90vw] relative border border-blue-100">
             <div className="text-center">
               <div className="mb-4">
-                <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <MicrophoneIcon className="w-8 h-8 text-blue-600 animate-pulse" />
+                <div className="w-full aspect-video rounded-xl overflow-hidden bg-black mb-4">
+                  <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Listening...</h3>
                 <p className="text-gray-600 text-sm">
