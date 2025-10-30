@@ -9,15 +9,13 @@ const getAuthToken = (): string => {
   // Try localStorage first (for "remember me" users)
   const persistentToken = localStorage.getItem("auth_token");
   if (persistentToken) {
-    // Return the actual API token for authenticated users
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU";
+    return persistentToken;
   }
 
   // Fall back to sessionStorage (for session-only users)
   const sessionToken = sessionStorage.getItem("auth_token");
   if (sessionToken) {
-    // Return the actual API token for authenticated users
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU";
+    return sessionToken;
   }
 
   // No authentication found, return empty string
