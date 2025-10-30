@@ -1,30 +1,24 @@
-# === INSERT ===
-INSERT_BADGE = """
-INSERT INTO badges (type, description, unlock_date, user_id)
-VALUES (%s, %s, %s, %s)
-RETURNING badge_id;
+
+CREATE_TABLE_USER_DETAIL = """
+CREATE TABLE IF NOT EXISTS user_badge (
+    user_id SERIAL PRIMARY KEY,
+    user_name VARCHAR(255) UNIQUE NOT NULL,
+    badge_progress JSONB DEFAULT '[0,0,0,0,0]',
+    max_score INTEGER DEFAULT 0,
+    xp INTEGER DEFAULT 0
+);
 """
 
-# === SELECT ===
-SELECT_BADGE_BY_ID = "SELECT * FROM badges WHERE badge_id = %s;"
-SELECT_BADGES_BY_USER = "SELECT * FROM badges WHERE user_id = %s ORDER BY unlock_date DESC;"
-GET_ALL_BADGES = "SELECT * FROM badges ORDER BY badge_id;"
-
-# === UPDATE ===
 UPDATE_BADGE_BY_ID = """
-UPDATE badges SET
-    type = %s,
-    description = %s,
-    unlock_date = %s
-WHERE badge_id = %s
-RETURNING *;
+
 """
 
-# === DELETE ===
-DELETE_BADGE_BY_ID = "DELETE FROM badges WHERE badge_id = %s;"
-DELETE_BADGES_BY_USER = "DELETE FROM badges WHERE user_id = %s;"
+GET_BADGE_STATUS_FROM_USRS = """
+SELECT * from user_badge
+WHERE user_name = %s;
+"""
 
-# # === Helper ===
-# COUNT_BADGES_BY_USER = "SELECT COUNT(*) FROM badges WHERE user_id = %s;"
-# GET_LATEST_BADGE = "SELECT * FROM badges WHERE user_id = %s ORDER BY unlock_date DESC LIMIT 1;"
-
+GET_MAX_SCORE_BY_USER = """
+SELECT max_score from user_badge
+WHERE user_name = %s;
+"""

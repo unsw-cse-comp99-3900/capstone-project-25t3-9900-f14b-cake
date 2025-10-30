@@ -7,6 +7,15 @@ from create_table_queries import *
 from user_db_queries import * 
 
 
+
+def find_user_badge_detail(user_name):
+    connection = db_connect.connection_pool.getconn()
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute()
+
+
+
 def insert_user_detail(user_name, password):
     connection = db_connect.connection_pool.getconn()
     with connection:
