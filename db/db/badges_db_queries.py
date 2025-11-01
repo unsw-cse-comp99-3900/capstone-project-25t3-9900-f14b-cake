@@ -2,9 +2,8 @@ CREATE_TABLE_USER_DETAIL = """
 CREATE TABLE IF NOT EXISTS user_score (
     user_id SERIAL PRIMARY KEY,
     user_name VARCHAR(255) UNIQUE NOT NULL,
-    xp INTEGER DEFAULT 0, 
-
-);
+    xp INTEGER DEFAULT 0
+)
 """
 
 
