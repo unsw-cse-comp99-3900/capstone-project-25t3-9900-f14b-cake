@@ -1,24 +1,46 @@
-
 CREATE_TABLE_USER_DETAIL = """
-CREATE TABLE IF NOT EXISTS user_badge (
+CREATE TABLE IF NOT EXISTS user_score (
     user_id SERIAL PRIMARY KEY,
     user_name VARCHAR(255) UNIQUE NOT NULL,
-    badge_progress JSONB DEFAULT '[0,0,0,0,0]',
-    max_score INTEGER DEFAULT 0,
-    xp INTEGER DEFAULT 0
+    xp INTEGER DEFAULT 0, 
+
 );
 """
 
-UPDATE_BADGE_BY_ID = """
 
+GET_USERS_XP_GE_100 = """
+SELECT user_id, user_name FROM user_score
+WHERE xp >= 100;
 """
 
-GET_BADGE_STATUS_FROM_USRS = """
-SELECT * from user_badge
-WHERE user_name = %s;
+
+GET_USERS_XP_GE_500 = """
+SELECT user_id, user_name FROM user_score
+WHERE xp >= 500;
 """
 
-GET_MAX_SCORE_BY_USER = """
-SELECT max_score from user_badge
-WHERE user_name = %s;
+
+GET_USERS_XP_GE_1000 = """
+SELECT user_id, user_name FROM user_score
+WHERE xp >= 1000;
 """
+
+
+CREATE_TABLE_BADGE = """
+CREATE TABLE IF NOT EXISTS badge (
+    user_id INTEGER NOT NULL,
+    badge_id INTEGER NOT NULL,
+    badge_name VARCHAR(255) NOT NULL,
+    badge_description VARCHAR(255) NOT NULL,
+    unlock_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, badge_id)
+);
+"""
+
+INSERT_BADGE = """
+INSERT INTO badge (user_id, badge_id, badge_name, badge_description)
+VALUES (%s, %s, %s, %s);
+"""
+
+
+

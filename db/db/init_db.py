@@ -6,7 +6,7 @@ import uuid
 from badges_db_queries import * 
 from interviews_db_queries import * 
 from user_db_queries import * 
-from create_table_queries import * 
+from xp_db_queries import * 
 
 connection_pool = psycopg2.pool.SimpleConnectionPool(
     minconn=1,
@@ -23,7 +23,7 @@ cursor = conn.cursor()
 
 cursor.execute(CREATE_TABLE_USER_DETAIL)
 cursor.execute(CREATE_TABLE_INTERVIEWS_DETAIL)
-cursor.execute(CREATE_TABLE_USER_BADGE)
+
 update_interview_detail(conn, uuid.uuid4(), 1, 1, 'technical', 'What is HTTP', 'answerQ1', 1.0, {"note": ok})
 update_interview_detail(conn, uuid.uuid4(), 1, 2, 'technical', 'questionQ2', 'answerQ2', 2.0, {})
 conn.commit()
