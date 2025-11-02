@@ -1,9 +1,14 @@
-def build_question_prompt(job_description: str, question_type: str) -> str:
+def build_question_prompt(
+    job_description: str, 
+    question_type: str,
+    question_number: int = 3
+) -> str:
     """
     Build a prompt asking GPT_ACCESS to generate an interview question.
     Args:
         job_description: str - Description of the job position.
         question_type: str - Type of question (technical, behavioral, situational, etc.)
+        question_number: int - Number of questions.
     Returns:
         str: A formatted prompt string.
     """

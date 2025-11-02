@@ -18,42 +18,53 @@ export default function Navbar({
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 md:px-10 py-3 border-b border-blue-100 bg-white/80 backdrop-blur shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 md:px-10 py-4 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
       <div className="flex items-center gap-6">
         {showBackButton && (
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-full hover:bg-blue-50 text-blue-700 transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-all duration-200"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 24 }}>arrow_back</span>
           </button>
         )}
         {title && (
-          <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         )}
         {!showBackButton && !title && (
           <div className="flex items-center gap-6 text-base font-medium text-gray-800">
             <button 
               onClick={() => router.push('/home')}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-3 hover:opacity-80 transition-all duration-200"
               aria-label="Home"
             >
-              <span className="material-symbols-outlined text-blue-700" style={{ fontSize: 28 }}>smart_toy</span>
+              <Image 
+                src="/icon.png" 
+                alt="AI Interview Coach" 
+                width={32} 
+                height={32}
+                className="rounded-lg"
+              />
               <span className="text-gray-900 text-lg font-semibold">AI Interview Coach</span>
             </button>
             {[
-              { label: 'Home', href: '/home' },
-              { label: 'Game', href: '/game' },
-              { label: 'Progress', href: '/progress' },
-              { label: 'Bank', href: '/bank' },
-            ].map(({ label, href }) => {
+              { label: 'Home', href: '/home', icon: 'home' },
+              { label: 'Game', href: '/game', icon: 'sports_esports' },
+              { label: 'Progress', href: '/progress', icon: 'trending_up' },
+              { label: 'Bank', href: '/bank', icon: 'account_balance' },
+            ].map(({ label, href, icon }) => {
               const isActive = pathname === href;
               return (
                 <button
                   key={href}
                   onClick={() => router.push(href)}
-                  className={`px-3 py-1.5 rounded-full transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                 >
+                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{icon}</span>
                   {label}
                 </button>
               );
@@ -63,13 +74,21 @@ export default function Navbar({
       </div>
       
       {showUserButton && (
-        <button
-          onClick={() => router.push('/profile')}
-          className="hover:text-blue-700 transition-colors"
-          aria-label="Profile"
-        >
-          <span className="material-symbols-outlined text-gray-700" style={{ fontSize: 35 }}>account_circle</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-600 transition-all duration-200">
+            <span className="material-symbols-outlined" style={{ fontSize: 24 }}>notifications</span>
+          </button>
+          <button
+            onClick={() => router.push('/login')}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
+            aria-label="User account"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
+              U
+            </div>
+            <span className="text-gray-700 font-medium hidden md:block">User</span>
+          </button>
+        </div>
       )}
     </nav>
   );

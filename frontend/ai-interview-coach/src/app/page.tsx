@@ -7,10 +7,11 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user has token in localStorage
-    const token = localStorage.getItem('auth_token');
+    // Check if user has token in localStorage or sessionStorage
+    const persistentToken = localStorage.getItem('auth_token');
+    const sessionToken = sessionStorage.getItem('auth_token');
     
-    if (token) {
+    if (persistentToken || sessionToken) {
       // User is authenticated, redirect to home
       router.push('/home');
     } else {

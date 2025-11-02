@@ -28,6 +28,7 @@ class GPTAccessClient:
     def send_prompt(self, question: str) -> Dict[str, Any]:
         """Send a question to GPT_ACCESS and return parsed response."""
         payload = {"question": question}
+        # print(self.api_url, "\n", self.jwt_token)
         try:
             response = requests.post(self.api_url, headers=self.headers, json=payload, timeout=self.timeout)
         except requests.exceptions.RequestException as e:

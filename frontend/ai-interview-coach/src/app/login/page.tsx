@@ -1,92 +1,126 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
 export default function LoginPage() {
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
   const router = useRouter();
+  const googleBtnRef = useRef<HTMLDivElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // Simulating user authentication logic
-    if (name && password) {
-      // Randomly generate a mock token
-      const fakeToken = 'token_' + Math.random().toString(36).substring(2);
-
-      // Saving to localStorage
-      localStorage.setItem('auth_token', fakeToken);
-
-      // If remember me, also save the username
-      if (remember) {
-        localStorage.setItem('username', name);
-      } else {
-        localStorage.removeItem('username');
-      }
-
-      alert(`Logged in as ${name}\nToken: ${fakeToken}`);
-
-      router.push('/home');
-    } else {
-      alert('Please enter both name and password');
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError('Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID');
+      return;
     }
-  };
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (!window.google) return;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: any) => {
+          const idToken = response?.credential as string | undefined;
+          if (!idToken) {
+            setError('Google sign-in failed');
+            return;
+          }
+          try {
+            localStorage.setItem('auth_token', idToken);
+            // decode token payload to extract user info
+            try {
+              const payloadStr = atob(idToken.split('.')[1] ?? '');
+              const payload = JSON.parse(payloadStr);
+              if (payload?.name) {
+                localStorage.setItem('username', payload.name as string);
+              }
+              if (payload?.picture) {
+                localStorage.setItem('avatar', payload.picture as string);
+              }
+              if (payload?.email) {
+                localStorage.setItem('email', payload.email as string);
+              }
+            } catch (_) {
+              // ignore decode errors, token already stored
+            }
+            router.push('/home');
+          } catch (e) {
+            setError('Failed to store token');
+          }
+        },
+        auto_select: false,
+        ux_mode: 'popup',
+      });
+
+      if (googleBtnRef.current) {
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'filled',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'pill',
+        });
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="bg-white p-16 rounded-2xl shadow-lg w-126">
-        <h2 className="text-center text-3xl font-bold mb-10 text-gray-800">
-          Login
-        </h2>
-        <form onSubmit={handleLogin}>
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-colors"
-            />
+    <div className="relative min-h-screen w-full bg-gray-50">
+      {/* Top blue section */}
+      <section className="relative bg-blue-600 text-white">
+        <div className="mx-auto max-w-6xl px-6 py-20 md:py-28 min-h-[45vh] flex flex-col items-center justify-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/15">
+              <Image src="/icon.png" alt="AI Interview Coach" width={18} height={18} className="rounded" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">AI Interview Coach</h1>
           </div>
-          <div className="mb-6">
-            <input
-              type="password"
-              placeholder="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-colors"
-            />
+          <p className="mx-auto max-w-3xl text-center text-blue-100/90 text-lg md:text-xl">
+            Stop job hunting the old way. Start with AI — get hired fast.
+          </p>
+
+          {/* Decorative icons removed */}
+        </div>
+      </section>
+
+      {/* Bottom auth area */}
+      <section className="relative bg-gray-50 py-16 md:py-24">
+        <div className="mx-auto max-w-3xl px-4 md:px-0 w-full -mt-28 md:-mt-50">
+          <div className="rounded-3xl border border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-10px_rgba(2,6,23,0.25)] p-12 md:p-16">
+            <div className="text-center mb-8">
+              <h2 className="text-[32px] md:text-[36px] font-bold text-slate-900 mb-2">Welcome Back</h2>
+              <p className="text-slate-600">Sign in with Google to continue</p>
+            </div>
+
+            <div className="space-y-10">
+              <div className="flex justify-center">
+                <div ref={googleBtnRef} />
+              </div>
+
+              {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+
+              <p className="text-center text-[11px] md:text-xs text-slate-500">
+                By continuing you agree to our Terms and Privacy Policy.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center justify-between mb-8">
-            <button
-              type="submit"
-              className="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-base"
-            >
-              Login
-            </button>
-            <label className="text-base flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="mr-2 scale-125"
-              />
-              remember me
-            </label>
-          </div>
-        </form>
-        <button
-          onClick={() => router.push('/register')}
-          className="w-full py-4 border-2 border-gray-300 rounded-lg bg-white hover:bg-gray-50 hover:border-blue-500 transition-colors text-base font-medium"
-        >
-          go to register
-        </button>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 """
-api_gateway
+external_access
 -----------
-Gateway module for connecting to external APIs such as GPT_ACCESS, FAQ_ACCESS.
+External_access module for connecting to external APIs such as GPT_ACCESS, FAQ_ACCESS.
 """
 
 from .gpt_access import GPTAccessClient

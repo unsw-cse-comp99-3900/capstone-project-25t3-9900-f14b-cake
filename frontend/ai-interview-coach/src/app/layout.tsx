@@ -17,12 +17,11 @@ export const metadata: Metadata = {
   description: "Prepare for your next interview with the power of AI.",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png" },
       { url: "/favicon.ico" },
-      { url: "/logo.png" },
     ],
-    shortcut: "/favicon.svg",
-    apple: "/logo.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 

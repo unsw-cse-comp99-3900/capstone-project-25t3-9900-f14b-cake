@@ -116,7 +116,8 @@ def build_feedback_prompt(
     "confidence_feedback": "string",
     "conciseness_score": "int",
     "conciseness_feedback": "string",
-    "overall_summary": "string"}}
+    "overall_summary": "string",
+    "overall_score": "float"}}
     """).strip()
 
 
@@ -175,6 +176,7 @@ def build_multicrit_feedback_prompt(
     "confidence_feedback": "string",
     "conciseness_score": "int",
     "conciseness_feedback": "string",
-    "overall_summary": "string"}}
+    "overall_summary": "string",
+    "overall_score": "float"}}
     """).strip()
 

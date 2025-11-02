@@ -18,21 +18,25 @@ class VerifyAccessClient:
         self.apple_jwt = apple_jwt
 
         if not self.api_url:
-            raise GPTAccessError("Token_Verify missing in .env file.")
+            raise TokenVerifyError("Token_Verify missing in .env file.")
         if not self.email:
             raise InvalidTokenError("Email must be provided when initializing GPTAccessClient.")
 
         self.headers = {
             "Content-Type": "application/json",
-            "Email": self.email,
-            "Google_jwt": self.google_jwt,
-            "Apple_jwt": self.apple_jwt
         }
+
+        self.payload = {
+            "email": self.email,
+            "google_jwt": self.google_jwt,
+            "apple_jwt": self.apple_jwt
+        }
+
 
     def token_verify(self) -> Dict[str, Any]:
         """Send a question to Token_Verify and return parsed response."""
         try:
-            response = requests.post(self.api_url, headers=self.headers, json={}, timeout=self.timeout)
+            response = requests.post(self.api_url, headers=self.headers, json=self.payload, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise RequestFailedError(f"Network error: {e}")
 
