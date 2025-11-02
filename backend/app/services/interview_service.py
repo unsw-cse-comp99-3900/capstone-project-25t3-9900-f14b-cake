@@ -2,6 +2,7 @@
 import json
 import re
 from typing import Any, Dict, List, Optional
+import uuid
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
 from app.prompt_builder import (
@@ -110,7 +111,9 @@ def interview_start(token: str, job_description: str, question_type: str) -> Dic
     while len(items) < 3:
         items.append("")
 
-    return {"interview_questions": items}
+    interview_id = str(uuid.uuid4())
+
+    return {"interview_id": interview_id, "interview_questions": items}
 
 
 def interview_feedback(token: str, interview_question: str, interview_answer: str) -> Dict[str, Any]:
