@@ -1,41 +1,76 @@
-backend/manage_docker.py
-Usage: ./manage_docker.py [command] [args]
+#  manage_docker.py Usage Guide
 
-Available commands:
-  start               Start backend + database containers
-  stop                Stop all containers
-  reset               Remove containers and volumes, rebuild everything
-  status              Show container status
-  logs                Follow backend logs
-  test                Run all unit tests inside the container
-  run [path]          Run a specific Python file inside the container (e.g. app/tests/test.py)
-  help                Show this help message
+###  File
+`backend/manage_docker.py`
 
-API of backend: 
+---
 
-##http://localhost:8000/auth/login
-Expected JSON (Body):
+##  Usage
+
+```bash
+./manage_docker.py [command] [args]
+```
+
+###  Available Commands
+
+| Command | Description |
+|----------|-------------|
+| `start` | Start backend + database containers |
+| `stop` | Stop all containers |
+| `reset` | Remove containers and volumes, rebuild everything |
+| `status` | Show container status |
+| `logs` | Follow backend logs |
+| `test` | Run all unit tests inside the container |
+| `run [path]` | Run a specific Python file inside the container (e.g. `app/tests/test.py`) |
+| `help` | Show this help message |
+
+---
+
+##  Backend API Endpoints
+
+---
+
+### 🔹 `/auth/login`
+
+**URL:**  
+`http://localhost:8000/auth/login`
+
+**Expected JSON (Body):**
+```json
 {
-    "email": "lyf47744922@gmail.com",
+    "email": "sample@sample.com",
     "google_jwt": "xwz",
     "apple_jwt": "xwz"
 }
+```
 
-Expected response (Body):
+**Expected Response (Body):**
+```json
 {
     "status": "ok",
-    "user_id": "lyf47744922@gmail.com",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjIwODE3OTgsIm5iZiI6MTc2MjA4MTc5OCwiZXhwIjoxNzYyMTY4MTk4fQ.xuwn-MlkqlNKEDXD1LjtTAsAg7FPIM8FFAd_tTp15uY"
+    "user_id": "sample@sample.com",
+    "token": "xxxx.xxxx.xxxx"
 }
+```
 
-##http://localhost:8000/interview/start
-Expected JSON (Body):
+---
+
+### 🔹 `/interview/start`
+
+**URL:**  
+`http://localhost:8000/interview/start`
+
+**Expected JSON (Body):**
+```json
 {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU",
+    "token": "xxxx.xxxx.xxxx",
     "job_description": "We are looking for a passionate and skilled Python Developer to join our technical team. You will be responsible for designing, developing, testing, and deploying efficient, scalable, and reliable software solutions. If you are familiar with the Python ecosystem, have a deep understanding of backend development, and enjoy collaborating with cross-functional teams, we encourage you to apply.",
     "question_type": "technical"
 }
-Expected response (Body):
+```
+
+**Expected Response (Body):**
+```json
 {
     "status": "ok",
     "interview_questions": [
@@ -44,17 +79,39 @@ Expected response (Body):
         "Describe your experience with testing frameworks in Python. How do you approach writing unit tests and integration tests for your applications?"
     ]
 }
+```
 
+---
 
-##http://localhost:8000/interview/feedback
-In the answer section, please use a string that conforms to JSON format.
-Expected JSON (Body):
+### 🔹 `/interview/feedback`
+
+**URL:**  
+`http://localhost:8000/interview/feedback`
+
+> 💡 *In the answer section, please use a string that conforms to JSON format.*
+
+**Expected JSON (Body):**
+```json
 {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU",
+    "token": "xxxx.xxxx.xxxx",
     "interview_question": "Can you explain the differences between Python 2 and Python 3, and why it is important to use Python 3 for new projects?",
-    "interview_answer": "The key differences between Python 2 and Python 3 center on string handling, the print statement, and division.\n    Strings/Encoding:\n        Python 2: Strings are default bytes, leading to messy Unicode errors.\n        Python 3: Strings are Unicode by default (for text), cleanly separated from bytes (for data), which resolves encoding issues.\n    Syntax:\n        Python 2: print is a statement (print \"hello\").\n        Python 3: print() is a function (print(\"hello\")).\n    Division:\n        Python 2: Integer division results in an integer (5 / 2 = 2).\n        Python 3: Division results in a float (5 / 2 = 2.5).\n    Why is Python 3 mandatory for new projects?\n        Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability."
+    "interview_answer": "The key differences between Python 2 and Python 3 center on string handling, the print statement, and division.
+    Strings/Encoding:
+        Python 2: Strings are default bytes, leading to messy Unicode errors.
+        Python 3: Strings are Unicode by default (for text), cleanly separated from bytes (for data), which resolves encoding issues.
+    Syntax:
+        Python 2: print is a statement (print \"hello\").
+        Python 3: print() is a function (print(\"hello\")).
+    Division:
+        Python 2: Integer division results in an integer (5 / 2 = 2).
+        Python 3: Division results in a float (5 / 2 = 2.5).
+    Why is Python 3 mandatory for new projects?
+        Because Python 2 reached End-of-Life (EOL) in 2020 and receives no further official security updates. All major libraries and new language features are exclusively developed for Python 3. Using Python 3 ensures project security and future viability."
 }
-Expected response (Body):
+```
+
+**Expected Response (Body):**
+```json
 {
     "status": "ok",
     "interview_feedback": {
@@ -72,3 +129,11 @@ Expected response (Body):
         "overall_score": 4.4
     }
 }
+```
+
+---
+
+ **Notes**
+- All JSON examples use **double quotes** for compatibility.
+- Use **Postman** or **curl** to test endpoints.
+- Tokens are JWTs generated after authentication.
