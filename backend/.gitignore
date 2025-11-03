@@ -35,3 +35,6 @@ Thumbs.db
 # --- Docker 相关 (可选) ---
 *.pid
 *.sock
+
+# --- 数据库相关 (可选) ---
+data/

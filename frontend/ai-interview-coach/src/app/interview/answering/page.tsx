@@ -297,8 +297,19 @@ export default function AnsweringPage() {
   const allQuestionsAnswered = questions.length > 0 && answeredQuestions.size === questions.length;
 
   const handleCompleteInterview = () => {
-    // Navigate back to home or show completion message
-    router.push('/home');
+    // Store interview data for feedback page
+    const feedbackData = {
+      questions,
+      answers,
+      feedbacks,
+      questionType,
+      mode,
+      timeElapsed,
+    };
+    sessionStorage.setItem('interview_feedback_data', JSON.stringify(feedbackData));
+    
+    // Navigate to feedback page
+    router.push('/interview/feedback');
   };
 
   return (

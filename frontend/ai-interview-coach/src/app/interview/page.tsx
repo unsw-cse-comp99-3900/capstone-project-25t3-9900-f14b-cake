@@ -113,7 +113,7 @@ export default function InterviewPage() {
                   <span className="material-symbols-outlined text-2xl text-blue-600">mic</span>
                   <span className="font-semibold text-gray-900">Audio Recording</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Speak your answers naturally</p>
+                <p className="text-sm text-gray-500 mt-0.5">Speak your answers naturally</p>
               </button>
 
               <button 
