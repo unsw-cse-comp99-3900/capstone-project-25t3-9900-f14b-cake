@@ -9,7 +9,7 @@ import uvicorn
 from app.core.config import url, port
 from app.api.auth import login
 from app.api.home import get_home_dashboard
-from app.api.interview import interview_start, interview_feedback
+from app.services.interview_service import interview_start, interview_feedback
 
 # Security
 security = HTTPBearer()
