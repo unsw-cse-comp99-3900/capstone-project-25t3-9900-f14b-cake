@@ -3,13 +3,82 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 import uuid
+import time
+from app.db.crud import create_interview, create_question, get_user_basic
+from app.db.models import Question, Interview
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
-from app.prompt_builder import (
-    build_question_prompt,
-    build_feedback_prompt,
-    build_multicrit_feedback_prompt,
-)
+from app.services.auth_service import get_user_id
+from app.prompt_builder import build_question_prompt, build_feedback_prompt
+
+
+# ---------------------------
+# Database Functions
+# ---------------------------
+def update_max(user, feedback, field_name, key_in_feedback):
+    if key_in_feedback in feedback:
+        new_score = feedback[key_in_feedback]
+        current_score = getattr(user, field_name)
+        if new_score > (current_score or 0):
+            setattr(user, field_name, new_score)
+
+def update_user_after_interview(db, user_id: str, interview_id: str):
+    user = get_user_basic(db, user_id)
+    if not user:
+        return None
+    user.total_interviews += 1
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_user_after_feedback(db, user_id: str, feedback: dict):
+    user = get_user_basic(db, user_id)
+    if not user:
+        return None
+    user.total_questions += 1
+    update_max(user, feedback, "max_clarity", "clarity_structure_score")
+    update_max(user, feedback, "max_relevance", "relevance_score")
+    update_max(user, feedback, "max_keyword", "keyword_score")
+    update_max(user, feedback, "max_confidence", "confidence_score")
+    update_max(user, feedback, "max_conciseness", "conciseness_score")
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def save_interview(db, user_id: str, interview_id: str):
+    """Save a interview result as a Interview record."""
+    interview_entry = Interview(
+        interview_id=interview_id,
+        user_id=user_id,
+    )
+
+    create_interview(interview_entry)
+
+    return interview_entry
+
+
+def save_feedback(db, user_id: str, interview_id: str, question_text: str, answer_text: str, feedback_data: dict):
+    """Save a feedback result as a Question record."""
+    question_id = f"{interview_id}_{int(time.time() * 1000)}"
+
+    question_entry = Question(
+        question_id=question_id,
+        interview_id=interview_id,
+        user_id=user_id,
+        question=question_text,
+        answer=answer_text,
+        feedback=feedback_data,
+    )
+
+    create_question(question_entry)
+    update_user_after_feedback(db, user_id, feedback_data)
+
+    return question_entry
+
 
 # ---------------------------
 # Internal Helper Functions
@@ -111,12 +180,14 @@ def interview_start(token: str, job_description: str, question_type: str) -> Dic
     while len(items) < 3:
         items.append("")
 
+    user_id = get_user_id(token)
     interview_id = str(uuid.uuid4())
+    save_interview(user_id=user_id, interview_id=interview_id)
 
     return {"interview_id": interview_id, "interview_questions": items}
 
 
-def interview_feedback(token: str, interview_question: str, interview_answer: str) -> Dict[str, Any]:
+def interview_feedback(token: str, interview_question: str, interview_answer: str, interview_id: str) -> Dict[str, Any]:
     """
     Generate feedback and a 5-element score list.
     """
@@ -143,6 +214,13 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
         parsed_feedback = json.loads(feedback_raw_api)
     except Exception:
         parsed_feedback = {}
+
+    user_id = get_user_id(token)
+    save_feedback(user_id=user_id, 
+                  interview_id=interview_id, 
+                  question_text=interview_question, 
+                  answer_text=interview_answer, 
+                  feedback_data=parsed_feedback)
 
     return {
         "interview_feedback": parsed_feedback

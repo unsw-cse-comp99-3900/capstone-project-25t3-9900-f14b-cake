@@ -25,7 +25,9 @@ async def start_interview(request: Request):
             raise HTTPException(status_code=400, detail="Missing required fields")
 
         result = interview_start(token, job_description, question_type)
-        return {"status": "ok", "interview_questions": result["interview_questions"]}
+        return {"status": "ok", 
+                "interview_id": result["interview_id"],
+                "interview_questions": result["interview_questions"]}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -39,7 +41,8 @@ async def feedback(request: Request):
     {
         "token": "jwt",
         "interview_question": "...",
-        "interview_answer": "..."
+        "interview_answer": "...",
+        "interview_id": "..."
     }
     """
     try:
@@ -47,11 +50,12 @@ async def feedback(request: Request):
         token = data.get("token")
         question = data.get("interview_question")
         answer = data.get("interview_answer")
+        interview_id = data.get("interview_id")
 
         if not all([token, question, answer]):
             raise HTTPException(status_code=400, detail="Missing required fields")
 
-        result = interview_feedback(token, question, answer)
+        result = interview_feedback(token, question, answer, interview_id)
         return {
             "status": "ok",
             "interview_feedback": result["interview_feedback"]
@@ -59,3 +63,5 @@ async def feedback(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+

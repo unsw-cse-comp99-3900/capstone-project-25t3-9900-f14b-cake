@@ -9,5 +9,9 @@ psycopg2-binary==2.9.6
 # --- Environment Config ---
 python-dotenv==1.1.1
 
+# Data validation
+pydantic==2.7.0
+pydantic-settings==2.2.1
+
 # --- External API Calls ---
 requests==2.32.5
