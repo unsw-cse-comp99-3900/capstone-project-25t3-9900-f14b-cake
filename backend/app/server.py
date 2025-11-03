@@ -3,13 +3,13 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 import uvicorn
-import config
 
-from auth import login, logout
-from home import get_home_dashboard
-from interview import interview_start, interview_feedback
+from app.core.config import url, port
+from app.api.auth import login
+from app.api.home import get_home_dashboard
+from app.api.interview import interview_start, interview_feedback
 
 # Security
 security = HTTPBearer()
@@ -20,7 +20,17 @@ def get_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> 
 # Request Models
 class LoginRequest(BaseModel):
     email: str = Field(description="User's email address", example="user@example.com")
-    password: str = Field(description="User's password", example="mypassword123")
+    google_jwt: Optional[str] = Field(
+        default=None,
+        description="Google JWT token for authentication",
+        example="eyJhbGciOiJSUzI1NiIsImtpZCI6IjE4MmU0M..."
+    )
+    apple_jwt: Optional[str] = Field(
+        default=None,
+        description="Apple JWT token for authentication",
+        example="eyJraWQiOiJlWGF1bm1MIiwiYWxnIjoiUlMyNTYifQ..."
+    )
+
 
 class QuestionRequest(BaseModel):
     job_description: str = Field(
@@ -61,13 +71,22 @@ class InterviewStartResponse(BaseModel):
     )
 
 class InterviewFeedbackResponse(BaseModel):
-    interview_feedback: str = Field(
-        description="Detailed feedback on the candidate's answer",
-        example="Your answer demonstrated a solid understanding of asynchronous programming concepts. You correctly explained the non-blocking nature of async functions and provided relevant examples."
-    )
-    interview_score: List[int] = Field(
-        description="Five scores (1–5) in order: [Clarity & Structure, Relevance, Keyword Alignment, Confidence, Conciseness]",
-        example=[4, 3, 5, 5, 5],
+    interview_feedback: dict = Field(
+        description="Detailed feedback breakdown with scores and comments for each criterion",
+        example={
+            "clarity_structure_score": 5,
+            "clarity_structure_feedback": "The response is well-organized, with clear sections addressing each aspect of the question.",
+            "relevance_score": 5,
+            "relevance_feedback": "The answer directly addresses the differences between Python 2 and 3 and emphasizes the importance of using Python 3, which is highly relevant.",
+            "keyword_alignment_score": 4,
+            "keyword_alignment_feedback": "The candidate used relevant technical terms, but could further enhance alignment by mentioning specific libraries or frameworks commonly used in Python 3.",
+            "confidence_score": 4,
+            "confidence_feedback": "The tone is confident and knowledgeable, though a bit more enthusiasm could enhance the delivery.",
+            "conciseness_score": 4,
+            "conciseness_feedback": "The answer is mostly concise, but could be slightly tightened by reducing redundancy in explanations.",
+            "overall_summary": "Overall, the candidate demonstrated a strong understanding of the differences between Python 2 and 3, effectively communicating their importance for new projects. To improve, the candidate could incorporate more specific examples of libraries and maintain a more dynamic tone throughout.",
+            "overall_score": 4.4
+        }
     )
 
 
@@ -120,26 +139,16 @@ async def server_home(token: str = Depends(get_token)):
 @app.post(
     "/login",
     summary="User Login",
-    description="Authenticates a user with email and password, returns a token for subsequent requests",
+    description="Authenticates a user with third-party login (Google or Apple). Requires email and either google_jwt or apple_jwt token.",
     response_model=LoginResponse,
     tags=["Authentication"]
 )
 async def server_auth_login(payload: LoginRequest):
-    ret = login(payload.email, payload.password)
+    ret = login(payload.email, payload.google_jwt, payload.apple_jwt)
     return {
         "user_id": ret["user_id"],
         "token": ret["token"]
     }
-
-@app.post(
-    "/logout",
-    summary="User Logout",
-    description="Invalidates the user's authentication token",
-    tags=["Authentication"]
-)
-async def server_auth_logout(token: str = Depends(get_token)):
-    logout(token)
-    return {}
 
 @app.post(
     "/interview/start",
@@ -157,17 +166,16 @@ async def server_interview_start(payload: QuestionRequest, token: str = Depends(
 @app.post(
     "/interview/feedback",
     summary="Generate Interview Feedback",
-    description="Analyzes the candidate's answer to an interview question and provides detailed feedback along with a score",
+    description="Analyzes the candidate's answer to an interview question and provides detailed feedback along with scores for each criterion",
     response_model=InterviewFeedbackResponse,
     tags=["Interview"]
 )
 async def server_interview_feedback(payload: FeedbackRequest, token: str = Depends(get_token)):
     ret = interview_feedback(token, payload.interview_question, payload.interview_answer)
     return {
-        "interview_feedback": ret["interview_feedback"],
-        "interview_score": ret["interview_score"],
+        "interview_feedback": ret["interview_feedback"]
     }
 
 # Local Dev
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="127.0.0.1", port=config.port, reload=True)
+    uvicorn.run("app.server:app", host="127.0.0.1", port=port, reload=True)
