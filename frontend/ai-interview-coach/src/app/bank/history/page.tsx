@@ -168,32 +168,34 @@ export default function HistoryPage() {
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
 
-      <main className="flex-1 p-5 pt-24">
+      <main className="flex-1 p-5 pt-24 bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Interview Records</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Interview Records</h2>
           
-          {/* Tab Navigation */}
-          <div className="flex gap-2 mb-6 border-b border-gray-200">
-            <Link
-              href="/bank/history"
-              className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${
-                isHistory
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              History
-            </Link>
-            <Link
-              href="/bank/favorites"
-              className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${
-                isFavorites
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Favorites
-            </Link>
+          {/* Tab Navigation Bar */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex bg-white rounded-lg p-1 shadow-lg border border-blue-100 min-w-[360px]">
+              <Link
+                href="/bank/history"
+                className={`px-16 py-3 rounded-md text-sm font-semibold transition-all duration-200 ${
+                  isHistory
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                History
+              </Link>
+              <Link
+                href="/bank/favorites"
+                className={`px-16 py-3 rounded-md text-sm font-semibold transition-all duration-200 ${
+                  isFavorites
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                Favorites
+              </Link>
+            </div>
           </div>
 
           {records.length === 0 ? (
@@ -206,20 +208,20 @@ export default function HistoryPage() {
           ) : (
             <>
               {/* Table */}
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-white border border-blue-200 rounded-lg overflow-hidden shadow-lg">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-blue-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Score</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Question Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Date & Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Duration</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Total Score</th>
+                      <th className="px-6 py-3 text-center text-xs font-semibold text-blue-600 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {currentRecords.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50">
+                      <tr key={record.id} className="hover:bg-blue-50/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="capitalize">{record.questionType}</span>
                         </td>
@@ -242,7 +244,7 @@ export default function HistoryPage() {
                           <div className="flex items-center justify-end gap-2 mr-19">
                             <button
                               onClick={() => viewDetails(record)}
-                              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                             >
                               View Details
                             </button>
