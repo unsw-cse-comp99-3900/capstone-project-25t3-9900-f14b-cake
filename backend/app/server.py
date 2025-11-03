@@ -7,9 +7,9 @@ from typing import List, Optional
 import uvicorn
 
 from app.core.config import url, port
-from app.api.auth import login
-from app.api.home import get_home_dashboard
+from app.services.auth_service import login
 from app.services.interview_service import interview_start, interview_feedback
+from app.services.user_service import get_user_detail
 
 # Security
 security = HTTPBearer()
@@ -50,11 +50,6 @@ class FeedbackRequest(BaseModel):
     )
 
 # Response Models
-class HomeResponse(BaseModel):
-    interview_ids: List[str] = Field(
-        description="List of interview session IDs",
-        example=["int_123", "int_456", "int_789"]
-    )
 
 class LoginResponse(BaseModel):
     user_id: str = Field(description="Unique user identifier", example="user_123")
@@ -89,6 +84,86 @@ class InterviewFeedbackResponse(BaseModel):
         }
     )
 
+class QuestionDetail(BaseModel):
+    interview_question: str = Field(
+        description="The interview question that was asked",
+        example="Explain the difference between async and sync functions in Python"
+    )
+    interview_answer: str = Field(
+        description="The candidate's answer to the question",
+        example="Async functions allow for non-blocking operations..."
+    )
+    interview_feedback: dict = Field(
+        description="Detailed feedback with scores for the answer",
+        example={
+            "clarity_structure_score": 5,
+            "clarity_structure_feedback": "Well organized response...",
+            "relevance_score": 4,
+            "relevance_feedback": "Addresses the question directly...",
+            "keyword_alignment_score": 4,
+            "keyword_alignment_feedback": "Good use of technical terms...",
+            "confidence_score": 5,
+            "confidence_feedback": "Confident delivery...",
+            "conciseness_score": 4,
+            "conciseness_feedback": "Concise and to the point...",
+            "overall_summary": "Strong answer overall...",
+            "overall_score": 4.4
+        }
+    )
+
+class BadgeDetail(BaseModel):
+    badge_id: int = Field(
+        description="Badge identifier",
+        example=1
+    )
+    unlock_date: int = Field(
+        description="Unix timestamp when the badge was unlocked",
+        example=1698796800
+    )
+
+class UserDetailResponse(BaseModel):
+    interviews: List[List[QuestionDetail]] = Field(
+        description="List of interviews, where each interview contains a list of questions with answers and feedback",
+        example=[
+            [
+                {
+                    "interview_question": "What is your experience with Python?",
+                    "interview_answer": "I have 5 years of experience...",
+                    "interview_feedback": {
+                        "clarity_structure_score": 5,
+                        "clarity_structure_feedback": "Well organized...",
+                        "relevance_score": 4,
+                        "relevance_feedback": "Relevant to the question...",
+                        "keyword_alignment_score": 4,
+                        "keyword_alignment_feedback": "Good keywords...",
+                        "confidence_score": 5,
+                        "confidence_feedback": "Confident...",
+                        "conciseness_score": 4,
+                        "conciseness_feedback": "Concise...",
+                        "overall_summary": "Strong answer...",
+                        "overall_score": 4.4
+                    }
+                }
+            ]
+        ]
+    )
+    badges: List[BadgeDetail] = Field(
+        description="List of badges earned by the user",
+        example=[
+            {
+                "badge_id": 1,
+                "unlock_date": 1698796800
+            },
+            {
+                "badge_id": 2,
+                "unlock_date": 1699401600
+            },
+            {
+                "badge_id": 1,
+                "unlock_date": 1700006400
+            }
+        ]
+    )
 
 # App Setup
 app = FastAPI(
@@ -123,19 +198,6 @@ async def default_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=code, content=payload)
 
 # Routes
-@app.get(
-    "/home",
-    summary="Get Home Dashboard",
-    description="Retrieves the user's home dashboard containing all their interview IDs",
-    response_model=HomeResponse,
-    tags=["Dashboard"]
-)
-async def server_home(token: str = Depends(get_token)):
-    ret = get_home_dashboard(token)
-    return {
-        "interview_ids": ret["interview_ids"]
-    }
-
 @app.post(
     "/login",
     summary="User Login",
@@ -174,6 +236,20 @@ async def server_interview_feedback(payload: FeedbackRequest, token: str = Depen
     ret = interview_feedback(token, payload.interview_question, payload.interview_answer)
     return {
         "interview_feedback": ret["interview_feedback"]
+    }
+
+@app.get(
+    "/user/detail",
+    summary="Get User Details",
+    description="Retrieves all interviews and questions for the authenticated user, including answers and feedback",
+    response_model=UserDetailResponse,
+    tags=["User"]
+)
+async def server_user_detail(token: str = Depends(get_token)):
+    ret = get_user_detail(token)
+    return {
+        "interviews": ret["interviews"],
+        "badges": ret["badges"]
     }
 
 # Local Dev
