@@ -2,6 +2,8 @@
 import base64
 import json
 from app.external_access.verify_access import VerifyAccessClient
+from app.services.user_service import update_user_login
+from app.services.utils import with_db_session
 
 def get_user_id(jwt_token: str) -> str:
     parts = jwt_token.split(".")
@@ -40,7 +42,8 @@ def get_user_info(jwt_token: str) -> str:
     return payload
 
 
-def login(email: str, google_jwt: str = None, apple_jwt: str = None) -> dict:
+@with_db_session
+def login(email: str, google_jwt: str = None, apple_jwt: str = None, db = None) -> dict:
     """
     Use third-party login (Google/Apple) to obtain JWT token.
     """
@@ -49,6 +52,7 @@ def login(email: str, google_jwt: str = None, apple_jwt: str = None) -> dict:
     jwt_token = result.get("jwt_token")
     if jwt_token:
         user_id = get_user_id(jwt_token)
+        update_user_login(db, user_id)
     else:
         user_id = None
 

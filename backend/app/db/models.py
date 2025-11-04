@@ -9,7 +9,6 @@ def current_millis():
     return int(time.time() * 1000)
 
 
-
 class Question(Base):
     __tablename__ = "questions"
     question_id = Column(String, primary_key=True, index=True)
@@ -45,8 +44,9 @@ class User(Base):
     xp = Column(Integer, default=0)
     total_questions = Column(Integer, default=0)
     total_interviews = Column(Integer, default=0)
-    total_login = Column(Integer, default=0)
+    total_logins = Column(Integer, default=0)
     last_login = Column(BigInteger, default=current_millis)
+    consecutive_days = Column(Integer, default=0)
 
     max_clarity = Column(Integer, default=0)
     max_relevance = Column(Integer, default=0)

@@ -10,7 +10,7 @@ from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
 from app.services.auth_service import get_user_id
 from app.prompt_builder import build_question_prompt, build_feedback_prompt
-
+from app.services.utils import with_db_session
 
 # ---------------------------
 # Database Functions
@@ -22,7 +22,8 @@ def update_max(user, feedback, field_name, key_in_feedback):
         if new_score > (current_score or 0):
             setattr(user, field_name, new_score)
 
-def update_user_after_interview(db, user_id: str, interview_id: str):
+@with_db_session
+def update_user_after_interview(user_id: str, interview_id: str, db=None):
     user = get_user_basic(db, user_id)
     if not user:
         return None
@@ -32,8 +33,8 @@ def update_user_after_interview(db, user_id: str, interview_id: str):
     db.refresh(user)
     return user
 
-
-def update_user_after_feedback(db, user_id: str, feedback: dict):
+@with_db_session
+def update_user_after_feedback(user_id: str, feedback: dict, db=None):
     user = get_user_basic(db, user_id)
     if not user:
         return None
@@ -48,8 +49,8 @@ def update_user_after_feedback(db, user_id: str, feedback: dict):
     db.refresh(user)
     return user
 
-
-def save_interview(db, user_id: str, interview_id: str):
+@with_db_session
+def save_interview(user_id: str, interview_id: str, db=None):
     """Save a interview result as a Interview record."""
     interview_entry = Interview(
         interview_id=interview_id,
@@ -60,8 +61,8 @@ def save_interview(db, user_id: str, interview_id: str):
 
     return interview_entry
 
-
-def save_feedback(db, user_id: str, interview_id: str, question_text: str, answer_text: str, feedback_data: dict):
+@with_db_session
+def save_feedback(user_id: str, interview_id: str, question_text: str, answer_text: str, feedback_data: dict, db=None):
     """Save a feedback result as a Question record."""
     question_id = f"{interview_id}_{int(time.time() * 1000)}"
 

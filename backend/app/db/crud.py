@@ -1,6 +1,6 @@
 # app/db/crud.py
 from sqlalchemy.orm import Session, joinedload
-from .models import Question, Interview, User, Badge, UserBadge
+from .models import Question, Interview, User, Badge, UserBadge, current_millis
 
 def create_question(db: Session, question: Question):
     db.add(question)
@@ -42,3 +42,27 @@ def get_user_badges(db: Session, user_id: str):
         .filter(UserBadge.user_id == user_id)
         .all()
     )
+
+
+def get_all_badges(db: Session):
+    return db.query(Badge).all()
+
+
+def get_unlocked_badges(db: Session, user_id: str):
+    return (
+        db.query(Badge)
+        .join(UserBadge)
+        .filter(UserBadge.user_id == user_id)
+        .all()
+    )
+
+def unlock_badge(db: Session, user_id: str, badge_id: int):
+    new_unlock = UserBadge(
+        user_id=user_id,
+        badge_id=badge_id,
+        unlock_time=current_millis(),
+    )
+    db.add(new_unlock)
+    db.commit()
+    db.refresh(new_unlock)
+    return new_unlock
