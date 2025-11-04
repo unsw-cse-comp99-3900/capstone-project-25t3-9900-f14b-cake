@@ -1,35 +1,24 @@
-# app/api/auth.py
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException
+from app.models.auth import LoginRequest, LoginResponse
 from app.services.auth_service import login
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter()
 
-@router.post("/login")
-async def login_user(request: Request):
+@router.post(
+    "/login",
+    summary="User Login",
+    description="Authenticates a user with third-party login (Google or Apple). Requires email and either google_jwt or apple_jwt token.",
+    response_model=LoginResponse
+)
+async def login_user(payload: LoginRequest):
     """
     Authenticate user via Google/Apple JWT and return token.
-    Expected JSON:
-    {
-        "email": "user@example.com",
-        "google_jwt": "...",   # optional
-        "apple_jwt": "..."     # optional
-    }
     """
     try:
-        data = await request.json()
-        email = data.get("email")
-        google_jwt = data.get("google_jwt")
-        apple_jwt = data.get("apple_jwt")
-
-        if not email:
-            raise HTTPException(status_code=400, detail="Email is required.")
-
-        result = login(email, google_jwt, apple_jwt)
+        result = login(payload.email, payload.google_jwt, payload.apple_jwt)
         return {
-            "status": "ok",
             "user_id": result["user_id"],
-            "token": result["token"],
+            "token": result["token"]
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

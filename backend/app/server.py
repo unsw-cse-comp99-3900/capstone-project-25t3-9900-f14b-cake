@@ -31,7 +31,6 @@ class LoginRequest(BaseModel):
         example="eyJraWQiOiJlWGF1bm1MIiwiYWxnIjoiUlMyNTYifQ..."
     )
 
-
 class QuestionRequest(BaseModel):
     job_description: str = Field(
         description="Detailed job description for the interview",
@@ -58,7 +57,6 @@ class FeedbackRequest(BaseModel):
     )
 
 # Response Models
-
 class LoginResponse(BaseModel):
     user_id: str = Field(description="Unique user identifier", example="user_123")
     token: str = Field(description="JWT authentication token", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
@@ -272,4 +270,4 @@ async def server_user_detail(token: str = Depends(get_token)):
 
 # Local Dev
 if __name__ == "__main__":
-    uvicorn.run("app.server:app", host="127.0.0.1", port=port, reload=True)
+    uvicorn.run("app.server:app", host="127.0.0.1", port=5555, reload=True)

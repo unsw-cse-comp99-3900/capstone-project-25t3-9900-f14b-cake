@@ -33,4 +33,3 @@ register_routers(app)
 @app.get("/")
 def root():
     return {"status": "ok", "message": "Interview API is running"}
-
