@@ -42,8 +42,16 @@ def get_user_detail(user_id: str, db=None):
         "badges": [
             {
                 "badge_id": b.badge_id,
-                "unlocked_at": b.unlocked_at.isoformat()
-            } for b in badges
+                "badge_code": b.badge.code if b.badge else None,
+                "name": b.badge.name if b.badge else None,
+                "description": b.badge.description if b.badge else None,
+                "unlocked_at": (
+                    datetime.fromtimestamp(b.unlocked_at / 1000, tz=timezone.utc).isoformat()
+                    if getattr(b, "unlocked_at", None)
+                    else None
+                ),
+            }
+            for b in badges
         ]
     }
 

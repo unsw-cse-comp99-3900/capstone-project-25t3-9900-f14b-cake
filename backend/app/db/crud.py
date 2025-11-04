@@ -39,28 +39,37 @@ def get_user_interviews(db: Session, user_id: str):
 def get_user_badges(db: Session, user_id: str):
     return (
         db.query(UserBadge)
+        .options(joinedload(UserBadge.badge))
         .filter(UserBadge.user_id == user_id)
         .all()
     )
 
 
 def get_all_badges(db: Session):
-    return db.query(Badge).all()
+    return db.query(Badge).order_by(Badge.badge_id).all()
 
 
 def get_unlocked_badges(db: Session, user_id: str):
     return (
         db.query(Badge)
-        .join(UserBadge)
+        .join(UserBadge, UserBadge.badge_id == Badge.badge_id)
         .filter(UserBadge.user_id == user_id)
         .all()
     )
 
 def unlock_badge(db: Session, user_id: str, badge_id: int):
+    existing = (
+        db.query(UserBadge)
+        .filter(UserBadge.user_id == user_id, UserBadge.badge_id == badge_id)
+        .first()
+    )
+    if existing:
+        return existing
+
     new_unlock = UserBadge(
         user_id=user_id,
         badge_id=badge_id,
-        unlock_time=current_millis(),
+        unlocked_at=current_millis(),
     )
     db.add(new_unlock)
     db.commit()

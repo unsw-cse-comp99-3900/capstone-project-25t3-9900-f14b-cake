@@ -1,5 +1,16 @@
 # app/db/models.py
-from sqlalchemy import Column, ForeignKey, Integer,String, Text, Float, BigInteger, JSON, DateTime
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Float,
+    BigInteger,
+    JSON,
+    DateTime,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 import time
 from .db_config import Base
@@ -58,21 +69,29 @@ class User(Base):
 
 
 class Badge(Base):
-    __tablename__ = "badge"
+    __tablename__ = "badges"
+
     badge_id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String, nullable=False, unique=True, index=True)
     name = Column(String, nullable=False, unique=True)
     description = Column(Text)
 
-    unlocked_users = relationship("UserBadge", back_populates="badge", cascade="all, delete-orphan")
+    unlocked_users = relationship(
+        "UserBadge",
+        back_populates="badge",
+        cascade="all, delete-orphan",
+    )
 
 
 
 class UserBadge(Base):
     __tablename__ = "user_badges"
+    __table_args__ = (UniqueConstraint("user_id", "badge_id", name="uq_user_badge"),)
+
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"))
-    badge_id = Column(String, ForeignKey("badges.badge_id", ondelete="CASCADE"))
-    unlocked_timestamp = Column(BigInteger, default=current_millis)
+    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    badge_id = Column(Integer, ForeignKey("badges.badge_id", ondelete="CASCADE"), nullable=False)
+    unlocked_at = Column(BigInteger, default=current_millis, nullable=False)
 
     user = relationship("User", back_populates="user_badges")
     badge = relationship("Badge", back_populates="unlocked_users")
