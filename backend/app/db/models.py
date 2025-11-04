@@ -1,8 +1,9 @@
 # app/db/models.py
-from sqlalchemy import Column, ForeignKey, Integer,String, Text, Float, BigInteger, JSON, DateTime
+from sqlalchemy import Column, ForeignKey, Integer,String, Text, Float, BigInteger, JSON, DateTime, Date
 from sqlalchemy.orm import relationship
 import time
-from .db_config import Base
+from datetime import date
+from app.db.db_config import Base
 
 def current_millis():
     """Returns the current time in Unix milliseconds."""
@@ -15,6 +16,7 @@ class Question(Base):
     interview_id = Column(String, ForeignKey("interviews.interview_id"), nullable=False)
 
     question = Column(Text, nullable=False)
+    question_type = Column(Text, nullable=False)
     answer = Column(Text)
     feedback = Column(JSON)
     timestamp = Column(BigInteger, default=current_millis)
@@ -27,6 +29,8 @@ class Interview(Base):
     __tablename__ = "interviews"
     interview_id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
+    interview_type = Column(String, nullable=False)
+    job_description = Column(String, nullable=False)
 
     user = relationship("User", back_populates="interviews")
     questions = relationship("Question", back_populates="interview", cascade="all, delete-orphan")
@@ -44,8 +48,10 @@ class User(Base):
     xp = Column(Integer, default=0)
     total_questions = Column(Integer, default=0)
     total_interviews = Column(Integer, default=0)
+    total_badges = Column(Integer, default=0)
     total_logins = Column(Integer, default=0)
-    last_login = Column(BigInteger, default=current_millis)
+
+    last_login = Column(Date, default=date.today)
     consecutive_days = Column(Integer, default=0)
 
     max_clarity = Column(Integer, default=0)
@@ -53,7 +59,6 @@ class User(Base):
     max_keyword = Column(Integer, default=0)
     max_confidence = Column(Integer, default=0)
     max_conciseness = Column(Integer, default=0)
-    max_questions_in_one_interview = Column(Integer, default=0)
 
 
 
@@ -70,8 +75,8 @@ class Badge(Base):
 class UserBadge(Base):
     __tablename__ = "user_badges"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"))
-    badge_id = Column(String, ForeignKey("badges.badge_id", ondelete="CASCADE"))
+    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"))
+    badge_id = Column(Integer, ForeignKey("badge.badge_id", ondelete="CASCADE"))
     unlocked_timestamp = Column(BigInteger, default=current_millis)
 
     user = relationship("User", back_populates="user_badges")

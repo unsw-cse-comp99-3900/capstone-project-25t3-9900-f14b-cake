@@ -5,14 +5,10 @@ Initialize PostgreSQL tables using SQLAlchemy ORM.
 Usage:
     python -m app.db.db_init
 """
-
-from .db_config import engine, Base
-from . import models
-
-# app/db/db_init.py
 from sqlalchemy import text
-from .db_config import engine, Base
-from . import models
+from app.db.db_config import engine, Base
+from app.db import models
+import sys
 
 def reset_table(table_name: str):
     """Clear the specified table"""
@@ -28,18 +24,22 @@ def reset_all():
     Base.metadata.create_all(bind=engine)
     print("All tables reset.")
 
-def seed_badges(db):
-    badges = [
-        {"name": "First Interview", "description": "Complete your first interview."},
-        {"name": "High Achiever", "description": "Reach a total score of 90 or higher."},
-        {"name": "Consistent Learner", "description": "Practice for 7 consecutive days."},
-        {"name": "Comeback Hero", "description": "Return within 1 day after inactivity."},
-    ]
-    for b in badges:
-        if not db.query(models.Badge).filter(models.Badge.name == b["name"]).first():
-            db.add(models.Badge(**b))
-    db.commit()
+def init_db(reset: bool = False):
+    """Initialize the database.
+    If reset=True, drop all tables before recreating.
+    """
+    if reset:
+        print("Dropping all existing tables...")
+        Base.metadata.drop_all(bind=engine)
+    print("Creating all tables...")
+    Base.metadata.create_all(bind=engine)
+    print("Database initialized successfully.")
+
 
 if __name__ == "__main__":
     reset_all()
+    if len(sys.argv) > 1 and sys.argv[1] == "reset":
+        init_db(reset=True)
+    else:
+        init_db(reset=False)
 

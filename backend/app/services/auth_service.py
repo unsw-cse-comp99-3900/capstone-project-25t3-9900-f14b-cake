@@ -2,10 +2,11 @@
 import base64
 import json
 from app.external_access.verify_access import VerifyAccessClient
-from app.services.user_service import update_user_login
+from app.services.user_service import create_new_user, update_user_login
+from app.db.crud import get_user_basic
 from app.services.utils import with_db_session
 
-def get_user_id(jwt_token: str) -> str:
+def get_user_id_and_email(jwt_token: str) -> str:
     parts = jwt_token.split(".")
     if len(parts) != 3:
         raise ValueError("Invalid JWT format")
@@ -15,31 +16,11 @@ def get_user_id(jwt_token: str) -> str:
     decoded_bytes = base64.urlsafe_b64decode(padded)
     decoded_str = decoded_bytes.decode("utf-8")
     payload = json.loads(decoded_str)
-    return str(payload["id"])
-
-def get_user_email(jwt_token: str) -> str:
-    parts = jwt_token.split(".")
-    if len(parts) != 3:
-        raise ValueError("Invalid JWT format")
-    
-    payload_b64 = parts[1]
-    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
-    decoded_bytes = base64.urlsafe_b64decode(padded)
-    decoded_str = decoded_bytes.decode("utf-8")
-    payload = json.loads(decoded_str)
-    return str(payload["email"])
-
-def get_user_info(jwt_token: str) -> str:
-    parts = jwt_token.split(".")
-    if len(parts) != 3:
-        raise ValueError("Invalid JWT format")
-    
-    payload_b64 = parts[1]
-    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
-    decoded_bytes = base64.urlsafe_b64decode(padded)
-    decoded_str = decoded_bytes.decode("utf-8")
-    payload = json.loads(decoded_str)
-    return payload
+    result = {
+        "id": payload["id"],
+        "email": payload["email"]
+    }
+    return result
 
 
 @with_db_session
@@ -51,9 +32,16 @@ def login(email: str, google_jwt: str = None, apple_jwt: str = None, db = None) 
     result = verify_client.token_verify()
     jwt_token = result.get("jwt_token")
     if jwt_token:
-        user_id = get_user_id(jwt_token)
-        update_user_login(db, user_id)
+        id_email = get_user_id_and_email(jwt_token)
+        user_id = id_email["id"]
+        user_email = id_email["email"]
+        # print(id_email)
+        user = get_user_basic(user_id, db)
+        if not user:
+            user = create_new_user(user_id, user_email)
+            user = update_user_login(user_id)
     else:
         user_id = None
+
 
     return {"user_id": user_id, "token": jwt_token}
