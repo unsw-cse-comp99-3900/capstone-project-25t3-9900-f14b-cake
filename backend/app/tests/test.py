@@ -4,7 +4,7 @@ from app.external_access import GPTAccessClient, FAQAccessClient, VerifyAccessCl
 from typing import List, Optional, Any, Dict
 # from prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
-from app.services.auth_service import login
+from app.services.auth_service import login, get_user_email, get_user_info
 
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
@@ -132,12 +132,14 @@ def test_auth():
     # client = VerifyAccessClient(email, google_jwt, apple_jwt)
     # result = client.token_verify()
     result = login(email, google_jwt, apple_jwt)
-    print(result)
+    jwt = result["token"]
+    user_info = get_user_info(jwt)
+    print(user_info)
 
 
 if __name__ == "__main__":
-    print_format_answer()
+    # print_format_answer()
     # test_prompt()
     # test_gpt()
     # test_faq()
-    # test_auth()
+    test_auth()
