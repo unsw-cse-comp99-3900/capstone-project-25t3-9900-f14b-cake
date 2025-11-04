@@ -188,7 +188,7 @@ def interview_start(token: str, job_description: str, question_type: str) -> Dic
     return {"interview_id": interview_id, "interview_questions": items}
 
 
-def interview_feedback(token: str, interview_question: str, interview_answer: str, interview_id: str) -> Dict[str, Any]:
+def interview_feedback(token: str, interview_id: str, interview_type: str, interview_question: str, interview_answer: str) -> Dict[str, Any]:
     """
     Generate feedback and a 5-element score list.
     """
