@@ -91,11 +91,11 @@ def get_unlocked_badges(user_id: str, db: Session = None):
 
 
 
-def unlock_badge(db: Session, user_id: str, badge_id: int):
+def unlock_badge(user_id: str, badge_id: int, db: Session = None):
     new_unlock = UserBadge(
         user_id=user_id,
         badge_id=badge_id,
-        unlock_time=current_millis(),
+        unlocked_timestamp=current_millis(),
     )
     db.add(new_unlock)
     db.commit()

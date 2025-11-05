@@ -136,17 +136,20 @@ def test_auth():
     jwt = result["token"]
     user_info = get_user_id_and_email(jwt)
     print(user_info)
+    print()
 
 
 def test_interview():
     token = JWT_TOKEN
     job_description = "We are looking for a passionate and skilled Python Developer to join our technical team. You will be responsible for designing, developing, testing, and deploying efficient, scalable, and reliable software solutions. If you are familiar with the Python ecosystem, have a deep understanding of backend development, and enjoy collaborating with cross-functional teams, we encourage you to apply."
     question_type = "Technical"
-    # interview = interview_start(token, job_description, question_type)
+    interview = interview_start(token, job_description, question_type)
     # print(interview)
-    interview_id = "2b283ef0-4b93-4913-8efd-bd6bbf5e5917"
+    # interview_id = "2b283ef0-4b93-4913-8efd-bd6bbf5e5917"
+    interview_id = interview["interview_id"]
     feedback = interview_feedback(token, interview_id, question_type, question, answer)
     print(feedback)
+    print()
 
 def test_user():
     result = get_user_detail(JWT_TOKEN)
@@ -157,6 +160,6 @@ if __name__ == "__main__":
     # test_prompt()
     # test_gpt()
     # test_faq()
-    # test_auth()
-    # test_interview()
+    test_auth()
+    test_interview()
     test_user()

@@ -4,12 +4,12 @@ import re
 from typing import Any, Dict, List, Optional
 import uuid
 import time
-from app.db.crud import add_interview, add_question, get_user_basic
+from app.db.crud import add_interview, add_question, get_user_basic, update_user
 from app.db.models import Question, Interview
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
 from app.services.auth_service import get_user_id_and_email
-from app.services.user_service import update_user
+from app.services.badge_service import check_badges_for_user
 from app.prompt_builder import build_question_prompt, build_feedback_prompt
 from app.services.utils import with_db_session
 
@@ -67,6 +67,12 @@ def save_question(user_id: str, interview_id: str, question_type: str, question_
     user = update_user(user_id, user_data, db)
     if not user:
         return None
+    # Check and unlock badges (e.g., Ice Breaker when first question is answered)
+    try:
+        check_badges_for_user(user, db)
+    except Exception:
+        # Badge checks should not block saving questions
+        pass
     return question
 
 # ---------------------------
