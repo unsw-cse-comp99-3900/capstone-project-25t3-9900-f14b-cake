@@ -1,33 +1,63 @@
 # app/db/crud.py
 from sqlalchemy.orm import Session, joinedload
-from .models import Question, Interview, User, Badge, UserBadge, current_millis
+from app.db.db_config import with_db_session
+from app.db.models import Question, Interview, User, Badge, UserBadge, current_millis
 
-def create_question(db: Session, question: Question):
+
+def add_question(question: Question, db: Session = None):
     db.add(question)
     db.commit()
     db.refresh(question)
     return question
 
-def create_interview(db: Session, interview: Interview):
+
+
+def add_interview(interview: Interview, db: Session = None):
     db.add(interview)
     db.commit()
     db.refresh(interview)
     return interview
 
-def get_questions_by_user(db: Session, user_id: str):
+
+
+def add_user(user: User, db: Session = None):
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_user(user_id: str, update_data: dict, db=None):
+    """
+    General user update functions. Excluding interviews and user_badges.
+    update_data is a dictionary of fields to be updated, for example:
+    {"last_login": date.today(), "total_login": 5}
+    """
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        return None
+
+    for key, value in update_data.items():
+        if hasattr(user, key):
+            setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+
+def get_questions_by_user(user_id: str, db: Session = None):
     return db.query(Question).filter(Question.user_id == user_id).all()
 
 
-def delete_question(db: Session, question_id: str):
-    db.query(Question).filter(Question.question_id == question_id).delete()
-    db.commit()
 
-
-def get_user_basic(db: Session, user_id: str):
+def get_user_basic(user_id: str, db: Session = None):
     return db.query(User).filter(User.user_id == user_id).first()
 
 
-def get_user_interviews(db: Session, user_id: str):
+
+def get_user_interviews(user_id: str, db: Session = None):
     return (
         db.query(Interview)
         .options(joinedload(Interview.questions))
@@ -36,40 +66,36 @@ def get_user_interviews(db: Session, user_id: str):
     )
 
 
-def get_user_badges(db: Session, user_id: str):
+
+def get_user_badges(user_id: str, db: Session = None):
     return (
         db.query(UserBadge)
-        .options(joinedload(UserBadge.badge))
         .filter(UserBadge.user_id == user_id)
         .all()
     )
 
 
-def get_all_badges(db: Session):
-    return db.query(Badge).order_by(Badge.badge_id).all()
+
+def get_all_badges(db: Session = None):
+    return db.query(Badge).all()
 
 
-def get_unlocked_badges(db: Session, user_id: str):
+
+def get_unlocked_badges(user_id: str, db: Session = None):
     return (
         db.query(Badge)
-        .join(UserBadge, UserBadge.badge_id == Badge.badge_id)
+        .join(UserBadge)
         .filter(UserBadge.user_id == user_id)
         .all()
     )
 
-def unlock_badge(db: Session, user_id: str, badge_id: int):
-    existing = (
-        db.query(UserBadge)
-        .filter(UserBadge.user_id == user_id, UserBadge.badge_id == badge_id)
-        .first()
-    )
-    if existing:
-        return existing
 
+
+def unlock_badge(db: Session, user_id: str, badge_id: int):
     new_unlock = UserBadge(
         user_id=user_id,
         badge_id=badge_id,
-        unlocked_at=current_millis(),
+        unlock_time=current_millis(),
     )
     db.add(new_unlock)
     db.commit()

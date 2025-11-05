@@ -11,7 +11,7 @@ test_db_basic.py
 from sqlalchemy import text
 from app.db.db_config import engine, SessionLocal
 from app.db.models import Base, Question
-from app.db.crud import create_question, get_questions_by_user, delete_question
+from app.db.crud import add_question, get_questions_by_user, delete_question
 
 
 def test_database_connection():
@@ -44,7 +44,7 @@ def test_insert_query_delete():
     }
 
     print("Inserting test record...")
-    q = create_question(db, test_data)
+    q = add_question(db, test_data)
     print(f"Inserted: {q.question_id}")
 
     print("Querying test record...")

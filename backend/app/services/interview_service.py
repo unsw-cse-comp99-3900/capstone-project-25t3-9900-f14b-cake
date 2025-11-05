@@ -4,82 +4,70 @@ import re
 from typing import Any, Dict, List, Optional
 import uuid
 import time
-from app.db.crud import create_interview, create_question, get_user_basic
+from app.db.crud import add_interview, add_question, get_user_basic
 from app.db.models import Question, Interview
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
-from app.services.auth_service import get_user_id
+from app.services.auth_service import get_user_id_and_email
+from app.services.user_service import update_user
 from app.prompt_builder import build_question_prompt, build_feedback_prompt
 from app.services.utils import with_db_session
 
 # ---------------------------
 # Database Functions
 # ---------------------------
-def update_max(user, feedback, field_name, key_in_feedback):
-    if key_in_feedback in feedback:
-        new_score = feedback[key_in_feedback]
-        current_score = getattr(user, field_name)
-        if new_score > (current_score or 0):
-            setattr(user, field_name, new_score)
-
-@with_db_session
-def update_user_after_interview(user_id: str, interview_id: str, db=None):
-    user = get_user_basic(db, user_id)
+def save_interview(user_id: str, interview_id: str, interview_type: str, job_description: str, db = None):
+    new_interview = Interview(interview_id=interview_id, 
+                              user_id=user_id, 
+                              interview_type=interview_type, 
+                              job_description=job_description)
+    interview = add_interview(new_interview, db)
+    if not interview:
+        return None
+    user = get_user_basic(user_id, db)
     if not user:
         return None
-    user.total_interviews += 1
+    user_data = {"total_interviews": interview.user.total_interviews + 1}
+    user = update_user(user_id, user_data, db)
+    return interview
 
-    db.commit()
-    db.refresh(user)
-    return user
 
-@with_db_session
-def update_user_after_feedback(user_id: str, feedback: dict, db=None):
-    user = get_user_basic(db, user_id)
+def save_question(user_id: str, interview_id: str, question_type: str, question_text: str, answer: str, feedback: dict, db = None):
+    print(f"Saving question for user={user_id}, interview={interview_id}")
+    timestamp = int(time.time() * 1000)
+    question_id = f"{interview_id}_{timestamp}"
+    question = Question(question_id=question_id,
+                            interview_id=interview_id,
+                            question=question_text,
+                            question_type=question_type,
+                            answer=answer,
+                            feedback=feedback,
+                            timestamp=timestamp
+                            )
+    new_question = add_question(question, db)
+    print(f"Saved question: {new_question.question_id}")
+    if not new_question:
+        return None
+    
+    user = get_user_basic(user_id, db)
     if not user:
         return None
-    user.total_questions += 1
-    update_max(user, feedback, "max_clarity", "clarity_structure_score")
-    update_max(user, feedback, "max_relevance", "relevance_score")
-    update_max(user, feedback, "max_keyword", "keyword_score")
-    update_max(user, feedback, "max_confidence", "confidence_score")
-    update_max(user, feedback, "max_conciseness", "conciseness_score")
-
-    db.commit()
-    db.refresh(user)
-    return user
-
-@with_db_session
-def save_interview(user_id: str, interview_id: str, db=None):
-    """Save a interview result as a Interview record."""
-    interview_entry = Interview(
-        interview_id=interview_id,
-        user_id=user_id,
-    )
-
-    create_interview(interview_entry)
-
-    return interview_entry
-
-@with_db_session
-def save_feedback(user_id: str, interview_id: str, question_text: str, answer_text: str, feedback_data: dict, db=None):
-    """Save a feedback result as a Question record."""
-    question_id = f"{interview_id}_{int(time.time() * 1000)}"
-
-    question_entry = Question(
-        question_id=question_id,
-        interview_id=interview_id,
-        user_id=user_id,
-        question=question_text,
-        answer=answer_text,
-        feedback=feedback_data,
-    )
-
-    create_question(question_entry)
-    update_user_after_feedback(db, user_id, feedback_data)
-
-    return question_entry
-
+    user_data = {"total_questions": user.total_questions + 1}
+    if feedback.get("clarity_structure_score", 0) > user.max_clarity:
+        user_data["max_clarity"] = feedback["clarity_structure_score"]
+    if feedback.get("relevance_score", 0) > user.max_relevance:
+        user_data["max_relevance"] = feedback["relevance_score"]
+    if feedback.get("keyword_alignment_score", 0) > user.max_keyword:
+        user_data["max_keyword"] = feedback["keyword_alignment_score"]
+    if feedback.get("confidence_score", 0) > user.max_confidence:
+        user_data["max_confidence"] = feedback["confidence_score"]
+    if feedback.get("conciseness_score", 0) > user.max_conciseness:
+        user_data["max_conciseness"] = feedback["conciseness_score"]
+    
+    user = update_user(user_id, user_data, db)
+    if not user:
+        return None
+    return question
 
 # ---------------------------
 # Internal Helper Functions
@@ -162,10 +150,10 @@ def _unwrap_api_answer(answer_text: str) -> str:
 # ---------------------------
 # Main Business Logic
 # ---------------------------
-
-def interview_start(token: str, job_description: str, question_type: str) -> Dict[str, Any]:
+@with_db_session
+def interview_start(token: str, job_description: str, question_type: str, db = None) -> Dict[str, Any]:
     """
-    Generate 3 interview questions for the given job description.
+    Generate some interview questions for the given job description.
     """
     gpt = GPTAccessClient(token)
     prompt = build_question_prompt(job_description, question_type)
@@ -181,14 +169,20 @@ def interview_start(token: str, job_description: str, question_type: str) -> Dic
     while len(items) < 3:
         items.append("")
 
-    user_id = get_user_id(token)
+    id_email = get_user_id_and_email(token)
+    user_id = id_email["id"]
     interview_id = str(uuid.uuid4())
-    save_interview(user_id=user_id, interview_id=interview_id)
+    save_interview(user_id=user_id, 
+                   interview_id=interview_id, 
+                   interview_type=question_type, 
+                   job_description=job_description,
+                   db=db
+                   )
 
     return {"interview_id": interview_id, "interview_questions": items}
 
-
-def interview_feedback(token: str, interview_question: str, interview_answer: str, interview_id: str) -> Dict[str, Any]:
+@with_db_session
+def interview_feedback(token: str, interview_id: str, interview_type: str, interview_question: str, interview_answer: str, db = None) -> Dict[str, Any]:
     """
     Generate feedback and a 5-element score list.
     """
@@ -216,12 +210,9 @@ def interview_feedback(token: str, interview_question: str, interview_answer: st
     except Exception:
         parsed_feedback = {}
 
-    user_id = get_user_id(token)
-    save_feedback(user_id=user_id, 
-                  interview_id=interview_id, 
-                  question_text=interview_question, 
-                  answer_text=interview_answer, 
-                  feedback_data=parsed_feedback)
+    id_email = get_user_id_and_email(token)
+    user_id = id_email["id"]
+    save_question(user_id, interview_id, interview_type, interview_question, interview_answer, parsed_feedback, db)
 
     return {
         "interview_feedback": parsed_feedback

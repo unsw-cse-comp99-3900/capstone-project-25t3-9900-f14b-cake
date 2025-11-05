@@ -1,34 +1,23 @@
-# app/api/user.py
-from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlalchemy.orm import Session
-from app.db.db_config import SessionLocal
-from app.services import user_service
-from app.services.auth_service import get_user_id
+from fastapi import APIRouter, HTTPException, Depends
+from app.models.user import UserDetailResponse
 from app.services.user_service import get_user_detail
+from app.api.helper import get_token
 
-router = APIRouter(prefix="/user", tags=["user"])
+router = APIRouter(prefix="/user")
 
-def get_db():
-    db = SessionLocal()
+@router.get(
+    "/detail",
+    summary="Get User Details",
+    description="Retrieves all interviews and questions for the authenticated user, including answers and feedback",
+    response_model=UserDetailResponse
+)
+async def user_detail(token: str = Depends(get_token)):
     try:
-        yield db
-    finally:
-        db.close()
-
-
-@router.get("/detail")
-async def server_user_detail(request: Request, db=Depends(get_db)):
-    try:
-        data = await request.json()
-        token = data.get("token")
-
-        if not token:
-            raise HTTPException(status_code=400, detail="Missing required fields")
-        else:
-            user_id = get_user_id(token)
-
-        detail = get_user_detail(db, user_id)
-        return {"status": "ok", "detail": detail}
-
+        result = get_user_detail(token)
+        return {
+            "user_id": result["user_id"],
+            "interviews": result["interviews"],
+            "badges": result["badges"]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -17,6 +17,8 @@ export default function FeedbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [recordId, setRecordId] = useState<string | null>(null);
 
   useEffect(() => {
     // Get data from sessionStorage (passed from answering page)
@@ -25,6 +27,29 @@ export default function FeedbackPage() {
       try {
         const data = JSON.parse(stored);
         setFeedbackData(data);
+        
+        // Calculate total score and create record ID
+        const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
+          const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
+          if (allScores.length === 0) return 0;
+          return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
+        };
+        
+        // Try to find existing record in history or create ID
+        const totalScore = calculateTotalScore(data.feedbacks);
+        const history = JSON.parse(localStorage.getItem('interview_history') || '[]');
+        const existingRecord = history.find((r: any) => 
+          r.questionType === data.questionType &&
+          r.timeElapsed === data.timeElapsed &&
+          Math.abs(r.totalScore - totalScore) < 0.1
+        );
+        
+        const id = existingRecord ? existingRecord.id : Date.now().toString();
+        setRecordId(id);
+        
+        // Check if favorite
+        const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+        setIsFavorite(favorites.some((f: any) => f.id === id));
       } catch (e) {
         console.error("Failed to parse feedback data", e);
       }
@@ -101,9 +126,53 @@ export default function FeedbackPage() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-3xl font-bold text-gray-900">
-                Interview Feedback - {questionType.charAt(0).toUpperCase() + questionType.slice(1)}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Interview Feedback - {questionType.charAt(0).toUpperCase() + questionType.slice(1)}
+                </h1>
+                {recordId && (
+                  <button
+                    onClick={() => {
+                      if (!recordId || !feedbackData) return;
+                      
+                      const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
+                        const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
+                        if (allScores.length === 0) return 0;
+                        return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
+                      };
+                      
+                      const interviewRecord = {
+                        id: recordId,
+                        questionType: feedbackData.questionType,
+                        timeElapsed: feedbackData.timeElapsed,
+                        createdAt: new Date().toISOString(),
+                        totalScore: calculateTotalScore(feedbackData.feedbacks),
+                        questions: feedbackData.questions,
+                        answers: feedbackData.answers,
+                        feedbacks: feedbackData.feedbacks,
+                        mode: feedbackData.mode,
+                      };
+                      
+                      const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+                      if (isFavorite) {
+                        const updated = favorites.filter((f: any) => f.id !== recordId);
+                        localStorage.setItem('interview_favorites', JSON.stringify(updated));
+                        setIsFavorite(false);
+                      } else {
+                        favorites.push(interviewRecord);
+                        localStorage.setItem('interview_favorites', JSON.stringify(favorites));
+                        setIsFavorite(true);
+                      }
+                    }}
+                    className="p-2 text-yellow-500 hover:text-yellow-600 transition-colors mt-1"
+                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <svg className="w-6 h-6" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <div className="text-lg text-gray-600">
                 Total Time: {formatTime(timeElapsed)}
               </div>

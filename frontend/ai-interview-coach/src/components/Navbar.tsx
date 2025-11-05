@@ -53,7 +53,9 @@ export default function Navbar({
               { label: 'Progress', href: '/progress', icon: 'trending_up' },
               { label: 'Bank', href: '/bank', icon: 'account_balance' },
             ].map(({ label, href, icon }) => {
-              const isActive = pathname === href;
+              const isActive = href === '/bank' 
+                ? pathname.startsWith('/bank')
+                : pathname === href;
               return (
                 <button
                   key={href}
