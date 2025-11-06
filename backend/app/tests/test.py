@@ -4,8 +4,9 @@ from app.external_access import GPTAccessClient, FAQAccessClient, VerifyAccessCl
 from typing import List, Optional, Any, Dict
 # from prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
-from app.services.auth_service import login
-
+from app.services.auth_service import login, get_user_id_and_email
+from app.services.interview_service import interview_start, interview_feedback
+from app.services.user_service import get_user_detail
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
 
@@ -132,12 +133,33 @@ def test_auth():
     # client = VerifyAccessClient(email, google_jwt, apple_jwt)
     # result = client.token_verify()
     result = login(email, google_jwt, apple_jwt)
+    jwt = result["token"]
+    user_info = get_user_id_and_email(jwt)
+    print(user_info)
+    print()
+
+
+def test_interview():
+    token = JWT_TOKEN
+    job_description = "We are looking for a passionate and skilled Python Developer to join our technical team. You will be responsible for designing, developing, testing, and deploying efficient, scalable, and reliable software solutions. If you are familiar with the Python ecosystem, have a deep understanding of backend development, and enjoy collaborating with cross-functional teams, we encourage you to apply."
+    question_type = "Technical"
+    interview = interview_start(token, job_description, question_type)
+    # print(interview)
+    # interview_id = "2b283ef0-4b93-4913-8efd-bd6bbf5e5917"
+    interview_id = interview["interview_id"]
+    feedback = interview_feedback(token, interview_id, question_type, question, answer)
+    print(feedback)
+    print()
+
+def test_user():
+    result = get_user_detail(JWT_TOKEN)
     print(result)
 
-
 if __name__ == "__main__":
-    print_format_answer()
+    # print_format_answer()
     # test_prompt()
     # test_gpt()
     # test_faq()
-    # test_auth()
+    test_auth()
+    test_interview()
+    test_user()

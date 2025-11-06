@@ -38,6 +38,16 @@ def reset():
     run_command(f"docker compose -f {COMPOSE_FILE} up -d --build")
     print("Reset completed.")
 
+def init_db():
+    """Create tables if not exist (safe)."""
+    print("Initializing database (create only)...")
+    run_command(f"docker exec -it {BACKEND_CONTAINER} python -m app.db.db_init")
+
+def reset_db():
+    """Drop all tables and recreate them."""
+    print("Resetting database (drop + create)...")
+    run_command(f"docker exec -it {BACKEND_CONTAINER} python -m app.db.db_init reset")
+
 
 def status():
     """Show running container status."""
@@ -95,6 +105,8 @@ Available commands:
   start               Start backend + database containers
   stop                Stop all containers
   reset               Remove containers and volumes, rebuild everything
+  initdb              Initialize database schema inside backend container
+  reset_db            Drop all tables and recreate them.
   status              Show container status
   logs                Follow backend logs
   test                Run all unit tests inside the container
@@ -116,6 +128,10 @@ if __name__ == "__main__":
         stop()
     elif command == "reset":
         reset()
+    elif command == "initdb":
+        init_db()
+    elif command == "reset_db":
+        reset_db()
     elif command == "status":
         status()
     elif command == "logs":
