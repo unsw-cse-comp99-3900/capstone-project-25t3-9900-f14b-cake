@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { API_BASE_URL } from '@/lib/constants';
 
 declare global {
   interface Window {
@@ -30,33 +31,76 @@ export default function LoginPage() {
       if (!window.google) return;
       window.google.accounts.id.initialize({
         client_id: clientId,
-        callback: (response: any) => {
-          const idToken = response?.credential as string | undefined;
-          if (!idToken) {
+        callback: async (response: any) => {
+          const googleIdToken = response?.credential as string | undefined;
+          // console.log('Google JWT Token:', googleIdToken);
+          // console.log('Full response:', response);
+          if (!googleIdToken) {
             setError('Google sign-in failed');
             return;
           }
           try {
-            localStorage.setItem('auth_token', idToken);
-            // decode token payload to extract user info
+            // Decode Google ID token (JWT) to get email
+            let email = '';
             try {
-              const payloadStr = atob(idToken.split('.')[1] ?? '');
+              const payloadStr = atob(googleIdToken.split('.')[1] ?? '');
               const payload = JSON.parse(payloadStr);
+              email = payload?.email || '';
               if (payload?.name) {
                 localStorage.setItem('username', payload.name as string);
               }
               if (payload?.picture) {
                 localStorage.setItem('avatar', payload.picture as string);
               }
-              if (payload?.email) {
-                localStorage.setItem('email', payload.email as string);
+              if (email) {
+                localStorage.setItem('email', email);
               }
             } catch (_) {
-              // ignore decode errors, token already stored
+              setError('Failed to decode Google token');
+              return;
             }
-            router.push('/home');
-          } catch (e) {
-            setError('Failed to store token');
+
+            if (!email) {
+              setError('Email not found in Google token');
+              return;
+            }
+
+            // Call backend /login API: pass Google's JWT token directly
+            try {
+              const loginResponse = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: email,
+                  google_jwt: googleIdToken, // Google 返回的 JWT token，直接传给后端
+                }),
+              });
+
+              if (!loginResponse.ok) {
+                const errorData = await loginResponse.json().catch(() => ({}));
+                setError(errorData.message || 'Login failed');
+                return;
+              }
+
+              const loginData = await loginResponse.json();
+              
+              // Store the backend token
+              localStorage.setItem('auth_token', loginData.token);
+              
+              // Store user_id if needed
+              if (loginData.user_id) {
+                localStorage.setItem('user_id', loginData.user_id);
+              }
+
+              router.push('/home');
+            } catch (e: any) {
+              console.error('Backend login error:', e);
+              setError('Failed to authenticate with server: ' + (e.message || 'Unknown error'));
+            }
+          } catch (e: any) {
+            setError('Failed to process login: ' + (e.message || 'Unknown error'));
           }
         },
         auto_select: false,

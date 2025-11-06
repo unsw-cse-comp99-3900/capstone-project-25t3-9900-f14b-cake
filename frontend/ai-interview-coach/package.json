@@ -21,7 +21,10 @@
     "axios": "^1.12.2",
     "next": "15.5.4",
     "react": "19.1.0",
+<<<<<<< HEAD
     "react-calendar": "^6.0.0",
+=======
+>>>>>>> origin/feature/demo2_frontend
     "react-dom": "19.1.0",
     "recharts": "^3.3.0"
   },
