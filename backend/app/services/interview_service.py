@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 import time
 from app.db.crud import add_interview, add_question, get_user_basic, update_user
-from app.db.models import Question, Interview
+from app.db.models import Question, Interview, current_millis
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
 from app.services.auth_service import get_user_id_and_email
@@ -20,7 +20,8 @@ def save_interview(user_id: str, interview_id: str, interview_type: str, job_des
     new_interview = Interview(interview_id=interview_id, 
                               user_id=user_id, 
                               interview_type=interview_type, 
-                              job_description=job_description)
+                              job_description=job_description,
+                              timestamp=current_millis())
     interview = add_interview(new_interview, db)
     if not interview:
         return None
@@ -52,17 +53,34 @@ def save_question(user_id: str, interview_id: str, question_type: str, question_
     user = get_user_basic(user_id, db)
     if not user:
         return None
-    user_data = {"total_questions": user.total_questions + 1}
-    if feedback.get("clarity_structure_score", 0) > user.max_clarity:
-        user_data["max_clarity"] = feedback["clarity_structure_score"]
-    if feedback.get("relevance_score", 0) > user.max_relevance:
-        user_data["max_relevance"] = feedback["relevance_score"]
-    if feedback.get("keyword_alignment_score", 0) > user.max_keyword:
-        user_data["max_keyword"] = feedback["keyword_alignment_score"]
-    if feedback.get("confidence_score", 0) > user.max_confidence:
-        user_data["max_confidence"] = feedback["confidence_score"]
-    if feedback.get("conciseness_score", 0) > user.max_conciseness:
-        user_data["max_conciseness"] = feedback["conciseness_score"]
+    clarity = feedback.get("clarity_structure_score", 0)
+    relevance = feedback.get("relevance_score", 0)
+    keyword = feedback.get("keyword_alignment_score", 0)
+    confidence = feedback.get("confidence_score", 0)
+    conciseness = feedback.get("conciseness_score", 0)
+    overall = feedback.get("overall_score", 0.0)
+
+    user_data = {
+        "total_questions": user.total_questions + 1,
+        "total_clarity": user.total_clarity + clarity,
+        "total_relevance": user.total_relevance + relevance,
+        "total_keyword": user.total_keyword + keyword,
+        "total_confidence": user.total_confidence + confidence,
+        "total_conciseness": user.total_conciseness + conciseness,
+        "total_overall": user.total_overall + overall
+        }
+    if clarity > user.max_clarity:
+        user_data["max_clarity"] = clarity
+    if relevance > user.max_relevance:
+        user_data["max_relevance"] = relevance
+    if keyword > user.max_keyword:
+        user_data["max_keyword"] = keyword
+    if confidence > user.max_confidence:
+        user_data["max_confidence"] = confidence
+    if conciseness > user.max_conciseness:
+        user_data["max_conciseness"] = conciseness
+    if overall > user.total_overall:
+        user_data["max_overall"] = overall
     
     user = update_user(user_id, user_data, db)
     if not user:

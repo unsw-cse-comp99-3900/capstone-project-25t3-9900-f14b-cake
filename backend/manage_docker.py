@@ -155,10 +155,13 @@ if __name__ == "__main__":
 
     if command == "start":
         start()
+        init_db()
     elif command == "stop":
         stop()
     elif command == "reset":
         reset()
+        reset_db()
+        init_db()
     elif command == "initdb":
         init_db()
     elif command == "reset_db":
