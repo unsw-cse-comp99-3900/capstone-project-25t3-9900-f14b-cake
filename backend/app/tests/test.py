@@ -1,12 +1,13 @@
 import json
 from textwrap import dedent
+from pprint import pprint
 from app.external_access import GPTAccessClient, FAQAccessClient, VerifyAccessClient
 from typing import List, Optional, Any, Dict
 # from prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
-from app.services.interview_service import interview_start, interview_feedback
-from app.services.user_service import get_user_detail
+from app.services.interview_service import interview_start, interview_feedback, change_interview_like
+from app.services.user_service import get_user_detail, get_user_interview_summary
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
 
@@ -135,8 +136,8 @@ def test_auth():
     result = login(email, google_jwt, apple_jwt)
     jwt = result["token"]
     user_info = get_user_id_and_email(jwt)
-    print(user_info)
-    print()
+    # print("user_info:\n", user_info)
+    # print()
 
 
 def test_interview():
@@ -148,12 +149,19 @@ def test_interview():
     # interview_id = "2b283ef0-4b93-4913-8efd-bd6bbf5e5917"
     interview_id = interview["interview_id"]
     feedback = interview_feedback(token, interview_id, question_type, question, answer)
-    print(feedback)
-    print()
+    # print("feedback:\n", feedback)
+    # print()
+    result = change_interview_like(interview_id, True)
+    print("change interview like:\n", {"interview_like": result.get("is_like", None)})
 
 def test_user():
     result = get_user_detail(JWT_TOKEN)
-    print(result)
+    print("user_detail:")
+    pprint(result)
+    print()
+    result = get_user_interview_summary(JWT_TOKEN)
+    print("interview_summary:")
+    pprint(result)
 
 if __name__ == "__main__":
     # print_format_answer()
@@ -163,3 +171,4 @@ if __name__ == "__main__":
     test_auth()
     test_interview()
     test_user()
+

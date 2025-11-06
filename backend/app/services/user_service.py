@@ -23,27 +23,27 @@ def get_user_detail(token: str, db = None):
     interviews = get_user_interviews(user_id, db)
     badges = get_user_badges(user_id, db)
 
-    result = {
-        "user_id": user.user_id,
-        "interviews": [
-            [
-                {
-                    "interview_type": q.question_type,
-                    "interview_question": q.question,
-                    "interview_answer": q.answer,
-                    "interview_feedback": dict(q.feedback) if q.feedback else {}
-                } for q in i.questions
-            ] for i in interviews if i.questions
-        ],
-        "badges": [
-            {
-                "badge_id": b.badge_id,
-                "unlocked_at": b.unlocked_at.isoformat()
-            } for b in badges
-        ]
-    }
+    # result = {
+    #     "user_id": user.user_id,
+    #     "interviews": [
+    #         [
+    #             {
+    #                 "interview_type": q.question_type,
+    #                 "interview_question": q.question,
+    #                 "interview_answer": q.answer,
+    #                 "interview_feedback": dict(q.feedback) if q.feedback else {}
+    #             } for q in i.questions
+    #         ] for i in interviews if i.questions
+    #     ],
+    #     "badges": [
+    #         {
+    #             "badge_id": b.badge_id,
+    #             "unlocked_at": b.unlocked_at.isoformat()
+    #         } for b in badges
+    #     ]
+    # }
 
-    full_result = {
+    result = {
         "user_id": user.user_id,
         "user_email": user.user_email,
         "xp": user.xp,
@@ -52,6 +52,8 @@ def get_user_detail(token: str, db = None):
         "interviews": [
             {
                 "interview_id": i.interview_id,
+                "interview_timestamp": i.timestamp,
+                "is_like": i.is_like,
                 "questions": [
                     {
                         "question_id": q.question_id,
@@ -66,7 +68,7 @@ def get_user_detail(token: str, db = None):
         "badges": [
             {
                 "badge_id": b.badge_id,
-                "unlocked_at": b.unlocked_at.isoformat()
+                "unlocked_data": b.unlocked_timestamp
             } for b in badges
         ]
     }
@@ -75,6 +77,7 @@ def get_user_detail(token: str, db = None):
 
 
 def create_new_user(user_id: str, user_email: str, db = None):
+    print("Create new user:", user_id)
     user = User(
         user_id=user_id,
         user_email=user_email,
@@ -89,13 +92,20 @@ def create_new_user(user_id: str, user_email: str, db = None):
         max_relevance=0,
         max_keyword=0,
         max_confidence=0,
-        max_conciseness=0
+        max_conciseness=0,
+        total_clarity=0,
+        total_relevance=0,
+        total_keyword=0,
+        total_confidence=0,
+        total_conciseness=0,
+        total_overall=0.0
     )
     user = add_user(user, db)
     return user
 
 
 def update_user_login(user_id: str, db = None):
+    print("User login:", user_id)
     user = get_user_basic(user_id, db)
     if not user:
         return None
@@ -146,6 +156,8 @@ def get_user_full_detail(token: str, db = None):
         "interviews": [
             {
                 "interview_id": i.interview_id,
+                "interview_timestamp": i.timestamp,
+                "is_like": i.is_like,
                 "questions": [
                     {
                         "question_id": q.question_id,
@@ -160,13 +172,29 @@ def get_user_full_detail(token: str, db = None):
         "badges": [
             {
                 "badge_id": b.badge_id,
-                "badge_name": badge_meta_by_id.get(b.badge_id, {}).get("name", ""),
-                "description": badge_meta_by_id.get(b.badge_id, {}).get("description", ""),
-                "unlocked_timestamp": b.unlocked_timestamp,
+                "unlocked_data": b.unlocked_timestamp
             } for b in badges
         ]
     }
 
     return full_result    
 
+@with_db_session
+def get_user_interview_summary(token: str, db = None):
+    from app.services.auth_service import get_user_id_and_email
+    id_email = get_user_id_and_email(token)
+    user_id = id_email.get("id")
+    user = get_user_basic(user_id, db)
+    if not user:
+        return None
     
+    questions_number = float(user.total_questions)
+    result = {
+        "avg_clarity": user.total_clarity / questions_number,
+        "avg_relevance": user.total_relevance / questions_number,
+        "avg_keyword": user.total_keyword / questions_number,
+        "avg_confidence": user.total_confidence / questions_number,
+        "avg_conciseness": user.total_conciseness / questions_number,
+        "avg_overall": user.total_overall / questions_number
+    }
+    return result
