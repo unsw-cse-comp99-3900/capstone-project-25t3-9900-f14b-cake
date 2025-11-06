@@ -2,19 +2,50 @@
 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import { ScoreDimension, TimeRange } from "@/types";
+import { ScoreDimension } from "@/types";
 import { SCORE_DIMENSION_CONFIGS } from "@/types/common";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import {
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
+    Radar,
+    ResponsiveContainer,
+    Tooltip,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Legend,
+} from "recharts";
+
+// Time range options for filtering interview sessions
+enum TimeRange {
+    RECENT_7 = "RECENT_7", // Last 7 sessions
+    RECENT_15 = "RECENT_15", // Last 15 sessions
+}
 
 // Mock data for development - backend will provide real data
-const mockReadinessData = [
-    { date: "2025-10-01", score: 65 },
-    { date: "2025-10-03", score: 68 },
-    { date: "2025-10-05", score: 72 },
-    { date: "2025-10-07", score: 75 },
-    { date: "2025-10-09", score: 78 },
-    { date: "2025-10-11", score: 82 },
-    { date: "2025-10-13", score: 85 },
-    { date: "2025-10-15", score: 88 },
+// Changed from date-based to interview session-based
+const mockReadinessDataAll = [
+    { session: 1, score: 65 },
+    { session: 2, score: 68 },
+    { session: 3, score: 72 },
+    { session: 4, score: 75 },
+    { session: 5, score: 78 },
+    { session: 6, score: 82 },
+    { session: 7, score: 85 },
+    { session: 8, score: 88 },
+    { session: 9, score: 90 },
+    { session: 10, score: 87 },
+    { session: 11, score: 91 },
+    { session: 12, score: 93 },
+    { session: 13, score: 89 },
+    { session: 14, score: 92 },
+    { session: 15, score: 94 },
 ];
 
 const mockLoginData = [
@@ -38,92 +69,111 @@ const mockLoginData = [
 const mockCategoryPerformance = [
     {
         dimension: ScoreDimension.CLARITY_STRUCTURE,
-        dimensionName: "Clarity & Structure",
-        averageScore: 4.2,
+        dimension_name: "Clarity & Structure",
+        average_score: 4.2,
         percentage: 84,
-        isStrength: true,
+        is_strength: true,
     },
     {
         dimension: ScoreDimension.RELEVANCE,
-        dimensionName: "Relevance to Question/Job",
-        averageScore: 3.8,
+        dimension_name: "Relevance to Question/Job",
+        average_score: 3.8,
         percentage: 76,
-        isStrength: true,
+        is_strength: true,
     },
     {
         dimension: ScoreDimension.KEYWORD_ALIGNMENT,
-        dimensionName: "Keyword & Skill Alignment",
-        averageScore: 3.1,
+        dimension_name: "Keyword & Skill Alignment",
+        average_score: 3.1,
         percentage: 62,
-        isStrength: false,
+        is_strength: false,
     },
     {
         dimension: ScoreDimension.CONFIDENCE_DELIVERY,
-        dimensionName: "Confidence & Delivery",
-        averageScore: 3.5,
+        dimension_name: "Confidence & Delivery",
+        average_score: 3.5,
         percentage: 70,
-        isStrength: false,
+        is_strength: false,
     },
     {
         dimension: ScoreDimension.CONCISENESS_FOCUS,
-        dimensionName: "Conciseness & Focus",
-        averageScore: 4.0,
+        dimension_name: "Conciseness & Focus",
+        average_score: 4.0,
         percentage: 80,
-        isStrength: true,
+        is_strength: true,
     },
 ];
 
-export default function ProgressPage() {
-    const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.WEEKLY);
-    const [showReadinessDetails, setShowReadinessDetails] = useState(false);
-    const [showLoginDetails, setShowLoginDetails] = useState(false);
-    const [showCategoryDetails, setShowCategoryDetails] = useState(false);
+// Prepare radar chart data with dual layers (current vs target)
+const radarChartData = mockCategoryPerformance.map((dim) => ({
+    subject: dim.dimension_name.split(" ")[0], // Shortened names for radar chart
+    current: dim.percentage, // Current performance
+    target: 85, // Target/benchmark score
+    fullMark: 100,
+}));
 
-    // Calculate max score for chart scaling
+export default function ProgressPage() {
+    const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.RECENT_7);
+
+    // Filter data based on selected time range
+    const mockReadinessData =
+        timeRange === TimeRange.RECENT_7
+            ? mockReadinessDataAll.slice(-7) // Last 7 sessions
+            : mockReadinessDataAll.slice(-15); // Last 15 sessions
+
+    // Calculate statistics
     const maxScore = Math.max(...mockReadinessData.map((d) => d.score));
     const minScore = Math.min(...mockReadinessData.map((d) => d.score));
+    const averageScore =
+        mockReadinessData.reduce((sum, d) => sum + d.score, 0) /
+        mockReadinessData.length;
+    const improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(
+        1
+    );
 
     // Calculate login streak
     const currentStreak = mockLoginData
+        .slice()
         .reverse()
         .findIndex((day) => !day.hasLogin);
     const loginStreakDays =
         currentStreak === -1 ? mockLoginData.length : currentStreak;
+    const totalLoginDays = mockLoginData.filter((d) => d.hasLogin).length;
+    const maxLoginStreak = 7; // This should come from backend
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar />
 
-            <main className="flex-1 p-10 pt-24">
+            <main className="flex-1 p-8 pt-24 max-w-7xl mx-auto w-full">
                 {/* Page Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-gray-800 mb-2">
                         Progress Tracking System
                     </h1>
                     <p className="text-lg text-gray-600">
-                        View your learning statistics and progress
+                        Detailed analysis of your interview performance and
+                        progress
                     </p>
                 </div>
 
-                {/* Main Grid Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-                    {/* Left Side - Readiness Scores Over Time */}
-                    <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">
-                                Readiness Scores Over Time
+                {/* Main Content */}
+                <div className="space-y-8">
+                    {/* Readiness Scores Section */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                                Interview Performance Progression
                             </h2>
-                            <button
-                                onClick={() => setShowReadinessDetails(true)}
-                                className="px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                            >
-                                Detailed Information
-                            </button>
+                            <p className="text-sm text-gray-600">
+                                Track your readiness score improvement across
+                                interview sessions
+                            </p>
                         </div>
 
                         {/* Time Range Selector */}
                         <div className="flex space-x-2 mb-6">
-                            {[TimeRange.WEEKLY, TimeRange.MONTHLY].map(
+                            {[TimeRange.RECENT_7, TimeRange.RECENT_15].map(
                                 (range) => (
                                     <button
                                         key={range}
@@ -134,90 +184,152 @@ export default function ProgressPage() {
                                                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                         }`}
                                     >
-                                        {range === TimeRange.WEEKLY
-                                            ? "Weekly"
-                                            : "Monthly"}
+                                        {range === TimeRange.RECENT_7
+                                            ? "Last 7 Sessions"
+                                            : "Last 15 Sessions"}
                                     </button>
                                 )
                             )}
                         </div>
 
-                        {/* Chart Area */}
-                        <div className="relative h-64 bg-gray-50 rounded-lg p-4">
-                            <svg
-                                className="w-full h-full"
-                                viewBox="0 0 400 200"
-                            >
-                                {/* Grid lines */}
-                                {[0, 25, 50, 75, 100].map((value, index) => (
-                                    <g key={value}>
-                                        <line
-                                            x1="40"
-                                            y1={180 - value * 1.4}
-                                            x2="380"
-                                            y2={180 - value * 1.4}
-                                            stroke="#e5e7eb"
-                                            strokeWidth="1"
-                                        />
-                                        <text
-                                            x="35"
-                                            y={185 - value * 1.4}
-                                            fontSize="10"
-                                            fill="#6b7280"
-                                            textAnchor="end"
+                        {/* Chart with X-axis as Interview Sessions */}
+                        <div
+                            className="relative bg-gray-50 rounded-lg p-6 mb-6"
+                            style={{ height: "320px" }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart
+                                    data={mockReadinessData}
+                                    margin={{
+                                        top: 10,
+                                        right: 30,
+                                        left: 20,
+                                        bottom: 20,
+                                    }}
+                                >
+                                    <defs>
+                                        <linearGradient
+                                            id="lineGradient"
+                                            x1="0"
+                                            y1="0"
+                                            x2="1"
+                                            y2="0"
                                         >
-                                            {value}
-                                        </text>
-                                    </g>
-                                ))}
+                                            <stop
+                                                offset="0%"
+                                                stopColor="#3b82f6"
+                                                stopOpacity={0.8}
+                                            />
+                                            <stop
+                                                offset="100%"
+                                                stopColor="#2563eb"
+                                                stopOpacity={1}
+                                            />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="#e5e7eb"
+                                        vertical={false}
+                                        opacity={0.5}
+                                    />
+                                    <XAxis
+                                        dataKey="session"
+                                        stroke="#6b7280"
+                                        style={{
+                                            fontSize: "12px",
+                                            fontWeight: 500,
+                                        }}
+                                        tickLine={false}
+                                        axisLine={{ stroke: "#e5e7eb" }}
+                                        label={{
+                                            value: "Interview Session Number",
+                                            position: "insideBottom",
+                                            offset: -10,
+                                            style: {
+                                                fontSize: "13px",
+                                                fill: "#374151",
+                                                fontWeight: 600,
+                                            },
+                                        }}
+                                        tickFormatter={(value) => `#${value}`}
+                                    />
+                                    <YAxis
+                                        domain={[40, 100]}
+                                        stroke="#6b7280"
+                                        style={{
+                                            fontSize: "12px",
+                                            fontWeight: 500,
+                                        }}
+                                        tickLine={false}
+                                        axisLine={{ stroke: "#e5e7eb" }}
+                                        label={{
+                                            value: "Readiness Score",
+                                            angle: -90,
+                                            position: "insideLeft",
+                                            style: {
+                                                fontSize: "13px",
+                                                fill: "#374151",
+                                                fontWeight: 600,
+                                            },
+                                        }}
+                                        ticks={[40, 50, 60, 70, 80, 90, 100]}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "#fff",
+                                            border: "1px solid #e5e7eb",
+                                            borderRadius: "8px",
+                                            fontSize: "12px",
+                                            boxShadow:
+                                                "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                            padding: "8px 12px",
+                                        }}
+                                        labelStyle={{
+                                            fontWeight: 600,
+                                            color: "#374151",
+                                            marginBottom: "4px",
+                                        }}
+                                        formatter={(value: number) => [
+                                            `${value}`,
+                                            "Readiness Score",
+                                        ]}
+                                        labelFormatter={(label) =>
+                                            `Session #${label}`
+                                        }
+                                        separator=": "
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="score"
+                                        stroke="url(#lineGradient)"
+                                        strokeWidth={3}
+                                        dot={{
+                                            fill: "#3b82f6",
+                                            r: 5,
+                                            strokeWidth: 2,
+                                            stroke: "#fff",
+                                        }}
+                                        activeDot={{
+                                            r: 7,
+                                            strokeWidth: 2,
+                                            stroke: "#fff",
+                                            fill: "#2563eb",
+                                        }}
+                                        animationDuration={800}
+                                        animationEasing="ease-out"
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
 
-                                {/* Chart line */}
-                                <polyline
-                                    fill="none"
-                                    stroke="#3b82f6"
-                                    strokeWidth="3"
-                                    points={mockReadinessData
-                                        .map((point, index) => {
-                                            const x =
-                                                40 +
-                                                index *
-                                                    (340 /
-                                                        (mockReadinessData.length -
-                                                            1));
-                                            const y =
-                                                180 - (point.score - 50) * 2.6;
-                                            return `${x},${y}`;
-                                        })
-                                        .join(" ")}
-                                />
-
-                                {/* Data points */}
-                                {mockReadinessData.map((point, index) => {
-                                    const x =
-                                        40 +
-                                        index *
-                                            (340 /
-                                                (mockReadinessData.length - 1));
-                                    const y = 180 - (point.score - 50) * 2.6;
-                                    return (
-                                        <circle
-                                            key={index}
-                                            cx={x}
-                                            cy={y}
-                                            r="4"
-                                            fill="#3b82f6"
-                                            className="hover:fill-blue-700 cursor-pointer"
-                                        />
-                                    );
-                                })}
-                            </svg>
-
-                            {/* Current Score Display */}
-                            <div className="absolute top-4 right-4 bg-white rounded-lg shadow px-3 py-2">
-                                <div className="text-sm text-gray-600">
+                        {/* Statistics Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-blue-50 rounded-lg p-4">
+                                <div className="text-sm text-blue-600 font-medium mb-1">
                                     Current Score
                                 </div>
-                                <div className="text-2xl font-bold text-blue-600">
+                                <div className="text-3xl font-bold text-blue-700">
                                     {
                                         mockReadinessData[
                                             mockReadinessData.length - 1
@@ -225,127 +337,451 @@ export default function ProgressPage() {
                                     }
                                 </div>
                             </div>
+                            <div className="bg-green-50 rounded-lg p-4">
+                                <div className="text-sm text-green-600 font-medium mb-1">
+                                    Average Score
+                                </div>
+                                <div className="text-3xl font-bold text-green-700">
+                                    {averageScore.toFixed(1)}
+                                </div>
+                            </div>
+                            <div className="bg-purple-50 rounded-lg p-4">
+                                <div className="text-sm text-purple-600 font-medium mb-1">
+                                    Best Score
+                                </div>
+                                <div className="text-3xl font-bold text-purple-700">
+                                    {maxScore}
+                                </div>
+                            </div>
+                            <div className="bg-orange-50 rounded-lg p-4">
+                                <div className="text-sm text-orange-600 font-medium mb-1">
+                                    Improvement
+                                </div>
+                                <div className="text-3xl font-bold text-orange-700">
+                                    +{improvementRate}%
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Detailed Analysis */}
+                        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <h4 className="font-semibold text-blue-900 mb-2">
+                                📊 Performance Analysis
+                            </h4>
+                            <p className="text-sm text-blue-800">
+                                Your readiness score has improved from{" "}
+                                <strong>{minScore}</strong> to{" "}
+                                <strong>{maxScore}</strong> over{" "}
+                                {mockReadinessData.length} interview sessions.
+                                This represents a{" "}
+                                <strong>{improvementRate}%</strong> improvement,
+                                showing consistent progress in your interview
+                                skills. Keep up the great work!
+                            </p>
                         </div>
                     </div>
 
-                    {/* Right Side */}
-                    <div className="space-y-6">
-                        {/* Consecutive Login Records */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold text-gray-800">
-                                    Consecutive Login Records
+                    {/* Bottom Grid: Login History + Dimension Analysis */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Login History - Left Side */}
+                        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <div className="mb-6">
+                                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                    Login Activity
                                 </h3>
-                                <button
-                                    onClick={() => setShowLoginDetails(true)}
-                                    className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-                                >
-                                    Detailed Information
-                                </button>
+                                <p className="text-sm text-gray-600">
+                                    Your practice consistency record
+                                </p>
                             </div>
 
-                            {/* Current Streak Display */}
-                            <div className="text-center mb-4">
-                                <div className="text-3xl font-bold text-green-600">
-                                    {loginStreakDays}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Days Streak
-                                </div>
+                            {/* Calendar */}
+                            <div className="mb-6">
+                                <style jsx global>{`
+                                    .react-calendar {
+                                        width: 100%;
+                                        border: none;
+                                        font-family: inherit;
+                                        background: transparent;
+                                    }
+                                    .react-calendar__navigation {
+                                        margin-bottom: 1rem;
+                                    }
+                                    .react-calendar__navigation button {
+                                        color: #374151;
+                                        font-size: 1rem;
+                                        font-weight: 600;
+                                        padding: 0.5rem;
+                                    }
+                                    .react-calendar__navigation
+                                        button:enabled:hover,
+                                    .react-calendar__navigation
+                                        button:enabled:focus {
+                                        background-color: #f3f4f6;
+                                        border-radius: 0.5rem;
+                                    }
+                                    .react-calendar__month-view__weekdays {
+                                        text-align: center;
+                                        font-size: 0.75rem;
+                                        font-weight: 600;
+                                        color: #6b7280;
+                                        margin-bottom: 0.5rem;
+                                    }
+                                    .react-calendar__month-view__weekdays__weekday {
+                                        padding: 0.5rem;
+                                    }
+                                    .react-calendar__tile {
+                                        padding: 0.75rem 0.5rem;
+                                        font-size: 0.875rem;
+                                        border-radius: 0.5rem;
+                                        transition: all 0.2s;
+                                        background: transparent;
+                                    }
+                                    .react-calendar__tile:enabled:hover,
+                                    .react-calendar__tile:enabled:focus {
+                                        background-color: #f3f4f6;
+                                    }
+                                    .react-calendar__tile--active {
+                                        background: #3b82f6 !important;
+                                        color: white !important;
+                                        font-weight: 600;
+                                    }
+                                    .react-calendar__tile--now {
+                                        background: #dbeafe;
+                                        font-weight: 600;
+                                    }
+                                    .react-calendar__tile--hasLogin {
+                                        background: #10b981 !important;
+                                        color: white !important;
+                                        font-weight: 600;
+                                        position: relative;
+                                    }
+                                    .react-calendar__tile--hasLogin::after {
+                                        content: "✓";
+                                        position: absolute;
+                                        top: 2px;
+                                        right: 4px;
+                                        font-size: 0.7rem;
+                                    }
+                                    .react-calendar__month-view__days__day--neighboringMonth {
+                                        color: #d1d5db;
+                                    }
+                                `}</style>
+                                <Calendar
+                                    value={new Date()}
+                                    tileClassName={({ date }) => {
+                                        const dateStr = date
+                                            .toISOString()
+                                            .split("T")[0];
+                                        const hasLogin = mockLoginData.find(
+                                            (d) => d.date === dateStr
+                                        )?.hasLogin;
+                                        return hasLogin
+                                            ? "react-calendar__tile--hasLogin"
+                                            : "";
+                                    }}
+                                    locale="en-US"
+                                    showNeighboringMonth={true}
+                                    next2Label={null}
+                                    prev2Label={null}
+                                />
                             </div>
 
-                            {/* Calendar Thumbnails */}
-                            <div className="grid grid-cols-7 gap-1">
-                                {mockLoginData.slice(-14).map((day, index) => {
-                                    const dayNum = new Date(day.date).getDate();
-                                    return (
-                                        <div
-                                            key={index}
-                                            className={`aspect-square rounded text-xs flex items-center justify-center font-medium ${
-                                                day.hasLogin
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-gray-100 text-gray-400"
-                                            }`}
-                                        >
-                                            {dayNum}
+                            {/* Login Statistics */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                    <div>
+                                        <div className="text-sm text-green-600 font-medium">
+                                            Current Streak
                                         </div>
-                                    );
-                                })}
+                                        <div className="text-2xl font-bold text-green-700">
+                                            {loginStreakDays} days
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl">🔥</div>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                    <div>
+                                        <div className="text-sm text-blue-600 font-medium">
+                                            Max Streak
+                                        </div>
+                                        <div className="text-2xl font-bold text-blue-700">
+                                            {maxLoginStreak} days
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl">⚡</div>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                                    <div>
+                                        <div className="text-sm text-purple-600 font-medium">
+                                            Total Days
+                                        </div>
+                                        <div className="text-2xl font-bold text-purple-700">
+                                            {totalLoginDays} days
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl">📅</div>
+                                </div>
+                            </div>
+
+                            {/* Motivational Message */}
+                            <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100">
+                                <p className="text-sm text-gray-700 italic">
+                                    💪 You&apos;ve maintained a{" "}
+                                    <strong>{loginStreakDays}-day</strong> login
+                                    streak. Consistent practice is the key to
+                                    interview success!
+                                </p>
                             </div>
                         </div>
 
-                        {/* Performance Dimensions Analysis */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold text-gray-800">
+                        {/* Performance Dimensions - Right Side (2 cols) */}
+                        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <div className="mb-6">
+                                <h3 className="text-xl font-bold text-gray-800 mb-2">
                                     Performance Dimensions Analysis
                                 </h3>
-                                <button
-                                    onClick={() => setShowCategoryDetails(true)}
-                                    className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                                >
-                                    Detailed Information
-                                </button>
+                                <p className="text-sm text-gray-600">
+                                    5-dimensional breakdown of your interview
+                                    skills
+                                </p>
                             </div>
 
+                            {/* Radar Chart */}
+                            <div className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <RadarChart data={radarChartData}>
+                                        <defs>
+                                            <linearGradient
+                                                id="radarGradient1"
+                                                x1="0"
+                                                y1="0"
+                                                x2="0"
+                                                y2="1"
+                                            >
+                                                <stop
+                                                    offset="0%"
+                                                    stopColor="#3b82f6"
+                                                    stopOpacity={0.8}
+                                                />
+                                                <stop
+                                                    offset="100%"
+                                                    stopColor="#2563eb"
+                                                    stopOpacity={0.3}
+                                                />
+                                            </linearGradient>
+                                            <linearGradient
+                                                id="radarGradient2"
+                                                x1="0"
+                                                y1="0"
+                                                x2="0"
+                                                y2="1"
+                                            >
+                                                <stop
+                                                    offset="0%"
+                                                    stopColor="#10b981"
+                                                    stopOpacity={0.6}
+                                                />
+                                                <stop
+                                                    offset="100%"
+                                                    stopColor="#059669"
+                                                    stopOpacity={0.2}
+                                                />
+                                            </linearGradient>
+                                        </defs>
+                                        <PolarGrid
+                                            stroke="#cbd5e1"
+                                            strokeWidth={1.5}
+                                            strokeDasharray="3 3"
+                                        />
+                                        <PolarAngleAxis
+                                            dataKey="subject"
+                                            tick={{
+                                                fill: "#1e293b",
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                            }}
+                                            tickLine={false}
+                                        />
+                                        <PolarRadiusAxis
+                                            angle={90}
+                                            domain={[0, 100]}
+                                            tick={{
+                                                fill: "#64748b",
+                                                fontSize: 12,
+                                                fontWeight: 500,
+                                            }}
+                                            tickCount={6}
+                                            axisLine={false}
+                                        />
+                                        {/* Target/Benchmark Layer (behind) */}
+                                        <Radar
+                                            name="Target (85%)"
+                                            dataKey="target"
+                                            stroke="#10b981"
+                                            strokeWidth={2}
+                                            fill="url(#radarGradient2)"
+                                            fillOpacity={0.4}
+                                            dot={{
+                                                r: 4,
+                                                fill: "#10b981",
+                                                strokeWidth: 0,
+                                            }}
+                                        />
+                                        {/* Current Performance Layer (front) */}
+                                        <Radar
+                                            name="Your Performance"
+                                            dataKey="current"
+                                            stroke="#3b82f6"
+                                            strokeWidth={3}
+                                            fill="url(#radarGradient1)"
+                                            fillOpacity={0.6}
+                                            dot={{
+                                                r: 5,
+                                                fill: "#3b82f6",
+                                                strokeWidth: 2,
+                                                stroke: "#fff",
+                                            }}
+                                            activeDot={{
+                                                r: 7,
+                                                fill: "#2563eb",
+                                                strokeWidth: 2,
+                                                stroke: "#fff",
+                                            }}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: "#ffffff",
+                                                border: "2px solid #e2e8f0",
+                                                borderRadius: "12px",
+                                                boxShadow:
+                                                    "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                                                padding: "12px 16px",
+                                            }}
+                                            labelStyle={{
+                                                color: "#1e293b",
+                                                fontWeight: 700,
+                                                fontSize: "14px",
+                                                marginBottom: "8px",
+                                            }}
+                                            itemStyle={{
+                                                color: "#64748b",
+                                                fontSize: "13px",
+                                                fontWeight: 500,
+                                                padding: "4px 0",
+                                            }}
+                                            formatter={(
+                                                value: number,
+                                                name: string
+                                            ) => [`${value}%`, name]}
+                                        />
+                                        <Legend
+                                            wrapperStyle={{
+                                                paddingTop: "20px",
+                                                fontSize: "14px",
+                                                fontWeight: 600,
+                                            }}
+                                            iconType="circle"
+                                            iconSize={12}
+                                        />
+                                    </RadarChart>
+                                </ResponsiveContainer>
+
+                                {/* Chart Legend Description */}
+                                <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                        <span className="text-gray-700 font-medium">
+                                            Your Current Performance
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <span className="text-gray-700 font-medium">
+                                            Target Benchmark (85%)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Detailed Dimension Analysis */}
                             <div className="space-y-4">
+                                <h4 className="font-semibold text-gray-800 mb-3">
+                                    Detailed Breakdown:
+                                </h4>
                                 {mockCategoryPerformance.map((dim) => (
                                     <div
                                         key={dim.dimension}
-                                        className="space-y-2"
+                                        className="bg-gray-50 rounded-lg p-4 border border-gray-100"
                                     >
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">
+                                        <div className="flex items-start gap-3 mb-3">
+                                            <span className="text-2xl">
+                                                {
+                                                    SCORE_DIMENSION_CONFIGS[
+                                                        dim.dimension
+                                                    ].icon
+                                                }
+                                            </span>
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h5 className="font-semibold text-gray-800">
+                                                        {dim.dimension_name}
+                                                    </h5>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-semibold text-gray-700">
+                                                            {dim.average_score}
+                                                            /5
+                                                        </span>
+                                                        <span className="text-lg font-bold text-gray-800">
+                                                            {dim.percentage}%
+                                                        </span>
+                                                        <span
+                                                            className={`text-xs px-3 py-1 rounded-full font-medium ${
+                                                                dim.is_strength
+                                                                    ? "bg-green-100 text-green-700"
+                                                                    : "bg-orange-100 text-orange-700"
+                                                            }`}
+                                                        >
+                                                            {dim.is_strength
+                                                                ? "✓ Strength"
+                                                                : "⚠ Needs Work"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mb-3">
                                                     {
                                                         SCORE_DIMENSION_CONFIGS[
                                                             dim.dimension
-                                                        ].icon
+                                                        ].description
                                                     }
-                                                </span>
-                                                <span className="text-sm font-medium text-gray-700">
-                                                    {dim.dimensionName}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-xs text-gray-600">
-                                                    {dim.averageScore}/5
-                                                </span>
-                                                <span className="text-sm font-bold">
-                                                    {dim.percentage}%
-                                                </span>
-                                                <span
-                                                    className={`text-xs px-2 py-1 rounded-full ${
-                                                        dim.isStrength
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-orange-100 text-orange-700"
-                                                    }`}
-                                                >
-                                                    {dim.isStrength
-                                                        ? "Strength"
-                                                        : "Needs Work"}
-                                                </span>
+                                                </p>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`h-2 rounded-full transition-all ${
+                                                            dim.is_strength
+                                                                ? "bg-green-500"
+                                                                : "bg-orange-500"
+                                                        }`}
+                                                        style={{
+                                                            width: `${dim.percentage}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="mt-3 p-3 bg-white rounded border border-gray-200">
+                                                    <p className="text-xs text-gray-700">
+                                                        <strong>
+                                                            {dim.is_strength
+                                                                ? "💡 Keep it up:"
+                                                                : "📈 Improvement tip:"}
+                                                        </strong>{" "}
+                                                        {dim.is_strength
+                                                            ? "You're excelling in this area! Continue leveraging this strength in your interviews."
+                                                            : "Focus on practicing this dimension more. Review feedback and work on specific examples."}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                            <div
-                                                className={`h-2 rounded-full transition-all ${
-                                                    dim.isStrength
-                                                        ? "bg-green-500"
-                                                        : "bg-orange-500"
-                                                }`}
-                                                style={{
-                                                    width: `${dim.percentage}%`,
-                                                }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {
-                                                SCORE_DIMENSION_CONFIGS[
-                                                    dim.dimension
-                                                ].description
-                                            }
-                                        </p>
                                     </div>
                                 ))}
                             </div>
@@ -353,114 +789,6 @@ export default function ProgressPage() {
                     </div>
                 </div>
             </main>
-
-            {/* Modal placeholders - will show detailed information */}
-            {showReadinessDetails && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                            Readiness Score Details
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            Your readiness score has improved from {minScore} to{" "}
-                            {maxScore} over the selected period. This represents
-                            a{" "}
-                            {(((maxScore - minScore) / minScore) * 100).toFixed(
-                                1
-                            )}
-                            % improvement.
-                        </p>
-                        <button
-                            onClick={() => setShowReadinessDetails(false)}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {showLoginDetails && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                            Login Streak Details
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            You have maintained a {loginStreakDays}-day login
-                            streak. Consistent practice is key to interview
-                            success!
-                        </p>
-                        <button
-                            onClick={() => setShowLoginDetails(false)}
-                            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {showCategoryDetails && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                            Performance Dimension Details
-                        </h3>
-                        <div className="space-y-4 mb-6">
-                            {mockCategoryPerformance.map((dim) => (
-                                <div
-                                    key={dim.dimension}
-                                    className="bg-gray-50 rounded-lg p-4"
-                                >
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-2xl">
-                                            {
-                                                SCORE_DIMENSION_CONFIGS[
-                                                    dim.dimension
-                                                ].icon
-                                            }
-                                        </span>
-                                        <h4 className="font-semibold text-gray-800">
-                                            {dim.dimensionName}
-                                        </h4>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2">
-                                        {
-                                            SCORE_DIMENSION_CONFIGS[
-                                                dim.dimension
-                                            ].description
-                                        }
-                                    </p>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-700">
-                                            Average Score: {dim.averageScore}/5
-                                            ({dim.percentage}%)
-                                        </span>
-                                        <span
-                                            className={`text-sm px-3 py-1 rounded-full font-medium ${
-                                                dim.isStrength
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-orange-100 text-orange-700"
-                                            }`}
-                                        >
-                                            {dim.isStrength
-                                                ? "Strength - Keep it up!"
-                                                : "Needs Work - Practice more"}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <button
-                            onClick={() => setShowCategoryDetails(false)}
-                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
