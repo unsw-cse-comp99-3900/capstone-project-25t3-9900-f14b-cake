@@ -33,6 +33,7 @@ def check_badges_for_user(user, db=None):
 
         if meets_condition(user, badge):
             unlock_badge(user.user_id, badge.badge_id, db)
+            print("unluck:" + badge.name)
             newly_unlocked.append(badge)
 
     # Optionally update user's total_badges count

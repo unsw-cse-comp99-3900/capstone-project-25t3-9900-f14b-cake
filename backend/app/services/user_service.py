@@ -4,6 +4,7 @@ from app.db.models import current_millis, User
 from app.services import badge_service
 from datetime import datetime, timezone, date
 from app.services.utils import with_db_session
+from datetime import date
 
 def day_from_millis(ms: int):
     """Convert millisecond timestamps to UTC days integers."""
@@ -76,7 +77,19 @@ def get_user_detail(token: str, db = None):
 def create_new_user(user_id: str, user_email: str, db = None):
     user = User(
         user_id=user_id,
-        user_email=user_email
+        user_email=user_email,
+        xp=0,
+        total_questions=0,
+        total_interviews=0,
+        total_badges=0,
+        total_logins=0,
+        last_login=date.today(),
+        consecutive_days=0,
+        max_clarity=0,
+        max_relevance=0,
+        max_keyword=0,
+        max_confidence=0,
+        max_conciseness=0
     )
     user = add_user(user, db)
     return user

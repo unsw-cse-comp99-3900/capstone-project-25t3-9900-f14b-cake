@@ -2,6 +2,8 @@
 import os
 import subprocess
 import sys
+import socket
+import time
 
 COMPOSE_FILE = "docker-compose.yml"
 BACKEND_CONTAINER = "backend_app"
@@ -30,18 +32,47 @@ def stop():
     print("All containers stopped.")
 
 
+# def reset():
+#     """Completely remove containers and volumes, then rebuild."""
+#     print("Performing full reset (containers + volumes)...")
+#     run_command(f"docker compose -f {COMPOSE_FILE} down -v")
+#     print("Rebuilding and restarting containers...")
+#     run_command(f"docker compose -f {COMPOSE_FILE} up -d --build")
+#     print("Reset completed.")
+def is_port_in_use(port: int) -> bool:
+    """Check if a given port is already in use."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+
 def reset():
     """Completely remove containers and volumes, then rebuild."""
     print("Performing full reset (containers + volumes)...")
     run_command(f"docker compose -f {COMPOSE_FILE} down -v")
+
+    # 等待端口释放
+    port = 9000
+    print(f"Checking if port {port} is free...")
+    for _ in range(10):
+        if not is_port_in_use(port):
+            print(f"Port {port} is free.")
+            break
+        print(f"Port {port} still in use, waiting...")
+        time.sleep(2)
+    else:
+        print(f"Warning: Port {port} still occupied. Try restarting Docker manually.")
+        sys.exit(1)
+
     print("Rebuilding and restarting containers...")
     run_command(f"docker compose -f {COMPOSE_FILE} up -d --build")
-    print("Reset completed.")
+    print("Reset completed successfully.")
 
 def init_db():
     """Create tables if not exist (safe)."""
     print("Initializing database (create only)...")
     run_command(f"docker exec -it {BACKEND_CONTAINER} python -m app.db.db_init")
+    print("Loading default badge data...")
+    run_command(f"docker exec -it {BACKEND_CONTAINER} python -m app.db.init_badges")
 
 def reset_db():
     """Drop all tables and recreate them."""

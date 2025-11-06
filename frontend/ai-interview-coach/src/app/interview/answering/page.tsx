@@ -16,6 +16,8 @@ export default function AnsweringPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [interviewId, setInterviewId] = useState<string | null>(null);
+  const [interviewType, setInterviewType] = useState<string | null>(null);
 
   const questionType = searchParams.get("type") || "behavioural";
   const mode = searchParams.get("mode") || "text";
@@ -104,6 +106,8 @@ export default function AnsweringPage() {
         });
         if (!isCancelled) {
           setQuestions(res.interview_questions || []);
+          setInterviewId(res.interview_id);
+          setInterviewType(questionType); // 使用 URL 参数中的 questionType 作为 interview_type
         }
       } catch (e) {
         if (!isCancelled) {
@@ -262,14 +266,38 @@ export default function AnsweringPage() {
     }
 
     try {
+      if (!interviewId || !interviewType) {
+        setCurrentFeedback({ 
+          text: "Interview session not initialized. Please refresh the page.", 
+          error: true, 
+          loading: false 
+        });
+        setShowFeedback(true);
+        return;
+      }
+
       setCurrentFeedback({ loading: true });
       const res = await interviewService.feedback({
+        interview_id: interviewId,
+        interview_type: interviewType,
         interview_question: questionText,
         interview_answer: answer,
       });
+      
+      // Extract feedback data from the response object
+      const feedback = res.interview_feedback;
+      const feedbackText = feedback.overall_summary || 'No feedback available';
+      const scores = [
+        feedback.clarity_structure_score,
+        feedback.relevance_score,
+        feedback.keyword_alignment_score,
+        feedback.confidence_score,
+        feedback.conciseness_score
+      ];
+      
       setCurrentFeedback({ 
-        text: res.interview_feedback, 
-        scores: res.interview_score, 
+        text: feedbackText, 
+        scores: scores, 
         error: false, 
         loading: false 
       });

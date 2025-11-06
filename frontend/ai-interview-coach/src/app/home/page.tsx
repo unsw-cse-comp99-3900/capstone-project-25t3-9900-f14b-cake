@@ -1,20 +1,90 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import type { InterviewRecord } from '@/app/bank/history/type';
 
 export default function HomePage() {
   const router = useRouter();
-  const [records] = useState([
-    'Interview Record 1',
-    'Interview Record 2',
-    'Interview Record 3',
-    'Interview Record 4',
-    'Interview Record 5',
-    'Interview Record 6',
-    'Interview Record 7',
-  ]);
+  const [records, setRecords] = useState<InterviewRecord[]>([]);
+
+  // Load interview records from localStorage
+  useEffect(() => {
+    const loadRecords = () => {
+      const stored = localStorage.getItem('interview_history');
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          setRecords(data);
+        } catch (e) {
+          console.error('Failed to parse interview history', e);
+        }
+      }
+    };
+    loadRecords();
+  }, []);
+
+  // Prepare chart data from records - count interviews per day
+  const chartData = useMemo(() => {
+    const days = 7;
+    interface ChartDataPoint {
+      date: string;
+      dateKey: string;
+      count: number;
+    }
+    const dataMap = new Map<string, ChartDataPoint>();
+    
+    // Calculate the start date (7 days ago from today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - (days - 1)); // Include today, so go back 6 days
+    
+    // Initialize all 7 days with 0
+    const chartDataArray: ChartDataPoint[] = [];
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const dayLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dataPoint: ChartDataPoint = { date: dayLabel, dateKey, count: 0 };
+      dataMap.set(dateKey, dataPoint);
+      chartDataArray.push(dataPoint);
+    }
+
+    if (records && records.length > 0) {
+      // Count interviews per day (only for dates in our 7-day range)
+      records.forEach((record) => {
+        const recordDate = new Date(record.createdAt);
+        recordDate.setHours(0, 0, 0, 0); // Reset to start of day
+        const dateKey = recordDate.toISOString().split('T')[0];
+        
+        if (dataMap.has(dateKey)) {
+          const existing = dataMap.get(dateKey)!;
+          existing.count += 1;
+        }
+      });
+    } else {
+      // Generate mock data for demonstration
+      chartDataArray.forEach((entry) => {
+        entry.count = Math.floor(Math.random() * 3) + 1;
+      });
+    }
+
+    // Return the array (already sorted chronologically)
+    return chartDataArray;
+  }, [records]);
+
+  // Calculate total interviews in the last 7 days (from chart data)
+  const recentWeekTotal = useMemo(() => {
+    if (chartData.length === 0) {
+      return 0;
+    }
+    // Sum up all counts from the chart data
+    return chartData.reduce((sum, dataPoint) => sum + dataPoint.count, 0);
+  }, [chartData]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -83,18 +153,83 @@ export default function HomePage() {
             <div className="modern-card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Recent interviews</h3>
-                <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{records.length} total</span>
+                <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{recentWeekTotal} total</span>
               </div>
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {records.slice(0, 4).map((record, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
-                  >
-                    <span className="text-gray-700 font-medium">{record}</span>
-                    <span className="material-symbols-outlined text-gray-400 group-hover:text-blue-500 transition-colors">chevron_right</span>
+              <div className="h-64">
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart 
+                      data={chartData} 
+                      margin={{ top: 10, right: 15, left: 0, bottom: 5 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke="#e5e7eb" 
+                        vertical={false}
+                        opacity={0.5}
+                      />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#6b7280"
+                        style={{ fontSize: '11px', fontWeight: 500 }}
+                        tickLine={false}
+                        axisLine={{ stroke: '#e5e7eb' }}
+                      />
+                      <YAxis 
+                        domain={[0, 'dataMax + 1']}
+                        stroke="#6b7280"
+                        style={{ fontSize: '11px', fontWeight: 500 }}
+                        tickLine={false}
+                        axisLine={{ stroke: '#e5e7eb' }}
+                        label={{ 
+                          value: 'Interview Count', 
+                          angle: -90, 
+                          position: 'insideLeft', 
+                          style: { fontSize: '12px', fill: '#6b7280', fontWeight: 500 } 
+                        }}
+                        allowDecimals={false}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                          padding: '8px 12px'
+                        }}
+                        labelStyle={{ 
+                          fontWeight: 600, 
+                          color: '#374151',
+                          marginBottom: '4px'
+                        }}
+                        formatter={(value: number) => [`${value}`, 'Interview Count']}
+                        separator=": "
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        fill="url(#colorGradient)"
+                        dot={{ fill: '#3b82f6', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff', fill: '#2563eb' }}
+                        animationDuration={800}
+                        animationEasing="ease-out"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No interview data available
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
