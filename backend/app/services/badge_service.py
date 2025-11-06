@@ -1,6 +1,6 @@
 """Badge checks for answering-related badges and time-of-day badges."""
 from datetime import datetime
-from app.db.crud import get_unlocked_badges, get_all_badges, unlock_badge
+from app.db.crud import get_unlocked_badges, get_all_badges, unlock_badge, update_user
 from app.db.models import User, Badge
 from app.services.utils import with_db_session
 
@@ -19,9 +19,11 @@ def check_badges_for_user(user, db=None):
     unlocked_badges = get_unlocked_badges(user.user_id, db)
     unlocked_ids = {b.badge_id for b in unlocked_badges}
 
-    # Only consider answering-related badges
+    # Only consider answering-related badges (normalize name by strip+lower)
     allowed = {"ice breaker", "answer rookie", "answer expert", "answer master", "night owl", "early bird"}
-    available_badges = [b for b in get_all_badges(db) if b.name.lower() in allowed]
+    def _norm(n: str) -> str:
+        return (n or "").strip().lower()
+    available_badges = [b for b in get_all_badges(db) if _norm(b.name) in allowed]
 
     newly_unlocked = []
 
@@ -33,12 +35,19 @@ def check_badges_for_user(user, db=None):
             unlock_badge(user.user_id, badge.badge_id, db)
             newly_unlocked.append(badge)
 
+    # Optionally update user's total_badges count
+    if newly_unlocked:
+        try:
+            update_user(user.user_id, {"total_badges": user.total_badges + len(newly_unlocked)}, db)
+        except Exception:
+            pass
+
     return newly_unlocked
 
 
 def meets_condition(user: User, badge: Badge) -> bool:
     """Conditions for answering badges based on total_questions count."""
-    name = badge.name.lower()
+    name = (badge.name or "").strip().lower()
     total_questions = getattr(user, "total_questions", 0)
     if name == "ice breaker":
         return total_questions >= 1

@@ -20,7 +20,7 @@ def init_badges():
         
         # 问题回答相关徽章
         {
-            "name": "Ice Breaker",
+            "name": "ice breaker",
             "description": "Take the first step!"
         },
         {
