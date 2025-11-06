@@ -77,6 +77,7 @@ def get_user_detail(token: str, db = None):
 
 
 def create_new_user(user_id: str, user_email: str, db = None):
+    print("Create new user:", user_id)
     user = User(
         user_id=user_id,
         user_email=user_email,
@@ -104,6 +105,7 @@ def create_new_user(user_id: str, user_email: str, db = None):
 
 
 def update_user_login(user_id: str, db = None):
+    print("User login:", user_id)
     user = get_user_basic(user_id, db)
     if not user:
         return None

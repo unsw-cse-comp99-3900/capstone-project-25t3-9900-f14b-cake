@@ -38,10 +38,12 @@ def login(email: str, google_jwt: str = None, apple_jwt: str = None, db = None) 
         # print(id_email)
         user = get_user_basic(user_id, db)
         if not user:
+            print("No user:", user_id)
             user = create_new_user(user_id, user_email, db)
+            user = update_user_login(user_id, db)
+        else:
             user = update_user_login(user_id, db)
     else:
         user_id = None
-
 
     return {"user_id": user_id, "token": jwt_token}

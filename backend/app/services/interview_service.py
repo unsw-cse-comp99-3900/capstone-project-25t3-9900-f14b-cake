@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 import time
 from app.db.crud import add_interview, add_question, get_user_basic, update_user
-from app.db.models import Question, Interview, current_millis
+from app.db.models import Question, Interview
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
 from app.services.auth_service import get_user_id_and_email
@@ -17,11 +17,14 @@ from app.services.utils import with_db_session
 # Database Functions
 # ---------------------------
 def save_interview(user_id: str, interview_id: str, interview_type: str, job_description: str, db = None):
+    print(f"Saving interview for user={user_id}")
+    timestamp = int(time.time() * 1000)
     new_interview = Interview(interview_id=interview_id, 
                               user_id=user_id, 
                               interview_type=interview_type, 
                               job_description=job_description,
-                              timestamp=current_millis())
+                              timestamp=timestamp,
+                              is_like=False)
     interview = add_interview(new_interview, db)
     if not interview:
         return None
@@ -30,6 +33,7 @@ def save_interview(user_id: str, interview_id: str, interview_type: str, job_des
         return None
     user_data = {"total_interviews": interview.user.total_interviews + 1}
     user = update_user(user_id, user_data, db)
+    print(f"Saved interview: {interview_id}")
     return interview
 
 
@@ -83,6 +87,7 @@ def save_question(user_id: str, interview_id: str, question_type: str, question_
         user_data["max_overall"] = overall
     
     user = update_user(user_id, user_data, db)
+    print("Update user after feedback.")
     if not user:
         return None
     # Check and unlock badges (e.g., Ice Breaker when first question is answered)
