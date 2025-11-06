@@ -4,7 +4,7 @@ import re
 from typing import Any, Dict, List, Optional
 import uuid
 import time
-from app.db.crud import add_interview, add_question, get_user_basic, update_user
+from app.db.crud import add_interview, add_question, get_user_basic, update_user, update_interview_like 
 from app.db.models import Question, Interview
 from app.external_access.gpt_access import GPTAccessClient
 from app.external_access.faq_access import FAQAccessClient
@@ -179,6 +179,15 @@ def _unwrap_api_answer(answer_text: str) -> str:
 # ---------------------------
 # Main Business Logic
 # ---------------------------
+@with_db_session
+def change_interview_like(interview_id: str, is_like: bool, db = None):
+    interview = update_interview_like(interview_id, is_like, db)
+    result = {
+        "interview_id": interview_id,
+        "is_like": interview.is_like
+    }
+    return result
+
 @with_db_session
 def interview_start(token: str, job_description: str, question_type: str, db = None) -> Dict[str, Any]:
     """
