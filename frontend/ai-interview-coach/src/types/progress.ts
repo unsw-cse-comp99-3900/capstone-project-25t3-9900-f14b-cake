@@ -11,7 +11,7 @@
  * 面试类别枚举
  */
 export enum InterviewCategory {
-    BEHAVIORAL = "BEHAVIORAL", // 行为面试
+    BEHAVIOURAL = "BEHAVIOURAL", // 行为面试 (英式拼写,与队友保持一致)
     TECHNICAL = "TECHNICAL", // 技术面试
     PSYCHOMETRIC = "PSYCHOMETRIC", // 心理测评
 }
@@ -118,7 +118,7 @@ export interface SessionRecord {
  * 类别分数统计
  */
 export interface CategoryScores {
-    [InterviewCategory.BEHAVIORAL]: number; // 行为面试分数
+    [InterviewCategory.BEHAVIOURAL]: number; // 行为面试分数
     [InterviewCategory.TECHNICAL]: number; // 技术面试分数
     [InterviewCategory.PSYCHOMETRIC]: number; // 心理测评分数
 }
