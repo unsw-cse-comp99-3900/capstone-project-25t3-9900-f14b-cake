@@ -14,6 +14,12 @@ import {
     Radar,
     ResponsiveContainer,
     Tooltip,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Legend,
 } from "recharts";
 
 // Time range options for filtering interview sessions
@@ -98,10 +104,11 @@ const mockCategoryPerformance = [
     },
 ];
 
-// Prepare radar chart data
+// Prepare radar chart data with dual layers (current vs target)
 const radarChartData = mockCategoryPerformance.map((dim) => ({
     subject: dim.dimension_name.split(" ")[0], // Shortened names for radar chart
-    value: dim.percentage,
+    current: dim.percentage, // Current performance
+    target: 85, // Target/benchmark score
     fullMark: 100,
 }));
 
@@ -186,108 +193,134 @@ export default function ProgressPage() {
                         </div>
 
                         {/* Chart with X-axis as Interview Sessions */}
-                        <div className="relative h-80 bg-gray-50 rounded-lg p-6 mb-6">
-                            <svg
-                                className="w-full h-full"
-                                viewBox="0 0 500 300"
-                            >
-                                {/* Grid lines */}
-                                {[0, 25, 50, 75, 100].map((value) => (
-                                    <g key={value}>
-                                        <line
-                                            x1="60"
-                                            y1={260 - value * 2.2}
-                                            x2="480"
-                                            y2={260 - value * 2.2}
-                                            stroke="#e5e7eb"
-                                            strokeWidth="1"
-                                        />
-                                        <text
-                                            x="50"
-                                            y={265 - value * 2.2}
-                                            fontSize="12"
-                                            fill="#6b7280"
-                                            textAnchor="end"
+                        <div
+                            className="relative bg-gray-50 rounded-lg p-6 mb-6"
+                            style={{ height: "320px" }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart
+                                    data={mockReadinessData}
+                                    margin={{
+                                        top: 10,
+                                        right: 30,
+                                        left: 20,
+                                        bottom: 20,
+                                    }}
+                                >
+                                    <defs>
+                                        <linearGradient
+                                            id="lineGradient"
+                                            x1="0"
+                                            y1="0"
+                                            x2="1"
+                                            y2="0"
                                         >
-                                            {value}
-                                        </text>
-                                    </g>
-                                ))}
-
-                                {/* Chart line */}
-                                <polyline
-                                    fill="none"
-                                    stroke="#3b82f6"
-                                    strokeWidth="3"
-                                    points={mockReadinessData
-                                        .map((point, index) => {
-                                            const x =
-                                                60 +
-                                                index *
-                                                    (420 /
-                                                        (mockReadinessData.length -
-                                                            1));
-                                            const y =
-                                                260 - (point.score - 40) * 3;
-                                            return `${x},${y}`;
-                                        })
-                                        .join(" ")}
-                                />
-
-                                {/* Data points */}
-                                {mockReadinessData.map((point, index) => {
-                                    const x =
-                                        60 +
-                                        index *
-                                            (420 /
-                                                (mockReadinessData.length - 1));
-                                    const y = 260 - (point.score - 40) * 3;
-                                    return (
-                                        <g key={index}>
-                                            <circle
-                                                cx={x}
-                                                cy={y}
-                                                r="5"
-                                                fill="#3b82f6"
-                                                className="hover:fill-blue-700 cursor-pointer"
+                                            <stop
+                                                offset="0%"
+                                                stopColor="#3b82f6"
+                                                stopOpacity={0.8}
                                             />
-                                            {/* X-axis labels */}
-                                            <text
-                                                x={x}
-                                                y="285"
-                                                fontSize="11"
-                                                fill="#6b7280"
-                                                textAnchor="middle"
-                                            >
-                                                #{point.session}
-                                            </text>
-                                        </g>
-                                    );
-                                })}
-
-                                {/* Axis labels */}
-                                <text
-                                    x="250"
-                                    y="298"
-                                    fontSize="13"
-                                    fill="#374151"
-                                    textAnchor="middle"
-                                    fontWeight="600"
-                                >
-                                    Interview Session Number
-                                </text>
-                                <text
-                                    x="25"
-                                    y="130"
-                                    fontSize="13"
-                                    fill="#374151"
-                                    textAnchor="middle"
-                                    fontWeight="600"
-                                    transform="rotate(-90, 25, 130)"
-                                >
-                                    Readiness Score
-                                </text>
-                            </svg>
+                                            <stop
+                                                offset="100%"
+                                                stopColor="#2563eb"
+                                                stopOpacity={1}
+                                            />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="#e5e7eb"
+                                        vertical={false}
+                                        opacity={0.5}
+                                    />
+                                    <XAxis
+                                        dataKey="session"
+                                        stroke="#6b7280"
+                                        style={{
+                                            fontSize: "12px",
+                                            fontWeight: 500,
+                                        }}
+                                        tickLine={false}
+                                        axisLine={{ stroke: "#e5e7eb" }}
+                                        label={{
+                                            value: "Interview Session Number",
+                                            position: "insideBottom",
+                                            offset: -10,
+                                            style: {
+                                                fontSize: "13px",
+                                                fill: "#374151",
+                                                fontWeight: 600,
+                                            },
+                                        }}
+                                        tickFormatter={(value) => `#${value}`}
+                                    />
+                                    <YAxis
+                                        domain={[40, 100]}
+                                        stroke="#6b7280"
+                                        style={{
+                                            fontSize: "12px",
+                                            fontWeight: 500,
+                                        }}
+                                        tickLine={false}
+                                        axisLine={{ stroke: "#e5e7eb" }}
+                                        label={{
+                                            value: "Readiness Score",
+                                            angle: -90,
+                                            position: "insideLeft",
+                                            style: {
+                                                fontSize: "13px",
+                                                fill: "#374151",
+                                                fontWeight: 600,
+                                            },
+                                        }}
+                                        ticks={[40, 50, 60, 70, 80, 90, 100]}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "#fff",
+                                            border: "1px solid #e5e7eb",
+                                            borderRadius: "8px",
+                                            fontSize: "12px",
+                                            boxShadow:
+                                                "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                            padding: "8px 12px",
+                                        }}
+                                        labelStyle={{
+                                            fontWeight: 600,
+                                            color: "#374151",
+                                            marginBottom: "4px",
+                                        }}
+                                        formatter={(value: number) => [
+                                            `${value}`,
+                                            "Readiness Score",
+                                        ]}
+                                        labelFormatter={(label) =>
+                                            `Session #${label}`
+                                        }
+                                        separator=": "
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="score"
+                                        stroke="url(#lineGradient)"
+                                        strokeWidth={3}
+                                        dot={{
+                                            fill: "#3b82f6",
+                                            r: 5,
+                                            strokeWidth: 2,
+                                            stroke: "#fff",
+                                        }}
+                                        activeDot={{
+                                            r: 7,
+                                            strokeWidth: 2,
+                                            stroke: "#fff",
+                                            fill: "#2563eb",
+                                        }}
+                                        animationDuration={800}
+                                        animationEasing="ease-out"
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
 
                         {/* Statistics Grid */}
@@ -516,41 +549,160 @@ export default function ProgressPage() {
                             </div>
 
                             {/* Radar Chart */}
-                            <div className="mb-8">
-                                <ResponsiveContainer width="100%" height={350}>
+                            <div className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                                <ResponsiveContainer width="100%" height={400}>
                                     <RadarChart data={radarChartData}>
-                                        <PolarGrid stroke="#e5e7eb" />
+                                        <defs>
+                                            <linearGradient
+                                                id="radarGradient1"
+                                                x1="0"
+                                                y1="0"
+                                                x2="0"
+                                                y2="1"
+                                            >
+                                                <stop
+                                                    offset="0%"
+                                                    stopColor="#3b82f6"
+                                                    stopOpacity={0.8}
+                                                />
+                                                <stop
+                                                    offset="100%"
+                                                    stopColor="#2563eb"
+                                                    stopOpacity={0.3}
+                                                />
+                                            </linearGradient>
+                                            <linearGradient
+                                                id="radarGradient2"
+                                                x1="0"
+                                                y1="0"
+                                                x2="0"
+                                                y2="1"
+                                            >
+                                                <stop
+                                                    offset="0%"
+                                                    stopColor="#10b981"
+                                                    stopOpacity={0.6}
+                                                />
+                                                <stop
+                                                    offset="100%"
+                                                    stopColor="#059669"
+                                                    stopOpacity={0.2}
+                                                />
+                                            </linearGradient>
+                                        </defs>
+                                        <PolarGrid
+                                            stroke="#cbd5e1"
+                                            strokeWidth={1.5}
+                                            strokeDasharray="3 3"
+                                        />
                                         <PolarAngleAxis
                                             dataKey="subject"
                                             tick={{
-                                                fill: "#374151",
-                                                fontSize: 13,
+                                                fill: "#1e293b",
+                                                fontSize: 14,
+                                                fontWeight: 600,
                                             }}
+                                            tickLine={false}
                                         />
                                         <PolarRadiusAxis
                                             angle={90}
                                             domain={[0, 100]}
                                             tick={{
-                                                fill: "#6b7280",
-                                                fontSize: 11,
+                                                fill: "#64748b",
+                                                fontSize: 12,
+                                                fontWeight: 500,
+                                            }}
+                                            tickCount={6}
+                                            axisLine={false}
+                                        />
+                                        {/* Target/Benchmark Layer (behind) */}
+                                        <Radar
+                                            name="Target (85%)"
+                                            dataKey="target"
+                                            stroke="#10b981"
+                                            strokeWidth={2}
+                                            fill="url(#radarGradient2)"
+                                            fillOpacity={0.4}
+                                            dot={{
+                                                r: 4,
+                                                fill: "#10b981",
+                                                strokeWidth: 0,
                                             }}
                                         />
+                                        {/* Current Performance Layer (front) */}
                                         <Radar
-                                            name="Performance"
-                                            dataKey="value"
+                                            name="Your Performance"
+                                            dataKey="current"
                                             stroke="#3b82f6"
-                                            fill="#3b82f6"
+                                            strokeWidth={3}
+                                            fill="url(#radarGradient1)"
                                             fillOpacity={0.6}
+                                            dot={{
+                                                r: 5,
+                                                fill: "#3b82f6",
+                                                strokeWidth: 2,
+                                                stroke: "#fff",
+                                            }}
+                                            activeDot={{
+                                                r: 7,
+                                                fill: "#2563eb",
+                                                strokeWidth: 2,
+                                                stroke: "#fff",
+                                            }}
                                         />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: "#fff",
-                                                border: "1px solid #e5e7eb",
-                                                borderRadius: "8px",
+                                                backgroundColor: "#ffffff",
+                                                border: "2px solid #e2e8f0",
+                                                borderRadius: "12px",
+                                                boxShadow:
+                                                    "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                                                padding: "12px 16px",
                                             }}
+                                            labelStyle={{
+                                                color: "#1e293b",
+                                                fontWeight: 700,
+                                                fontSize: "14px",
+                                                marginBottom: "8px",
+                                            }}
+                                            itemStyle={{
+                                                color: "#64748b",
+                                                fontSize: "13px",
+                                                fontWeight: 500,
+                                                padding: "4px 0",
+                                            }}
+                                            formatter={(
+                                                value: number,
+                                                name: string
+                                            ) => [`${value}%`, name]}
+                                        />
+                                        <Legend
+                                            wrapperStyle={{
+                                                paddingTop: "20px",
+                                                fontSize: "14px",
+                                                fontWeight: 600,
+                                            }}
+                                            iconType="circle"
+                                            iconSize={12}
                                         />
                                     </RadarChart>
                                 </ResponsiveContainer>
+
+                                {/* Chart Legend Description */}
+                                <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                        <span className="text-gray-700 font-medium">
+                                            Your Current Performance
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <span className="text-gray-700 font-medium">
+                                            Target Benchmark (85%)
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Detailed Dimension Analysis */}
