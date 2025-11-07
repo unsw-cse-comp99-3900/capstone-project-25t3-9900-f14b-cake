@@ -163,3 +163,29 @@ class UserLikeResponse(BaseModel):
         description="Whether the interview is liked (added to question bank) or not",
         example=True
     )
+
+class UserInterviewSummaryResponse(BaseModel):
+    avg_clarity: float = Field(
+        description="Average clarity and structure score across all questions",
+        example=4.5
+    )
+    avg_relevance: float = Field(
+        description="Average relevance score across all questions",
+        example=4.2
+    )
+    avg_keyword: float = Field(
+        description="Average keyword alignment score across all questions",
+        example=4.3
+    )
+    avg_confidence: float = Field(
+        description="Average confidence score across all questions",
+        example=4.6
+    )
+    avg_conciseness: float = Field(
+        description="Average conciseness score across all questions",
+        example=4.1
+    )
+    avg_overall: float = Field(
+        description="Average overall score across all questions",
+        example=4.34
+    )
