@@ -1,6 +1,7 @@
 # app/services/user_service.py
 from app.db.crud import add_user, update_user, get_user_basic, get_user_interviews, get_user_badges, get_all_badges
 from app.db.models import current_millis, User
+from app.db.db_config import SessionLocal
 from app.services import badge_service
 from datetime import datetime, timezone, date
 from app.services.utils import with_db_session
@@ -200,3 +201,125 @@ def get_user_interview_summary(token: str, db = None):
         "avg_overall": user.total_overall / questions_number
     }
     return result
+
+
+class UserStatistics:
+    def __init__(self, user, interviews=None, badges=None):
+        self.user_id = user.user_id
+        self.user_email = user.user_email
+        self.xp = user.xp
+
+        self.interviews = [{"interview_id": i.interview_id, "timestamp": i.timestamp} for i in interviews]
+        self.badges = [{"badge_id": b.badge_id, "unlocked_timestamp": b.unlocked_timestamp} for b in badges]
+
+        self.total_questions = user.total_questions
+        self.total_interviews = user.total_interviews
+        self.total_badges = user.total_badges
+
+        self.total_logins = user.total_logins
+        self.last_login = user.last_login
+        self.consecutive_days = user.consecutive_days
+
+        self.max_clarity = user.max_clarity
+        self.max_relevance = user.max_relevance
+        self.max_keyword = user.max_keyword
+        self.max_confidence = user.max_confidence
+        self.max_conciseness = user.max_conciseness
+        self.max_overall = user.max_overall
+
+        self.total_clarity = user.total_clarity
+        self.total_relevance = user.total_relevance
+        self.total_keyword = user.total_keyword
+        self.total_confidence = user.total_confidence
+        self.total_conciseness = user.total_conciseness
+        self.total_overall = user.total_overall
+
+
+    @classmethod
+    @with_db_session
+    def from_db(cls, user_id, db = None):
+        user = get_user_basic(user_id, db)
+        interviews = get_user_interviews(user_id, db)
+        badges = get_user_badges(user_id, db)
+
+        if not user:
+            raise ValueError(f"User {user_id} not found")
+        return cls(user, interviews=interviews, badges=badges)
+    
+    def show(self):
+        print(f"user_id: {self.user_id}")
+        print(f"user_email: {self.user_email}")
+        print(f"xp: {self.xp}")
+
+        print(f"total_questions: {self.total_questions}")
+        print(f"total_interviews: {self.total_interviews}")
+        print(f"total_badges: {self.total_badges}")
+        print(f"total_logins: {self.total_logins}")
+        print(f"last_login: {self.last_login}")
+        print(f"consecutive_days: {self.consecutive_days}")
+
+        print(f"max_clarity: {self.max_clarity}")
+        print(f"max_relevance: {self.max_relevance}")
+        print(f"max_keyword: {self.max_keyword}")
+        print(f"max_confidence: {self.max_confidence}")
+        print(f"max_conciseness: {self.max_conciseness}")
+        print(f"max_overall: {self.max_overall}")
+
+        print(f"total_clarity: {self.total_clarity}")
+        print(f"total_relevance: {self.total_relevance}")
+        print(f"total_keyword: {self.total_keyword}")
+        print(f"total_confidence: {self.total_confidence}")
+        print(f"total_conciseness: {self.total_conciseness}")
+        print(f"total_overall: {self.total_overall}")
+
+        print("interives: ")
+        for i in self.interviews:
+            interview_id = i["interview_id"]
+            timestamp = i["timestamp"]
+            print(f"    initerview_id: {interview_id}   timestamp: {timestamp}")
+        print("badges: ")
+        for b in self.badges:
+            badge_id = b["badge_id"]
+            unlocked_timestamp = b["unlocked_timestamp"]
+            print(f"    badge_id: {badge_id}   unlocked_timestamp: {unlocked_timestamp}")
+
+    
+    def get_dict(self):
+        result = {}
+
+        result["user_id"] = self.user_id
+        result["user_email"] = self.user_email
+        result["xp"] = self.xp
+
+        result["interives"] = self.interviews
+        result["badges"] = self.badges
+
+        result["total_questions"] = self.total_questions
+        result["total_interviews"] = self.total_interviews
+        result["total_badges"] = self.total_badges
+
+        result["total_logins"] = self.total_logins
+        result["last_login"] = self.last_login
+        result["consecutive_days"] = self.consecutive_days
+
+        result["max_clarity"] = self.max_clarity
+        result["max_relevance"] = self.max_relevance
+        result["max_keyword"] = self.max_keyword
+        result["max_confidence"] = self.max_confidence
+        result["max_conciseness"] = self.max_conciseness
+        result["max_overall"] = self.max_overall
+
+        result["total_clarity"] = self.total_clarity
+        result["total_relevance"] = self.total_relevance
+        result["total_keyword"] = self.total_keyword
+        result["total_confidence"] = self.total_confidence
+        result["total_conciseness"] = self.total_conciseness
+        result["total_overall"] = self.total_overall
+
+        return result
+
+
+
+def get_user_statistics(user_id: str):
+    user_statistics = UserStatistics.from_db(user_id)
+    return user_statistics

@@ -7,7 +7,7 @@ from typing import List, Optional, Any, Dict
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
 from app.services.interview_service import interview_start, interview_feedback, change_interview_like
-from app.services.user_service import get_user_detail, get_user_interview_summary
+from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics
 from app.services.utils import with_db_session
 from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic
 from app.services.badge_service import check_badges_for_user
@@ -165,6 +165,11 @@ def test_user():
     result = get_user_interview_summary(JWT_TOKEN)
     print("interview_summary:")
     pprint(result)
+    print()
+    user_id = "1760000357832x893806233003485000"
+    user_statistics = get_user_statistics(user_id)
+    print("user_statistics:")
+    user_statistics.show()
 
 @with_db_session
 def test_badges(db = None):
