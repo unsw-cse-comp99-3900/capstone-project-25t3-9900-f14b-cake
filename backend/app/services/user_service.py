@@ -189,6 +189,8 @@ def get_user_interview_summary(token: str, db = None):
         return None
     
     questions_number = float(user.total_questions)
+    if questions_number < 1:
+        questions_number = 1
     result = {
         "avg_clarity": user.total_clarity / questions_number,
         "avg_relevance": user.total_relevance / questions_number,
