@@ -198,3 +198,6 @@ def get_user_interview_summary(token: str, db = None):
         "avg_overall": user.total_overall / questions_number
     }
     return result
+
+def like_interview(token: str, interview_id = str):
+    return
