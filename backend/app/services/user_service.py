@@ -53,7 +53,7 @@ def get_user_detail(token: str, db = None):
         "interviews": [
             {
                 "interview_id": i.interview_id,
-                "interview_timestamp": i.timestamp,
+                "interview_time": i.timestamp,
                 "is_like": i.is_like,
                 "questions": [
                     {
@@ -69,7 +69,7 @@ def get_user_detail(token: str, db = None):
         "badges": [
             {
                 "badge_id": b.badge_id,
-                "unlocked_data": b.unlocked_timestamp
+                "unlock_date": b.unlocked_timestamp
             } for b in badges
         ]
     }
@@ -157,7 +157,7 @@ def get_user_full_detail(token: str, db = None):
         "interviews": [
             {
                 "interview_id": i.interview_id,
-                "interview_timestamp": i.timestamp,
+                "interview_time": i.timestamp,
                 "is_like": i.is_like,
                 "questions": [
                     {
@@ -173,7 +173,7 @@ def get_user_full_detail(token: str, db = None):
         "badges": [
             {
                 "badge_id": b.badge_id,
-                "unlocked_data": b.unlocked_timestamp
+                "unlock_date": b.unlocked_timestamp
             } for b in badges
         ]
     }
