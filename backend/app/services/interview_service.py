@@ -90,12 +90,12 @@ def save_question(user_id: str, interview_id: str, question_type: str, question_
     print("Update user after feedback.")
     if not user:
         return None
-    # Check and unlock badges (e.g., Ice Breaker when first question is answered)
-    try:
-        check_badges_for_user(user, db)
-    except Exception:
-        # Badge checks should not block saving questions
-        pass
+    else:
+        print("Try to check badges")
+        newly_unlocked = check_badges_for_user(user, db)
+        if not newly_unlocked:
+            print("Not unlock new badges")
+
     return question
 
 # ---------------------------

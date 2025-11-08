@@ -7,7 +7,10 @@ from typing import List, Optional, Any, Dict
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
 from app.services.interview_service import interview_start, interview_feedback, change_interview_like
-from app.services.user_service import get_user_detail, get_user_interview_summary
+from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics
+from app.services.utils import with_db_session
+from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic
+from app.services.badge_service import check_badges_for_user
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
 
@@ -162,6 +165,31 @@ def test_user():
     result = get_user_interview_summary(JWT_TOKEN)
     print("interview_summary:")
     pprint(result)
+    print()
+    user_id = "1760000357832x893806233003485000"
+    user_statistics = get_user_statistics(user_id)
+    print("user_statistics:")
+    user_statistics.show()
+
+@with_db_session
+def test_badges(db = None):
+    user_id = "1760000357832x893806233003485000"
+    badge_id = 3
+    unlocked_badges = get_unlocked_badges(user_id, db)
+    unlocked_ids = [b.badge_id for b in unlocked_badges]
+    print(unlocked_ids)
+    # new_unlock = unlock_badge(user_id, badge_id, db)
+    # result = {
+    #     "id": new_unlock.id,
+    #     "user_id": new_unlock.user_id,
+    #     "badge_id": new_unlock.badge_id,
+    #     "unlocked_timestamp": new_unlock.unlocked_timestamp
+    # }
+    # print(result)
+    user = get_user_basic(user_id, db)
+    newly_unlocked = check_badges_for_user(user, db)
+    print(newly_unlocked)
+    
 
 if __name__ == "__main__":
     # print_format_answer()
@@ -171,4 +199,5 @@ if __name__ == "__main__":
     test_auth()
     test_interview()
     test_user()
+    # test_badges()
 

@@ -166,6 +166,7 @@ if __name__ == "__main__":
         init_db()
     elif command == "reset_db":
         reset_db()
+        init_db()
     elif command == "status":
         status()
     elif command == "logs":
