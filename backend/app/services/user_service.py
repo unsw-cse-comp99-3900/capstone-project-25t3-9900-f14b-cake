@@ -1,5 +1,5 @@
 # app/services/user_service.py
-from app.db.crud import add_user, update_user, get_user_basic, get_user_interviews, get_user_badges, get_all_badges
+from app.db.crud import add_user, update_user, get_user_basic, get_user_interviews, get_user_badges, get_all_badges, get_interview, update_interview_like
 from app.db.models import current_millis, User
 from app.db.db_config import SessionLocal
 from app.services import badge_service
@@ -323,3 +323,18 @@ class UserStatistics:
 def get_user_statistics(user_id: str):
     user_statistics = UserStatistics.from_db(user_id)
     return user_statistics
+
+
+@with_db_session
+def like_interview(token, interview_id, db = None):
+    from app.services.auth_service import get_user_id_and_email
+    id_email = get_user_id_and_email(token)
+    user_id = id_email.get("id")
+    interview = update_interview_like(interview_id, db)
+    
+    print(f"User: {user_id} change interview {interview_id} is_like value to {interview.is_like}.")
+    result = {
+        "interview_id": interview.interview_id,
+        "is_like": interview.is_like
+    }
+    return result

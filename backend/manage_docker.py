@@ -7,7 +7,7 @@ import time
 
 COMPOSE_FILE = "docker-compose.yml"
 BACKEND_CONTAINER = "backend_app"
-
+# docker exec -it backend_postgres /bin/bash
 
 def run_command(cmd: str):
     """Run a shell command and handle errors gracefully."""

@@ -180,8 +180,8 @@ def _unwrap_api_answer(answer_text: str) -> str:
 # Main Business Logic
 # ---------------------------
 @with_db_session
-def change_interview_like(interview_id: str, is_like: bool, db = None):
-    interview = update_interview_like(interview_id, is_like, db)
+def change_interview_like(interview_id: str, db = None):
+    interview = update_interview_like(interview_id, db)
     result = {
         "interview_id": interview_id,
         "is_like": interview.is_like
