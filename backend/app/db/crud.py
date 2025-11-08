@@ -23,14 +23,15 @@ def get_interview(interview_id: str, db: Session = None):
     return db.query(Interview).filter(Interview.interview_id == interview_id).first()
 
 
-def update_interview_like(interview_id: str, is_like: bool, db: Session = None):
+def update_interview_like(interview_id: str, db: Session = None):
     interview = get_interview(interview_id, db)
     if not interview:
         return None
+    is_like = interview.is_like
     if is_like:
-        interview.is_like = True
-    else:
         interview.is_like = False
+    else:
+        interview.is_like = True
     db.commit()
     db.refresh(interview)
     return interview
