@@ -7,10 +7,11 @@ from typing import List, Optional, Any, Dict
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
 from app.services.interview_service import interview_start, interview_feedback, change_interview_like
-from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics, like_interview
+from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics, like_interview, UserStatistics
 from app.services.utils import with_db_session
-from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic
+from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic, get_user_interviews, get_user_badges
 from app.services.badge_service import check_badges_for_user
+from app.db.init_badges import init_badges
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
 
@@ -138,6 +139,8 @@ def test_auth():
     # result = client.token_verify()
     result = login(email, google_jwt, apple_jwt)
     jwt = result["token"]
+    global JWT_TOKEN
+    JWT_TOKEN = jwt
     user_info = get_user_id_and_email(jwt)
     print("user_info:\n", user_info)
     print()
@@ -148,7 +151,7 @@ def test_interview():
     job_description = "We are looking for a passionate and skilled Python Developer to join our technical team. You will be responsible for designing, developing, testing, and deploying efficient, scalable, and reliable software solutions. If you are familiar with the Python ecosystem, have a deep understanding of backend development, and enjoy collaborating with cross-functional teams, we encourage you to apply."
     question_type = "Technical"
     interview = interview_start(token, job_description, question_type)
-    # print(interview)
+    print(interview)
     # interview_id = "2b283ef0-4b93-4913-8efd-bd6bbf5e5917"
     interview_id = interview["interview_id"]
     feedback = interview_feedback(token, interview_id, question_type, question, answer)
@@ -180,23 +183,31 @@ def test_user():
 
 @with_db_session
 def test_badges(db = None):
-    user_id = "1760000357832x893806233003485000"
-    badge_id = 3
-    unlocked_badges = get_unlocked_badges(user_id, db)
-    unlocked_ids = [b.badge_id for b in unlocked_badges]
-    print(unlocked_ids)
-    # new_unlock = unlock_badge(user_id, badge_id, db)
-    # result = {
-    #     "id": new_unlock.id,
-    #     "user_id": new_unlock.user_id,
-    #     "badge_id": new_unlock.badge_id,
-    #     "unlocked_timestamp": new_unlock.unlocked_timestamp
-    # }
-    # print(result)
+    # Ensure badge definitions exist
+    init_badges()
+
+    # Use the currently logged-in user's id from JWT (avoid hardcoding)
+    id_email = get_user_id_and_email(JWT_TOKEN)
+    user_id = id_email.get("id")
+
+    # Re-check and unlock any badges the user now qualifies for
     user = get_user_basic(user_id, db)
     newly_unlocked = check_badges_for_user(user, db)
-    print(newly_unlocked)
-    
+
+    # Print a readable summary of unlocked badges
+    unlocked_badges = get_unlocked_badges(user_id, db)
+    names = [b.name for b in unlocked_badges]
+    print({"newly_unlocked": [b.name for b in (newly_unlocked or [])], "all_unlocked": names})
+
+@with_db_session
+def test_user_statistics(db = None):
+    user_id = "1760000357832x893806233003485000"
+    user = get_user_basic(user_id, db)
+    interviews = get_user_interviews(user_id, db)
+    badges = get_user_badges(user_id, db)
+    user_statistics = UserStatistics(user, interviews=interviews, badges=badges)
+    print(user_statistics.get_dict())
+
 
 if __name__ == "__main__":
     # print_format_answer()
@@ -206,5 +217,6 @@ if __name__ == "__main__":
     test_auth()
     test_interview()
     test_user()
-    # test_badges()
+    test_badges()
+    # test_user_statistics()
 
