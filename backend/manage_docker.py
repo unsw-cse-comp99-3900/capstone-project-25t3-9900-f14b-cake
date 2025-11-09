@@ -7,7 +7,7 @@ import time
 
 COMPOSE_FILE = "docker-compose.yml"
 BACKEND_CONTAINER = "backend_app"
-
+# docker exec -it backend_postgres /bin/bash
 
 def run_command(cmd: str):
     """Run a shell command and handle errors gracefully."""
@@ -155,14 +155,18 @@ if __name__ == "__main__":
 
     if command == "start":
         start()
+        init_db()
     elif command == "stop":
         stop()
     elif command == "reset":
         reset()
+        reset_db()
+        init_db()
     elif command == "initdb":
         init_db()
     elif command == "reset_db":
         reset_db()
+        init_db()
     elif command == "status":
         status()
     elif command == "logs":

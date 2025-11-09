@@ -9,7 +9,7 @@ def _current_hour() -> int:
     """Return current local hour. Isolated for test patching."""
     return int(datetime.now().hour)
 
-@with_db_session
+# @with_db_session
 def check_badges_for_user(user, db=None):
     """
     Call this function every time user data is updated. 
@@ -32,8 +32,8 @@ def check_badges_for_user(user, db=None):
             continue
 
         if meets_condition(user, badge):
-            unlock_badge(user.user_id, badge.badge_id, db)
-            print("unluck:" + badge.name)
+            unlock = unlock_badge(user.user_id, badge.badge_id, db)
+            print(f"User {user.user_id} unlock badge {badge.name} at {unlock.unlocked_timestamp}.")
             newly_unlocked.append(badge)
 
     # Optionally update user's total_badges count

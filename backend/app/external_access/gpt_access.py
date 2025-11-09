@@ -5,7 +5,11 @@ from dotenv import load_dotenv
 from typing import Dict, Any
 from .exceptions import GPTAccessError, InvalidTokenError, RequestFailedError
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+# load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ENV_PATH = os.path.join(BASE_DIR, '.env')
+
+load_dotenv(dotenv_path=ENV_PATH)
 
 class GPTAccessClient:
     """Encapsulates interaction with the GPT_ACCESS API."""
