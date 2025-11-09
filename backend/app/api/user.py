@@ -3,9 +3,10 @@ from app.models.user import (
     UserDetailResponse,
     UserLikeRequest,
     UserLikeResponse,
-    UserInterviewSummaryResponse
+    UserInterviewSummaryResponse,
+    UserStatisticsResponse
 )
-from app.services.user_service import get_user_detail, get_user_full_detail, like_interview, get_user_interview_summary
+from app.services.user_service import get_user_detail, get_user_full_detail, like_interview, get_user_interview_summary, get_user_statistics
 from app.api.helper import get_token
 
 router = APIRouter(prefix="/user")
@@ -67,5 +68,30 @@ async def interview_summary(token: str = Depends(get_token)):
         }
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get(
+    "/statistics",
+    summary="Get User Statistics",
+    description="Retrieves comprehensive user statistics including all performance metrics, login history, and achievement records",
+    response_model=UserStatisticsResponse
+)
+async def user_statistics(token: str = Depends(get_token)):
+    try:
+        from app.services.auth_service import get_user_id_and_email
+        id_email = get_user_id_and_email(token)
+        user_id = id_email.get("id")
+        
+        user_stats = get_user_statistics(user_id)
+        stats_dict = user_stats.get_dict()
+        
+        # Convert last_login date to string if it's a date object
+        if hasattr(stats_dict.get("last_login"), 'isoformat'):
+            stats_dict["last_login"] = stats_dict["last_login"].isoformat()
+        
+        return stats_dict
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

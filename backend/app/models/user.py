@@ -189,3 +189,101 @@ class UserInterviewSummaryResponse(BaseModel):
         description="Average overall score across all questions",
         example=4.34
     )
+
+class UserStatisticsResponse(BaseModel):
+    user_id: str = Field(
+        description="Unique user identifier",
+        example="550e8400-e29b-41d4-a716-446655440000"
+    )
+    user_email: str = Field(
+        description="User's email address",
+        example="user@example.com"
+    )
+    xp: int = Field(
+        description="User's total experience points",
+        example=1250
+    )
+    interviews: List[dict] = Field(
+        description="List of interview IDs and timestamps",
+        example=[
+            {"interview_id": "550e8400-e29b-41d4-a716-446655440000", "timestamp": 1698796800}
+        ]
+    )
+    badges: List[dict] = Field(
+        description="List of badge IDs and unlock timestamps",
+        example=[
+            {"badge_id": 1, "unlocked_timestamp": 1698796800}
+        ]
+    )
+    total_questions: int = Field(
+        description="Total number of questions answered",
+        example=75
+    )
+    total_interviews: int = Field(
+        description="Total number of interviews completed",
+        example=15
+    )
+    total_badges: int = Field(
+        description="Total number of badges earned",
+        example=5
+    )
+    total_logins: int = Field(
+        description="Total number of login sessions",
+        example=42
+    )
+    last_login: str = Field(
+        description="Last login date",
+        example="2024-11-08"
+    )
+    consecutive_days: int = Field(
+        description="Current consecutive login streak in days",
+        example=7
+    )
+    max_clarity: int = Field(
+        description="Maximum clarity score achieved",
+        example=5
+    )
+    max_relevance: int = Field(
+        description="Maximum relevance score achieved",
+        example=5
+    )
+    max_keyword: int = Field(
+        description="Maximum keyword alignment score achieved",
+        example=5
+    )
+    max_confidence: int = Field(
+        description="Maximum confidence score achieved",
+        example=5
+    )
+    max_conciseness: int = Field(
+        description="Maximum conciseness score achieved",
+        example=5
+    )
+    max_overall: float = Field(
+        description="Maximum overall score achieved",
+        example=4.8
+    )
+    total_clarity: int = Field(
+        description="Sum of all clarity scores",
+        example=320
+    )
+    total_relevance: int = Field(
+        description="Sum of all relevance scores",
+        example=310
+    )
+    total_keyword: int = Field(
+        description="Sum of all keyword alignment scores",
+        example=315
+    )
+    total_confidence: int = Field(
+        description="Sum of all confidence scores",
+        example=330
+    )
+    total_conciseness: int = Field(
+        description="Sum of all conciseness scores",
+        example=305
+    )
+    total_overall: float = Field(
+        description="Sum of all overall scores",
+        example=325.5
+    )
