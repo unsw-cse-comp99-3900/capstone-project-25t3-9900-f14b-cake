@@ -121,12 +121,12 @@ def init_badges():
     db.commit()
     db.close()
     
-    print(f"\n{'='*60}")
+    print(f"\n{'='*40}")
     print(f"Badge initialization complete!")
     print(f"  Created: {created_count}")
     print(f"  Skipped: {skipped_count}")
     print(f"  Total: {created_count + skipped_count}")
-    print(f"{'='*60}")
+    print(f"{'='*40}")
 
 
 if __name__ == "__main__":
