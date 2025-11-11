@@ -123,7 +123,7 @@ export default function HomePage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Welcome User!</h1>
-                <p className="text-gray-600">Ready to land your next role as a Software Engineer? <span className="text-blue-600 cursor-pointer hover:underline">edit</span></p>
+                <p className="text-gray-600">Ready to land your next role as a Software Engineer?</p>
               </div>
             </div>
           </div>
