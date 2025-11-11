@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { BadgeType, BADGE_CONFIGS, DAILY_QUOTES } from "@/types";
 
@@ -15,6 +16,7 @@ const mockUserBadges = [
 ];
 
 export default function GamePage() {
+    const router = useRouter();
     const [showDailyQuote, setShowDailyQuote] = useState(false);
     const [selectedBadge, setSelectedBadge] = useState<BadgeType | null>(null);
     const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
@@ -26,6 +28,11 @@ export default function GamePage() {
     const handleDailyCheckIn = () => {
         setShowDailyQuote(true);
         setHasCheckedInToday(true);
+    };
+
+    // 跳转到 Home 页面
+    const handleStartPractice = () => {
+        router.push("/home");
     };
 
     // 处理徽章点击
@@ -143,8 +150,8 @@ export default function GamePage() {
 
             {/* Daily Quote Modal */}
             {showDailyQuote && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all">
+                <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all border-4 border-blue-200">
                         <div className="text-center">
                             <div className="text-6xl mb-4">🌟</div>
                             <h3 className="text-2xl font-bold text-gray-800 mb-4">
@@ -155,7 +162,7 @@ export default function GamePage() {
                             </p>
                             <div className="flex space-x-3">
                                 <button
-                                    onClick={() => setShowDailyQuote(false)}
+                                    onClick={handleStartPractice}
                                     className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                                 >
                                     Start Today's Practice

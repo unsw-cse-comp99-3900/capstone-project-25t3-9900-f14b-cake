@@ -15,6 +15,9 @@ export default function LoginPage() {
   const router = useRouter();
   const googleBtnRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [useOtherEmail, setUseOtherEmail] = useState(false);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -123,6 +126,55 @@ export default function LoginPage() {
     };
   }, [router]);
 
+  const handleOtherEmailLogin = async () => {
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const loginResponse = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          google_jwt: 'text', // 使用 "text" 作为标识
+        }),
+      });
+
+      if (!loginResponse.ok) {
+        const errorData = await loginResponse.json().catch(() => ({}));
+        setError(errorData.message || 'Login failed');
+        setLoading(false);
+        return;
+      }
+
+      const loginData = await loginResponse.json();
+      
+      // Store the backend token
+      localStorage.setItem('auth_token', loginData.token);
+      
+      // Store user_id if needed
+      if (loginData.user_id) {
+        localStorage.setItem('user_id', loginData.user_id);
+      }
+
+      // Store email
+      localStorage.setItem('email', email);
+
+      router.push('/home');
+    } catch (e: any) {
+      console.error('Backend login error:', e);
+      setError('Failed to authenticate with server: ' + (e.message || 'Unknown error'));
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full bg-gray-50">
       {/* Top blue section */}
@@ -148,13 +200,77 @@ export default function LoginPage() {
           <div className="rounded-3xl border border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-10px_rgba(2,6,23,0.25)] p-12 md:p-16">
             <div className="text-center mb-8">
               <h2 className="text-[32px] md:text-[36px] font-bold text-slate-900 mb-2">Welcome Back</h2>
-              <p className="text-slate-600">Sign in with Google to continue</p>
+              <p className="text-slate-600">
+                {useOtherEmail ? 'Sign in with your email' : 'Sign in with Google to continue'}
+              </p>
             </div>
 
-            <div className="space-y-10">
-              <div className="flex justify-center">
-                <div ref={googleBtnRef} />
-              </div>
+            <div className="space-y-6">
+              {!useOtherEmail ? (
+                <>
+                  <div className="flex justify-center">
+                    <div ref={googleBtnRef} />
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">or</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setUseOtherEmail(true)}
+                    className="w-full py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Use other email
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleOtherEmailLogin();
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={handleOtherEmailLogin}
+                      disabled={loading || !email}
+                      className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Signing in...' : 'Sign in'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setUseOtherEmail(false);
+                        setEmail('');
+                        setError(null);
+                      }}
+                      className="w-full py-2 px-4 text-gray-600 hover:text-gray-800 transition-colors text-sm"
+                    >
+                      Back to Google sign in
+                    </button>
+                  </div>
+                </>
+              )}
 
               {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 

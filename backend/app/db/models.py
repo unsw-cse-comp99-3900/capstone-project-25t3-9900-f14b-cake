@@ -1,5 +1,5 @@
 # app/db/models.py
-from sqlalchemy import Column, ForeignKey, Integer,String, Text, Float, BigInteger, JSON, DateTime, Date
+from sqlalchemy import Column, ForeignKey, Integer,String, Text, Float, BigInteger, JSON, DateTime, Date, Boolean
 from sqlalchemy.orm import relationship
 import time
 from datetime import date
@@ -31,6 +31,8 @@ class Interview(Base):
     user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
     interview_type = Column(String, nullable=False)
     job_description = Column(String, nullable=False)
+    timestamp = Column(BigInteger, default=current_millis)
+    is_like = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="interviews")
     questions = relationship("Question", back_populates="interview", cascade="all, delete-orphan")
@@ -59,6 +61,14 @@ class User(Base):
     max_keyword = Column(Integer, default=0)
     max_confidence = Column(Integer, default=0)
     max_conciseness = Column(Integer, default=0)
+    max_overall = Column(Float, default=0.0)
+
+    total_clarity = Column(Integer, default=0)
+    total_relevance = Column(Integer, default=0)
+    total_keyword = Column(Integer, default=0)
+    total_confidence = Column(Integer, default=0)
+    total_conciseness = Column(Integer, default=0)
+    total_overall = Column(Float, default=0.0)
 
 
 

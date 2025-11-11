@@ -28,8 +28,8 @@ export enum BadgeType {
     LOGIN_STREAK_7 = "LOGIN_STREAK_7", // 连续登录7天
     LOGIN_STREAK_30 = "LOGIN_STREAK_30", // 连续登录30天
 
-    // 类别表现徽章
-    BEHAVIORAL_MASTER = "BEHAVIORAL_MASTER", // 行为类别大师
+    // 类别表现徽章 (使用英式拼写与队友保持一致)
+    BEHAVIOURAL_MASTER = "BEHAVIOURAL_MASTER", // 行为类别大师
     TECHNICAL_MASTER = "TECHNICAL_MASTER", // 技术类别大师
     PSYCHOMETRIC_MASTER = "PSYCHOMETRIC_MASTER", // 心理测评大师
 

@@ -3,12 +3,22 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from functools import wraps
+from dotenv import load_dotenv
 
-DB_USER = os.getenv("POSTGRES_USER", "admin")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "123456")
-DB_NAME = os.getenv("POSTGRES_DB", "mydb")
-DB_HOST = os.getenv("POSTGRES_HOST", "backend_postgres")  # ✅ 注意这里！
-DB_PORT = os.getenv("POSTGRES_PORT", "5432")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+load_dotenv(dotenv_path=ENV_PATH)
+
+# DB_USER = os.getenv("POSTGRES_USER", "admin")
+# DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "123456")
+# DB_NAME = os.getenv("POSTGRES_DB", "mydb")
+# DB_HOST = os.getenv("POSTGRES_HOST", "backend_postgres") 
+# DB_PORT = os.getenv("POSTGRES_PORT", "5432")
+DB_USER = os.getenv("POSTGRES_USER")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_HOST = os.getenv("POSTGRES_HOST") 
+DB_PORT = os.getenv("POSTGRES_PORT")
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Creating the SQLAlchemy engine

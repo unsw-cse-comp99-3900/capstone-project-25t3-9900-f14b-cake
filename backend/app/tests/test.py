@@ -1,12 +1,16 @@
 import json
 from textwrap import dedent
+from pprint import pprint
 from app.external_access import GPTAccessClient, FAQAccessClient, VerifyAccessClient
 from typing import List, Optional, Any, Dict
 # from prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
-from app.services.interview_service import interview_start, interview_feedback
-from app.services.user_service import get_user_detail
+from app.services.interview_service import interview_start, interview_feedback, change_interview_like
+from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics, like_interview
+from app.services.utils import with_db_session
+from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic
+from app.services.badge_service import check_badges_for_user
 # JWT Token
 JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
 
@@ -135,7 +139,7 @@ def test_auth():
     result = login(email, google_jwt, apple_jwt)
     jwt = result["token"]
     user_info = get_user_id_and_email(jwt)
-    print(user_info)
+    print("user_info:\n", user_info)
     print()
 
 
@@ -148,12 +152,51 @@ def test_interview():
     # interview_id = "2b283ef0-4b93-4913-8efd-bd6bbf5e5917"
     interview_id = interview["interview_id"]
     feedback = interview_feedback(token, interview_id, question_type, question, answer)
-    print(feedback)
+    # print("feedback:\n", feedback)
+    # print()
+    result = change_interview_like(interview_id)
+    print("change interview like:\n", {"interview_like": result.get("is_like", None)})
     print()
 
 def test_user():
     result = get_user_detail(JWT_TOKEN)
+    print("user_detail:")
+    pprint(result)
+    print()
+    result = get_user_interview_summary(JWT_TOKEN)
+    print("interview_summary:")
+    pprint(result)
+    print()
+    user_id = "1760000357832x893806233003485000"
+    user_statistics = get_user_statistics(user_id)
+    print("user_statistics.get_dict:")
+    # user_statistics.show()
+    print(user_statistics.get_dict())
+    print()
+    result = like_interview(JWT_TOKEN, user_statistics.interviews[0]["interview_id"])
+    print("result of like_interview(JWT_TOKEN, user_statistics.interviews[0][\"interview_id\"]):")
     print(result)
+    print()
+
+@with_db_session
+def test_badges(db = None):
+    user_id = "1760000357832x893806233003485000"
+    badge_id = 3
+    unlocked_badges = get_unlocked_badges(user_id, db)
+    unlocked_ids = [b.badge_id for b in unlocked_badges]
+    print(unlocked_ids)
+    # new_unlock = unlock_badge(user_id, badge_id, db)
+    # result = {
+    #     "id": new_unlock.id,
+    #     "user_id": new_unlock.user_id,
+    #     "badge_id": new_unlock.badge_id,
+    #     "unlocked_timestamp": new_unlock.unlocked_timestamp
+    # }
+    # print(result)
+    user = get_user_basic(user_id, db)
+    newly_unlocked = check_badges_for_user(user, db)
+    print(newly_unlocked)
+    
 
 if __name__ == "__main__":
     # print_format_answer()
@@ -163,3 +206,5 @@ if __name__ == "__main__":
     test_auth()
     test_interview()
     test_user()
+    # test_badges()
+
