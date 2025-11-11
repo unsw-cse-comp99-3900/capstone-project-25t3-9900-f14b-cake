@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
+import { getUserDetail } from '@/features/user/services';
+import { transformInterviewsToRecords } from '@/utils/dataTransform';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,93 +15,34 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<InterviewRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load records from localStorage
-    const loadRecords = () => {
-      const stored = localStorage.getItem('interview_history');
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          setRecords(data);
-        } catch (e) {
-          console.error('Failed to parse interview history', e);
+    // Load records from API
+    const loadRecords = async () => {
+      try {
+        setLoading(true);
+        const userData = await getUserDetail();
+        const transformedRecords = transformInterviewsToRecords(userData.interviews);
+        setRecords(transformedRecords);
+      } catch (e) {
+        console.error('Failed to load interview history from API', e);
+        // Fallback to localStorage if API fails
+        const stored = localStorage.getItem('interview_history');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setRecords(data);
+          } catch (parseError) {
+            console.error('Failed to parse interview history from localStorage', parseError);
+          }
         }
-      } else {
-        // Mock data for development
-        const mockData: InterviewRecord[] = [
-          {
-            id: '1',
-            questionType: 'behavioural',
-            timeElapsed: 1250,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 4.2,
-            questions: ['Tell me about yourself', 'Describe a challenging situation'],
-            answers: { 0: { textAnswer: 'I am a software engineer...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Good answer', scores: [4, 4, 4, 5, 4], error: false, loading: false } },
-            mode: 'text',
-          },
-          {
-            id: '2',
-            questionType: 'technical',
-            timeElapsed: 980,
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 3.8,
-            questions: ['Explain how React works', 'What is the difference between let and const?'],
-            answers: { 0: { textAnswer: 'React is a library...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Clear explanation', scores: [4, 3, 4, 4, 4], error: false, loading: false } },
-            mode: 'audio',
-          },
-          {
-            id: '3',
-            questionType: 'psychometric',
-            timeElapsed: 750,
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 4.6,
-            questions: ['How do you handle stress?', 'What motivates you?'],
-            answers: { 0: { textAnswer: 'I handle stress by...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Excellent response', scores: [5, 4, 5, 4, 5], error: false, loading: false } },
-            mode: 'text',
-          },
-          {
-            id: '4',
-            questionType: 'behavioural',
-            timeElapsed: 1120,
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 3.2,
-            questions: ['Tell me about a time you failed', 'How do you work in a team?'],
-            answers: { 0: { textAnswer: 'Once I failed at...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Could be improved', scores: [3, 3, 3, 3, 4], error: false, loading: false } },
-            mode: 'text',
-          },
-          {
-            id: '5',
-            questionType: 'technical',
-            timeElapsed: 1450,
-            createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 4.4,
-            questions: ['Explain database indexing', 'What is a REST API?'],
-            answers: { 0: { textAnswer: 'Database indexing is...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Very detailed answer', scores: [4, 5, 4, 4, 4], error: false, loading: false } },
-            mode: 'audio',
-          },
-        ];
-        setRecords(mockData);
-        localStorage.setItem('interview_history', JSON.stringify(mockData));
+      } finally {
+        setLoading(false);
       }
     };
 
     loadRecords();
-    
-    // Listen for storage changes (when new record is added from another tab/page)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'interview_history') {
-        loadRecords();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
@@ -143,19 +86,45 @@ export default function HistoryPage() {
     router.push('/interview/feedback');
   };
 
-  const toggleFavorite = (record: InterviewRecord) => {
-    const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
-    const index = favorites.findIndex((f: InterviewRecord) => f.id === record.id);
-    
-    if (index >= 0) {
-      favorites.splice(index, 1);
-    } else {
-      favorites.push(record);
+  const toggleFavorite = async (record: InterviewRecord) => {
+    // Find the interview in the records to get is_like status
+    const interview = records.find((r) => r.id === record.id);
+    if (!interview) return;
+
+    try {
+      // Call backend API to toggle like status
+      const { fetcher } = await import('@/lib/fetcher');
+      await fetcher.post('/user/like', {
+        interview_id: record.id,
+      });
+      
+      // Reload data from API to get updated is_like status
+      const userData = await getUserDetail();
+      const transformedRecords = transformInterviewsToRecords(userData.interviews);
+      setRecords(transformedRecords);
+    } catch (e) {
+      console.error('Failed to toggle favorite', e);
+      // Fallback to localStorage if API fails
+      const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+      const index = favorites.findIndex((f: InterviewRecord) => f.id === record.id);
+      
+      if (index >= 0) {
+        favorites.splice(index, 1);
+      } else {
+        favorites.push(record);
+      }
+      localStorage.setItem('interview_favorites', JSON.stringify(favorites));
     }
-    localStorage.setItem('interview_favorites', JSON.stringify(favorites));
   };
 
   const isFavorite = (recordId: string): boolean => {
+    // Check if interview is liked from the records (which come from API)
+    const record = records.find((r) => r.id === recordId);
+    if (record && record.is_like !== undefined) {
+      // Convert number to boolean if needed (backend may return 0/1 or true/false)
+      return record.is_like === true || record.is_like === 1;
+    }
+    // Fallback to localStorage check if is_like is not available
     const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
     return favorites.some((f: InterviewRecord) => f.id === recordId);
   };
@@ -198,7 +167,11 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          {records.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <p className="text-gray-600 text-lg">Loading interview records...</p>
+            </div>
+          ) : records.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-600 text-lg">No interview records yet.</p>
               <Link href="/interview" className="text-blue-600 hover:underline mt-4 inline-block">

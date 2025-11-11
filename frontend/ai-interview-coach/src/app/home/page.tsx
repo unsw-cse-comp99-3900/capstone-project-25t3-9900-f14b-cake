@@ -5,22 +5,39 @@ import { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import type { InterviewRecord } from '@/app/bank/history/type';
+import { getUserDetail } from '@/features/user/services';
+import { transformInterviewsToRecords } from '@/utils/dataTransform';
 
 export default function HomePage() {
   const router = useRouter();
   const [records, setRecords] = useState<InterviewRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load interview records from localStorage
+  // Load interview records from API
   useEffect(() => {
-    const loadRecords = () => {
-      const stored = localStorage.getItem('interview_history');
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          setRecords(data);
-        } catch (e) {
-          console.error('Failed to parse interview history', e);
+    const loadRecords = async () => {
+      try {
+        setLoading(true);
+        const userData = await getUserDetail();
+        console.log('User data from API:', userData);
+        console.log('Interviews count:', userData.interviews?.length || 0);
+        const transformedRecords = transformInterviewsToRecords(userData.interviews || []);
+        console.log('Transformed records:', transformedRecords);
+        setRecords(transformedRecords);
+      } catch (e) {
+        console.error('Failed to load interview history from API', e);
+        // Fallback to localStorage if API fails
+        const stored = localStorage.getItem('interview_history');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setRecords(data);
+          } catch (parseError) {
+            console.error('Failed to parse interview history from localStorage', parseError);
+          }
         }
+      } finally {
+        setLoading(false);
       }
     };
     loadRecords();
@@ -55,15 +72,34 @@ export default function HomePage() {
     }
 
     if (records && records.length > 0) {
+      console.log('Processing records for chart:', records.length);
       // Count interviews per day (only for dates in our 7-day range)
+      // Use timestamp from backend (Unix timestamp in seconds) if available
       records.forEach((record) => {
-        const recordDate = new Date(record.createdAt);
+        // Use timestamp if available
+        // Backend returns timestamp in milliseconds (from current_millis()), but user said it's in seconds
+        // Handle both cases: if timestamp < 1e12, treat as seconds, otherwise as milliseconds
+        let timestamp: number;
+        if (record.timestamp) {
+          // If timestamp is less than 1e12 (year 2001 in seconds), it's likely in seconds
+          // Otherwise, it's in milliseconds
+          timestamp = record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+        } else {
+          timestamp = new Date(record.createdAt).getTime();
+        }
+        
+        const recordDate = new Date(timestamp);
         recordDate.setHours(0, 0, 0, 0); // Reset to start of day
         const dateKey = recordDate.toISOString().split('T')[0];
+        
+        console.log(`Record date: ${dateKey}, timestamp: ${record.timestamp}, converted: ${timestamp}, createdAt: ${record.createdAt}`);
         
         if (dataMap.has(dateKey)) {
           const existing = dataMap.get(dateKey)!;
           existing.count += 1;
+          console.log(`Matched date ${dateKey}, count now: ${existing.count}`);
+        } else {
+          console.log(`Date ${dateKey} not in 7-day range. Available dates:`, Array.from(dataMap.keys()));
         }
       });
     } else {
@@ -156,7 +192,11 @@ export default function HomePage() {
                 <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{recentWeekTotal} total</span>
               </div>
               <div className="h-64">
-                {chartData.length > 0 ? (
+                {loading ? (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Loading...
+                  </div>
+                ) : chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart 
                       data={chartData} 
