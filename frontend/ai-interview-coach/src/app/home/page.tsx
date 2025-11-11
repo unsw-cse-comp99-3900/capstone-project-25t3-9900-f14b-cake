@@ -13,7 +13,7 @@ export default function HomePage() {
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load interview records from API
+  // Load interview records
   useEffect(() => {
     const loadRecords = async () => {
       try {
@@ -26,7 +26,6 @@ export default function HomePage() {
         setRecords(transformedRecords);
       } catch (e) {
         console.error('Failed to load interview history from API', e);
-        // Fallback to localStorage if API fails
         const stored = localStorage.getItem('interview_history');
         if (stored) {
           try {
@@ -43,7 +42,7 @@ export default function HomePage() {
     loadRecords();
   }, []);
 
-  // Prepare chart data from records - count interviews per day
+  // Chart data 
   const chartData = useMemo(() => {
     const days = 7;
     interface ChartDataPoint {
@@ -53,13 +52,12 @@ export default function HomePage() {
     }
     const dataMap = new Map<string, ChartDataPoint>();
     
-    // Calculate the start date (7 days ago from today)
+    // Calculate the start date 
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset to start of day
+    today.setHours(0, 0, 0, 0); 
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - (days - 1)); // Include today, so go back 6 days
+    startDate.setDate(startDate.getDate() - (days - 1)); 
     
-    // Initialize all 7 days with 0
     const chartDataArray: ChartDataPoint[] = [];
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate);
@@ -73,23 +71,16 @@ export default function HomePage() {
 
     if (records && records.length > 0) {
       console.log('Processing records for chart:', records.length);
-      // Count interviews per day (only for dates in our 7-day range)
-      // Use timestamp from backend (Unix timestamp in seconds) if available
       records.forEach((record) => {
-        // Use timestamp if available
-        // Backend returns timestamp in milliseconds (from current_millis()), but user said it's in seconds
-        // Handle both cases: if timestamp < 1e12, treat as seconds, otherwise as milliseconds
         let timestamp: number;
         if (record.timestamp) {
-          // If timestamp is less than 1e12 (year 2001 in seconds), it's likely in seconds
-          // Otherwise, it's in milliseconds
           timestamp = record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
         } else {
           timestamp = new Date(record.createdAt).getTime();
         }
         
         const recordDate = new Date(timestamp);
-        recordDate.setHours(0, 0, 0, 0); // Reset to start of day
+        recordDate.setHours(0, 0, 0, 0); 
         const dateKey = recordDate.toISOString().split('T')[0];
         
         console.log(`Record date: ${dateKey}, timestamp: ${record.timestamp}, converted: ${timestamp}, createdAt: ${record.createdAt}`);
@@ -103,22 +94,19 @@ export default function HomePage() {
         }
       });
     } else {
-      // Generate mock data for demonstration
       chartDataArray.forEach((entry) => {
         entry.count = Math.floor(Math.random() * 3) + 1;
       });
     }
 
-    // Return the array (already sorted chronologically)
     return chartDataArray;
   }, [records]);
 
-  // Calculate total interviews in the last 7 days (from chart data)
+  // Calculate total interviews in the last 7 days
   const recentWeekTotal = useMemo(() => {
     if (chartData.length === 0) {
       return 0;
     }
-    // Sum up all counts from the chart data
     return chartData.reduce((sum, dataPoint) => sum + dataPoint.count, 0);
   }, [chartData]);
 
@@ -128,7 +116,6 @@ export default function HomePage() {
 
       <main className="flex-1 pt-20 px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Welcome Section */}
           <div className="mb-8 mt-8">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
@@ -141,7 +128,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {[
               { label: 'Saved', count: 0, icon: 'bookmark', color: 'green' },
@@ -171,7 +157,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Main Action Card */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             <div className="modern-card p-12">
               <div className="text-center">

@@ -31,7 +31,6 @@ export default function AnsweringPage() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const chunksRef = useState<Blob[]>([])[0];
 
-  // Feedback state for all questions
   const [feedbacks, setFeedbacks] = useState<Record<number, {
     text: string | null;
     scores: number[] | null;
@@ -55,7 +54,6 @@ export default function AnsweringPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Manage webcam preview when the transcription modal is open
   useEffect(() => {
     let active = true;
     const startPreview = async () => {
@@ -67,11 +65,9 @@ export default function AnsweringPage() {
         }
         setPreviewStream(stream);
         if (videoRef.current) {
-          // @ts-ignore - srcObject is supported in modern browsers
           videoRef.current.srcObject = stream as any;
         }
       } catch (e) {
-        // If camera permission denied, silently ignore and keep modal without preview
       }
     };
 
@@ -89,13 +85,11 @@ export default function AnsweringPage() {
     };
   }, [showTranscriptionModal]);
 
-  // Show feedback when switching to a question that has feedback
   useEffect(() => {
     const currentFeedback = getCurrentFeedback();
     setShowFeedback(!!currentFeedback.text || currentFeedback.error);
   }, [currentQuestionIndex]);
 
-  // Fetch questions when page loads
   useEffect(() => {
     let isCancelled = false;
     (async () => {
@@ -122,7 +116,6 @@ export default function AnsweringPage() {
     };
   }, [questionType, jobDescription]);
 
-  // Cleanup any ongoing speech on unmount
   useEffect(() => {
     return () => {
       if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -154,7 +147,6 @@ export default function AnsweringPage() {
   const startRecording = async () => {
     if (isRecording) return;
     
-    // Start real-time transcription instead of recording
     try {
       setShowTranscriptionModal(true);
       setIsTranscribing(true);
@@ -171,21 +163,18 @@ export default function AnsweringPage() {
   };
 
   const stopRecording = () => {
-    // Stop the speech recognition
     speechToTextService.stop();
     setShowTranscriptionModal(false);
     setIsTranscribing(false);
   };
 
   const reRecord = () => {
-    // Clear previous transcription and start new one
     setCurrentAnswer({ transcribedText: null });
     startRecording();
   };
 
   const [answers, setAnswers] = useState<Record<number, { textAnswer: string; transcribedText: string | null }>>({});
 
-  // Helper functions to get/set current question's answer
   const getCurrentAnswer = () => {
     return answers[currentQuestionIndex] || { textAnswer: "", transcribedText: null };
   };
@@ -202,7 +191,6 @@ export default function AnsweringPage() {
     }));
   };
 
-  // Helper functions to get/set current question's feedback
   const getCurrentFeedback = () => {
     return feedbacks[currentQuestionIndex] || { text: null, scores: null, error: false, loading: false };
   };
@@ -231,7 +219,6 @@ export default function AnsweringPage() {
       setShowTranscriptionModal(true);
       setIsTranscribing(true);
 
-      // Start real-time speech recognition
       speechToTextService.transcribeWithWebSpeech()
         .then((result) => {
           setCurrentAnswer({ transcribedText: result.transcript });
@@ -284,7 +271,6 @@ export default function AnsweringPage() {
         interview_answer: answer,
       });
       
-      // Extract feedback data from the response object
       const feedback = res.interview_feedback;
       const feedbackText = feedback.overall_summary || 'No feedback available';
       const scores = [
@@ -303,7 +289,6 @@ export default function AnsweringPage() {
       });
       setShowFeedback(true);
       
-      // Mark current question as answered
       setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]));
     } catch (e) {
       setCurrentFeedback({ 
@@ -325,7 +310,6 @@ export default function AnsweringPage() {
   const allQuestionsAnswered = questions.length > 0 && answeredQuestions.size === questions.length;
 
   const handleCompleteInterview = () => {
-    // Store interview data for feedback page
     const feedbackData = {
       questions,
       answers,
@@ -333,11 +317,10 @@ export default function AnsweringPage() {
       questionType,
       mode,
       timeElapsed,
-      interview_id: interviewId, // Pass interview_id for API calls
+      interview_id: interviewId, 
     };
     sessionStorage.setItem('interview_feedback_data', JSON.stringify(feedbackData));
     
-    // Navigate to feedback page
     router.push('/interview/feedback');
   };
 
@@ -347,7 +330,6 @@ export default function AnsweringPage() {
 
       <main className="flex-1 p-5 pt-24">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-2xl font-bold text-gray-800">
@@ -363,7 +345,6 @@ export default function AnsweringPage() {
             </div>
           </div>
 
-          {/* Question list + progress */}
           <div className="mb-6">
             {/* Progress bar */}
             <div className="mb-3">
@@ -383,7 +364,6 @@ export default function AnsweringPage() {
               </div>
             </div>
 
-            {/* Question chips */}
             <div className="flex flex-wrap gap-2">
               {questions.map((_, idx) => {
                 const isActive = idx === currentQuestionIndex;
@@ -405,7 +385,6 @@ export default function AnsweringPage() {
             </div>
           </div>
 
-          {/* Top controls */}
           <div className="flex justify-between items-center mb-8">
             <button
               onClick={() => {
@@ -441,7 +420,6 @@ export default function AnsweringPage() {
             )}
           </div>
 
-          {/* Current question */}
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Current question</h2>
@@ -463,7 +441,6 @@ export default function AnsweringPage() {
             </p>
           </div>
 
-          {/* Answer or Feedback area */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             {!showFeedback ? (
               <>
@@ -625,7 +602,6 @@ export default function AnsweringPage() {
         </div>
       )}
 
-      {/* Transcription Modal */}
       {showTranscriptionModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg w-[28rem] max-w-[90vw] relative border border-blue-100">

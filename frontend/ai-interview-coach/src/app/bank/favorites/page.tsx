@@ -17,7 +17,7 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load favorites from API - only show records where is_like is true
+    // Show records that is_like is true
     const loadRecords = async () => {
       try {
         setLoading(true);
@@ -25,7 +25,6 @@ export default function FavoritesPage() {
         setRecords(favoriteRecords);
       } catch (e) {
         console.error('Failed to load interview favorites from API', e);
-        // Fallback to localStorage if API fails
         const stored = localStorage.getItem('interview_favorites');
         if (stored) {
           try {
@@ -50,12 +49,10 @@ export default function FavoritesPage() {
   };
 
   const formatDate = (record: InterviewRecord): string => {
-    // Use timestamp if available (Unix timestamp in seconds), otherwise fallback to createdAt
+    // Trans timestamp to date
     let timestamp: number;
     const recordTimestamp = record.timestamp;
     if (recordTimestamp !== undefined && recordTimestamp !== null) {
-      // If timestamp is less than 1e12 (year 2001 in seconds), it's likely in seconds
-      // Otherwise, it's in milliseconds
       timestamp = recordTimestamp < 1e12 ? recordTimestamp * 1000 : recordTimestamp;
     } else {
       timestamp = new Date(record.createdAt).getTime();
@@ -78,7 +75,6 @@ export default function FavoritesPage() {
   };
 
   const viewDetails = (record: InterviewRecord) => {
-    // Store record data for detail view
     sessionStorage.setItem('interview_feedback_data', JSON.stringify({
       questions: record.questions,
       answers: record.answers,
@@ -86,22 +82,18 @@ export default function FavoritesPage() {
       questionType: record.questionType,
       mode: record.mode,
       timeElapsed: record.timeElapsed,
-      interview_id: record.id, // Pass interview_id for API calls
+      interview_id: record.id, 
     }));
     router.push('/interview/feedback');
   };
 
   const removeFavorite = async (recordId: string) => {
     try {
-      // Call backend API to toggle like status
       await bankService.toggleLike(recordId);
-      
-      // Reload favorite records from API
       const favoriteRecords = await bankService.getFavorites();
       setRecords(favoriteRecords);
     } catch (e) {
       console.error('Failed to toggle favorite', e);
-      // Fallback to localStorage if API fails
       const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
       const updated = favorites.filter((f: InterviewRecord) => f.id !== recordId);
       localStorage.setItem('interview_favorites', JSON.stringify(updated));

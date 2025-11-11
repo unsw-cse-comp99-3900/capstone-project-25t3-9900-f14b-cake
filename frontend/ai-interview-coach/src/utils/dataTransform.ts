@@ -4,17 +4,14 @@ import type {
   BackendQuestionDetail,
 } from "@/features/user/type";
 
-/**
- * Convert backend interview data to frontend InterviewRecord format
- */
+// Convert backend interview data format
 export const transformInterviewToRecord = (
   interview: BackendInterviewDetail,
-  questionType?: string // Optional override, will use interview.interview_type if not provided
+  questionType?: string
 ): InterviewRecord => {
-  // Use interview_type from backend if available, otherwise use provided questionType or default
   const finalQuestionType =
     interview.interview_type || questionType || "technical";
-  // Calculate total score from all questions' feedback
+  // Calculate total score
   const scores: number[] = [];
   const answers: Record<
     number,
@@ -64,7 +61,6 @@ export const transformInterviewToRecord = (
         10
       : 0;
 
-  // Calculate time elapsed (estimate: assume 2 minutes per question)
   const timeElapsed = interview.questions.length * 120;
 
   return {
@@ -77,14 +73,11 @@ export const transformInterviewToRecord = (
     questions: interview.questions.map((q) => q.question),
     answers: answers,
     feedbacks: feedbacks,
-    mode: "text", // Default to text mode
+    mode: "text",
     is_like: interview.is_like, // Preserve is_like status from backend
   };
 };
 
-/**
- * Transform all backend interviews to frontend records
- */
 export const transformInterviewsToRecords = (
   interviews: BackendInterviewDetail[]
 ): InterviewRecord[] => {

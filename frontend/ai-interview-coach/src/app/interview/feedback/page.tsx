@@ -4,16 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { bankService } from "@/features/bank/services";
-
-interface FeedbackData {
-  questions: string[];
-  answers: Record<number, { textAnswer: string; transcribedText: string | null }>;
-  feedbacks: Record<number, { text: string | null; scores: number[] | null; error: boolean; loading: boolean }>;
-  questionType: string;
-  mode: string;
-  timeElapsed: number;
-  interview_id?: string; // Optional interview_id from backend
-}
+import type { FeedbackData } from "./type";
 
 export default function FeedbackPage() {
   const router = useRouter();
@@ -24,19 +15,16 @@ export default function FeedbackPage() {
   const [interviewId, setInterviewId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get data from sessionStorage (passed from answering page or history page)
+    // Get data from sessionStorage 
     const stored = sessionStorage.getItem("interview_feedback_data");
     if (stored) {
       try {
         const data = JSON.parse(stored);
         setFeedbackData(data);
-        
-        // Get interview_id if available (from backend)
         if (data.interview_id) {
           setInterviewId(data.interview_id);
           setRecordId(data.interview_id);
         } else {
-          // Calculate total score and create record ID (fallback for old data)
           const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
             const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
             if (allScores.length === 0) return 0;
@@ -60,11 +48,10 @@ export default function FeedbackPage() {
     }
   }, []);
 
-  // Load favorite status from API if interview_id is available
+  // Load favorite data
   useEffect(() => {
     const loadFavoriteStatus = async () => {
       if (!interviewId) {
-        // Fallback to localStorage if no interview_id
         const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
         setIsFavorite(favorites.some((f: any) => f.id === recordId));
         return;
@@ -77,7 +64,6 @@ export default function FeedbackPage() {
         }
       } catch (e) {
         console.error('Failed to load favorite status from API', e);
-        // Fallback to localStorage
         const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
         setIsFavorite(favorites.some((f: any) => f.id === recordId));
       }
@@ -155,7 +141,6 @@ export default function FeedbackPage() {
 
       <main className="flex-1 px-4 md:px-6 lg:px-8 py-5 pt-24">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-3">
@@ -169,22 +154,17 @@ export default function FeedbackPage() {
                       if (!idToUse) return;
 
                       try {
-                        // Call backend API to toggle like status
                         await bankService.toggleLike(idToUse);
-                        
-                        // Reload favorite status from API
                         if (interviewId) {
                           const interview = await bankService.getById(interviewId);
                           if (interview) {
                             setIsFavorite(interview.is_like === true || interview.is_like === 1);
                           }
                         } else {
-                          // Fallback: toggle local state if no interview_id
                           setIsFavorite(!isFavorite);
                         }
                       } catch (e) {
                         console.error('Failed to toggle favorite', e);
-                        // Fallback to localStorage if API fails
                         if (!feedbackData) return;
                         
                         const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
@@ -236,7 +216,6 @@ export default function FeedbackPage() {
             </div>
           </div>
 
-          {/* Summary Card */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-8 border border-blue-100">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
@@ -264,7 +243,6 @@ export default function FeedbackPage() {
             </div>
           </div>
 
-          {/* Questions List */}
           <div className="space-y-6">
             {questions.map((question, index) => {
               const answer = getAnswerText(index);
@@ -273,7 +251,6 @@ export default function FeedbackPage() {
 
               return (
                 <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  {/* Question Number Badge */}
                   <div className="flex items-center justify-between mb-4">
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
                       Question {index + 1}
@@ -285,13 +262,11 @@ export default function FeedbackPage() {
                     )}
                   </div>
 
-                  {/* Question */}
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-gray-500 mb-2">Question:</h3>
                     <p className="text-gray-900 text-lg leading-relaxed">{question}</p>
                   </div>
 
-                  {/* Answer */}
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-gray-500 mb-2">Your Answer:</h3>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -301,7 +276,6 @@ export default function FeedbackPage() {
                     </div>
                   </div>
 
-                  {/* Feedback */}
                   {feedback.text && (
                     <div className="mb-4">
                       <h3 className="text-sm font-semibold text-gray-500 mb-2">Feedback:</h3>
@@ -313,7 +287,6 @@ export default function FeedbackPage() {
                     </div>
                   )}
 
-                  {/* Scores Breakdown */}
                   {feedback.scores && feedback.scores.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-gray-500 mb-3">Performance Scores</h3>
@@ -362,7 +335,6 @@ export default function FeedbackPage() {
             })}
           </div>
 
-          {/* Actions */}
           <div className="mt-8 flex justify-center gap-4">
             <button
               onClick={() => router.push('/interview')}

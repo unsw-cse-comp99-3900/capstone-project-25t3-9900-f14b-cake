@@ -43,7 +43,6 @@ export default function LoginPage() {
             return;
           }
           try {
-            // Decode Google ID token (JWT) to get email
             let email = '';
             try {
               const payloadStr = atob(googleIdToken.split('.')[1] ?? '');
@@ -68,7 +67,6 @@ export default function LoginPage() {
               return;
             }
 
-            // Call backend /login API: pass Google's JWT token directly
             try {
               const loginResponse = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
@@ -77,7 +75,7 @@ export default function LoginPage() {
                 },
                 body: JSON.stringify({
                   email: email,
-                  google_jwt: googleIdToken, // Google 返回的 JWT token，直接传给后端
+                  google_jwt: googleIdToken
                 }),
               });
 
@@ -143,7 +141,7 @@ export default function LoginPage() {
         },
         body: JSON.stringify({
           email: email,
-          google_jwt: 'text', // 使用 "text" 作为标识
+          google_jwt: 'text', 
         }),
       });
 
@@ -156,15 +154,12 @@ export default function LoginPage() {
 
       const loginData = await loginResponse.json();
       
-      // Store the backend token
       localStorage.setItem('auth_token', loginData.token);
       
-      // Store user_id if needed
       if (loginData.user_id) {
         localStorage.setItem('user_id', loginData.user_id);
       }
 
-      // Store email
       localStorage.setItem('email', email);
 
       router.push('/home');
@@ -177,7 +172,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-gray-50">
-      {/* Top blue section */}
       <section className="relative bg-blue-600 text-white">
         <div className="mx-auto max-w-6xl px-6 py-20 md:py-28 min-h-[45vh] flex flex-col items-center justify-center">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -190,11 +184,9 @@ export default function LoginPage() {
             Stop job hunting the old way. Start with AI — get hired fast.
           </p>
 
-          {/* Decorative icons removed */}
         </div>
       </section>
 
-      {/* Bottom auth area */}
       <section className="relative bg-gray-50 py-16 md:py-24">
         <div className="mx-auto max-w-3xl px-4 md:px-0 w-full -mt-28 md:-mt-50">
           <div className="rounded-3xl border border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-10px_rgba(2,6,23,0.25)] p-12 md:p-16">

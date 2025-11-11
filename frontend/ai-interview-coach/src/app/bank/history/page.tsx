@@ -17,7 +17,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load records from API
+    // Load records 
     const loadRecords = async () => {
       try {
         setLoading(true);
@@ -25,7 +25,6 @@ export default function HistoryPage() {
         setRecords(records);
       } catch (e) {
         console.error('Failed to load interview history from API', e);
-        // Fallback to localStorage if API fails
         const stored = localStorage.getItem('interview_history');
         if (stored) {
           try {
@@ -50,11 +49,8 @@ export default function HistoryPage() {
   };
 
   const formatDate = (record: InterviewRecord): string => {
-    // Use timestamp if available (Unix timestamp in seconds), otherwise fallback to createdAt
     let timestamp: number;
     if (record.timestamp) {
-      // If timestamp is less than 1e12 (year 2001 in seconds), it's likely in seconds
-      // Otherwise, it's in milliseconds
       timestamp = record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
     } else {
       timestamp = new Date(record.createdAt).getTime();
@@ -80,9 +76,9 @@ export default function HistoryPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentRecords = records.slice(startIndex, endIndex);
-
+  
+  // Store record data
   const viewDetails = (record: InterviewRecord) => {
-    // Store record data for detail view
     sessionStorage.setItem('interview_feedback_data', JSON.stringify({
       questions: record.questions,
       answers: record.answers,
@@ -96,20 +92,15 @@ export default function HistoryPage() {
   };
 
   const toggleFavorite = async (record: InterviewRecord) => {
-    // Find the interview in the records to get is_like status
     const interview = records.find((r) => r.id === record.id);
     if (!interview) return;
 
     try {
-      // Call backend API to toggle like status
       await bankService.toggleLike(record.id);
-      
-      // Reload data from API to get updated is_like status
       const updatedRecords = await bankService.getRecords();
       setRecords(updatedRecords);
     } catch (e) {
       console.error('Failed to toggle favorite', e);
-      // Fallback to localStorage if API fails
       const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
       const index = favorites.findIndex((f: InterviewRecord) => f.id === record.id);
       
@@ -123,13 +114,10 @@ export default function HistoryPage() {
   };
 
   const isFavorite = (recordId: string): boolean => {
-    // Check if interview is liked from the records (which come from API)
     const record = records.find((r) => r.id === recordId);
     if (record && record.is_like !== undefined) {
-      // Convert number to boolean if needed (backend may return 0/1 or true/false)
       return record.is_like === true || record.is_like === 1;
     }
-    // Fallback to localStorage check if is_like is not available
     const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
     return favorites.some((f: InterviewRecord) => f.id === recordId);
   };
@@ -146,7 +134,6 @@ export default function HistoryPage() {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Interview Records</h2>
           
-          {/* Tab Navigation Bar */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex bg-white rounded-lg p-1 shadow-lg border border-blue-100 min-w-[360px]">
               <Link
@@ -185,7 +172,6 @@ export default function HistoryPage() {
             </div>
           ) : (
             <>
-              {/* Table */}
               <div className="bg-white border border-blue-200 rounded-lg overflow-hidden shadow-lg">
                 <table className="w-full">
                   <thead className="bg-blue-50">
@@ -243,7 +229,6 @@ export default function HistoryPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-gray-700">

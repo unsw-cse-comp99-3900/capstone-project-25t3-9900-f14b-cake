@@ -3,11 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 
-interface NavbarProps {
-  showBackButton?: boolean;
-  title?: string;
-  showUserButton?: boolean;
-}
+import type { NavbarProps } from "./type";
 
 export default function Navbar({ 
   showBackButton = false, 
