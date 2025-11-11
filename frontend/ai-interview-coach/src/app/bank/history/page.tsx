@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
+import { bankService } from '@/features/bank/services';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,93 +14,32 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<InterviewRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load records from localStorage
-    const loadRecords = () => {
-      const stored = localStorage.getItem('interview_history');
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          setRecords(data);
-        } catch (e) {
-          console.error('Failed to parse interview history', e);
+    // Load records 
+    const loadRecords = async () => {
+      try {
+        setLoading(true);
+        const records = await bankService.getRecords();
+        setRecords(records);
+      } catch (e) {
+        console.error('Failed to load interview history from API', e);
+        const stored = localStorage.getItem('interview_history');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setRecords(data);
+          } catch (parseError) {
+            console.error('Failed to parse interview history from localStorage', parseError);
+          }
         }
-      } else {
-        // Mock data for development
-        const mockData: InterviewRecord[] = [
-          {
-            id: '1',
-            questionType: 'behavioural',
-            timeElapsed: 1250,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 4.2,
-            questions: ['Tell me about yourself', 'Describe a challenging situation'],
-            answers: { 0: { textAnswer: 'I am a software engineer...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Good answer', scores: [4, 4, 4, 5, 4], error: false, loading: false } },
-            mode: 'text',
-          },
-          {
-            id: '2',
-            questionType: 'technical',
-            timeElapsed: 980,
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 3.8,
-            questions: ['Explain how React works', 'What is the difference between let and const?'],
-            answers: { 0: { textAnswer: 'React is a library...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Clear explanation', scores: [4, 3, 4, 4, 4], error: false, loading: false } },
-            mode: 'audio',
-          },
-          {
-            id: '3',
-            questionType: 'psychometric',
-            timeElapsed: 750,
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 4.6,
-            questions: ['How do you handle stress?', 'What motivates you?'],
-            answers: { 0: { textAnswer: 'I handle stress by...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Excellent response', scores: [5, 4, 5, 4, 5], error: false, loading: false } },
-            mode: 'text',
-          },
-          {
-            id: '4',
-            questionType: 'behavioural',
-            timeElapsed: 1120,
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 3.2,
-            questions: ['Tell me about a time you failed', 'How do you work in a team?'],
-            answers: { 0: { textAnswer: 'Once I failed at...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Could be improved', scores: [3, 3, 3, 3, 4], error: false, loading: false } },
-            mode: 'text',
-          },
-          {
-            id: '5',
-            questionType: 'technical',
-            timeElapsed: 1450,
-            createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-            totalScore: 4.4,
-            questions: ['Explain database indexing', 'What is a REST API?'],
-            answers: { 0: { textAnswer: 'Database indexing is...', transcribedText: null } },
-            feedbacks: { 0: { text: 'Very detailed answer', scores: [4, 5, 4, 4, 4], error: false, loading: false } },
-            mode: 'audio',
-          },
-        ];
-        setRecords(mockData);
-        localStorage.setItem('interview_history', JSON.stringify(mockData));
+      } finally {
+        setLoading(false);
       }
     };
 
     loadRecords();
-    
-    // Listen for storage changes (when new record is added from another tab/page)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'interview_history') {
-        loadRecords();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
@@ -108,8 +48,15 @@ export default function HistoryPage() {
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
+  const formatDate = (record: InterviewRecord): string => {
+    let timestamp: number;
+    if (record.timestamp) {
+      timestamp = record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+    } else {
+      timestamp = new Date(record.createdAt).getTime();
+    }
+    
+    const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -129,9 +76,9 @@ export default function HistoryPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentRecords = records.slice(startIndex, endIndex);
-
+  
+  // Store record data
   const viewDetails = (record: InterviewRecord) => {
-    // Store record data for detail view
     sessionStorage.setItem('interview_feedback_data', JSON.stringify({
       questions: record.questions,
       answers: record.answers,
@@ -139,23 +86,38 @@ export default function HistoryPage() {
       questionType: record.questionType,
       mode: record.mode,
       timeElapsed: record.timeElapsed,
+      interview_id: record.id, // Pass interview_id for API calls
     }));
     router.push('/interview/feedback');
   };
 
-  const toggleFavorite = (record: InterviewRecord) => {
-    const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
-    const index = favorites.findIndex((f: InterviewRecord) => f.id === record.id);
-    
-    if (index >= 0) {
-      favorites.splice(index, 1);
-    } else {
-      favorites.push(record);
+  const toggleFavorite = async (record: InterviewRecord) => {
+    const interview = records.find((r) => r.id === record.id);
+    if (!interview) return;
+
+    try {
+      await bankService.toggleLike(record.id);
+      const updatedRecords = await bankService.getRecords();
+      setRecords(updatedRecords);
+    } catch (e) {
+      console.error('Failed to toggle favorite', e);
+      const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+      const index = favorites.findIndex((f: InterviewRecord) => f.id === record.id);
+      
+      if (index >= 0) {
+        favorites.splice(index, 1);
+      } else {
+        favorites.push(record);
+      }
+      localStorage.setItem('interview_favorites', JSON.stringify(favorites));
     }
-    localStorage.setItem('interview_favorites', JSON.stringify(favorites));
   };
 
   const isFavorite = (recordId: string): boolean => {
+    const record = records.find((r) => r.id === recordId);
+    if (record && record.is_like !== undefined) {
+      return record.is_like === true || record.is_like === 1;
+    }
     const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
     return favorites.some((f: InterviewRecord) => f.id === recordId);
   };
@@ -172,7 +134,6 @@ export default function HistoryPage() {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Interview Records</h2>
           
-          {/* Tab Navigation Bar */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex bg-white rounded-lg p-1 shadow-lg border border-blue-100 min-w-[360px]">
               <Link
@@ -198,7 +159,11 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          {records.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <p className="text-gray-600 text-lg">Loading interview records...</p>
+            </div>
+          ) : records.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-600 text-lg">No interview records yet.</p>
               <Link href="/interview" className="text-blue-600 hover:underline mt-4 inline-block">
@@ -207,7 +172,6 @@ export default function HistoryPage() {
             </div>
           ) : (
             <>
-              {/* Table */}
               <div className="bg-white border border-blue-200 rounded-lg overflow-hidden shadow-lg">
                 <table className="w-full">
                   <thead className="bg-blue-50">
@@ -226,7 +190,7 @@ export default function HistoryPage() {
                           <span className="capitalize">{record.questionType}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {formatDate(record.createdAt)}
+                          {formatDate(record)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {formatTime(record.timeElapsed)}
@@ -265,7 +229,6 @@ export default function HistoryPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-gray-700">
