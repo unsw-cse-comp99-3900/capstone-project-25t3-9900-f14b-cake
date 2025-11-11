@@ -333,6 +333,7 @@ export default function AnsweringPage() {
       questionType,
       mode,
       timeElapsed,
+      interview_id: interviewId, // Pass interview_id for API calls
     };
     sessionStorage.setItem('interview_feedback_data', JSON.stringify(feedbackData));
     

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
+import { bankService } from '@/features/bank/services';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,74 +14,33 @@ export default function FavoritesPage() {
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<InterviewRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load favorites from localStorage
-    const stored = localStorage.getItem('interview_favorites');
-    if (stored) {
+    // Load favorites from API - only show records where is_like is true
+    const loadRecords = async () => {
       try {
-        const data = JSON.parse(stored);
-        if (data.length > 0) {
-          setRecords(data);
-        } else {
-          // Mock data for development if no favorites exist
-          const mockData: InterviewRecord[] = [
-            {
-              id: '3',
-              questionType: 'psychometric',
-              timeElapsed: 750,
-              createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-              totalScore: 4.6,
-              questions: ['How do you handle stress?', 'What motivates you?'],
-              answers: { 0: { textAnswer: 'I handle stress by...', transcribedText: null } },
-              feedbacks: { 0: { text: 'Excellent response', scores: [5, 4, 5, 4, 5], error: false, loading: false } },
-              mode: 'text',
-            },
-            {
-              id: '5',
-              questionType: 'technical',
-              timeElapsed: 1450,
-              createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-              totalScore: 4.4,
-              questions: ['Explain database indexing', 'What is a REST API?'],
-              answers: { 0: { textAnswer: 'Database indexing is...', transcribedText: null } },
-              feedbacks: { 0: { text: 'Very detailed answer', scores: [4, 5, 4, 4, 4], error: false, loading: false } },
-              mode: 'audio',
-            },
-          ];
-          setRecords(mockData);
-        }
+        setLoading(true);
+        const favoriteRecords = await bankService.getFavorites();
+        setRecords(favoriteRecords);
       } catch (e) {
-        console.error('Failed to parse interview favorites', e);
+        console.error('Failed to load interview favorites from API', e);
+        // Fallback to localStorage if API fails
+        const stored = localStorage.getItem('interview_favorites');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setRecords(data);
+          } catch (parseError) {
+            console.error('Failed to parse interview favorites from localStorage', parseError);
+          }
+        }
+      } finally {
+        setLoading(false);
       }
-    } else {
-      // Mock data for development
-      const mockData: InterviewRecord[] = [
-        {
-          id: '3',
-          questionType: 'psychometric',
-          timeElapsed: 750,
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          totalScore: 4.6,
-          questions: ['How do you handle stress?', 'What motivates you?'],
-          answers: { 0: { textAnswer: 'I handle stress by...', transcribedText: null } },
-          feedbacks: { 0: { text: 'Excellent response', scores: [5, 4, 5, 4, 5], error: false, loading: false } },
-          mode: 'text',
-        },
-        {
-          id: '5',
-          questionType: 'technical',
-          timeElapsed: 1450,
-          createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          totalScore: 4.4,
-          questions: ['Explain database indexing', 'What is a REST API?'],
-          answers: { 0: { textAnswer: 'Database indexing is...', transcribedText: null } },
-          feedbacks: { 0: { text: 'Very detailed answer', scores: [4, 5, 4, 4, 4], error: false, loading: false } },
-          mode: 'audio',
-        },
-      ];
-      setRecords(mockData);
-    }
+    };
+
+    loadRecords();
   }, []);
 
   const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
@@ -89,8 +49,19 @@ export default function FavoritesPage() {
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
+  const formatDate = (record: InterviewRecord): string => {
+    // Use timestamp if available (Unix timestamp in seconds), otherwise fallback to createdAt
+    let timestamp: number;
+    const recordTimestamp = record.timestamp;
+    if (recordTimestamp !== undefined && recordTimestamp !== null) {
+      // If timestamp is less than 1e12 (year 2001 in seconds), it's likely in seconds
+      // Otherwise, it's in milliseconds
+      timestamp = recordTimestamp < 1e12 ? recordTimestamp * 1000 : recordTimestamp;
+    } else {
+      timestamp = new Date(record.createdAt).getTime();
+    }
+    
+    const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -115,15 +86,27 @@ export default function FavoritesPage() {
       questionType: record.questionType,
       mode: record.mode,
       timeElapsed: record.timeElapsed,
+      interview_id: record.id, // Pass interview_id for API calls
     }));
     router.push('/interview/feedback');
   };
 
-  const removeFavorite = (recordId: string) => {
-    const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
-    const updated = favorites.filter((f: InterviewRecord) => f.id !== recordId);
-    localStorage.setItem('interview_favorites', JSON.stringify(updated));
-    setRecords(updated);
+  const removeFavorite = async (recordId: string) => {
+    try {
+      // Call backend API to toggle like status
+      await bankService.toggleLike(recordId);
+      
+      // Reload favorite records from API
+      const favoriteRecords = await bankService.getFavorites();
+      setRecords(favoriteRecords);
+    } catch (e) {
+      console.error('Failed to toggle favorite', e);
+      // Fallback to localStorage if API fails
+      const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+      const updated = favorites.filter((f: InterviewRecord) => f.id !== recordId);
+      localStorage.setItem('interview_favorites', JSON.stringify(updated));
+      setRecords(updated);
+    }
   };
 
   const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
@@ -169,7 +152,11 @@ export default function FavoritesPage() {
             </div>
           </div>
 
-          {records.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <p className="text-gray-600 text-lg">Loading favorite records...</p>
+            </div>
+          ) : records.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-600 text-lg">No favorite records yet.</p>
               <Link href="/bank/history" className="text-blue-600 hover:underline mt-4 inline-block">
@@ -197,7 +184,7 @@ export default function FavoritesPage() {
                           <span className="capitalize">{record.questionType}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {formatDate(record.createdAt)}
+                          {formatDate(record)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {formatTime(record.timeElapsed)}

@@ -5,8 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
-import { getUserDetail } from '@/features/user/services';
-import { transformInterviewsToRecords } from '@/utils/dataTransform';
+import { bankService } from '@/features/bank/services';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -22,9 +21,8 @@ export default function HistoryPage() {
     const loadRecords = async () => {
       try {
         setLoading(true);
-        const userData = await getUserDetail();
-        const transformedRecords = transformInterviewsToRecords(userData.interviews);
-        setRecords(transformedRecords);
+        const records = await bankService.getRecords();
+        setRecords(records);
       } catch (e) {
         console.error('Failed to load interview history from API', e);
         // Fallback to localStorage if API fails
@@ -51,8 +49,18 @@ export default function HistoryPage() {
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
+  const formatDate = (record: InterviewRecord): string => {
+    // Use timestamp if available (Unix timestamp in seconds), otherwise fallback to createdAt
+    let timestamp: number;
+    if (record.timestamp) {
+      // If timestamp is less than 1e12 (year 2001 in seconds), it's likely in seconds
+      // Otherwise, it's in milliseconds
+      timestamp = record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+    } else {
+      timestamp = new Date(record.createdAt).getTime();
+    }
+    
+    const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -82,6 +90,7 @@ export default function HistoryPage() {
       questionType: record.questionType,
       mode: record.mode,
       timeElapsed: record.timeElapsed,
+      interview_id: record.id, // Pass interview_id for API calls
     }));
     router.push('/interview/feedback');
   };
@@ -93,15 +102,11 @@ export default function HistoryPage() {
 
     try {
       // Call backend API to toggle like status
-      const { fetcher } = await import('@/lib/fetcher');
-      await fetcher.post('/user/like', {
-        interview_id: record.id,
-      });
+      await bankService.toggleLike(record.id);
       
       // Reload data from API to get updated is_like status
-      const userData = await getUserDetail();
-      const transformedRecords = transformInterviewsToRecords(userData.interviews);
-      setRecords(transformedRecords);
+      const updatedRecords = await bankService.getRecords();
+      setRecords(updatedRecords);
     } catch (e) {
       console.error('Failed to toggle favorite', e);
       // Fallback to localStorage if API fails
@@ -199,7 +204,7 @@ export default function HistoryPage() {
                           <span className="capitalize">{record.questionType}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {formatDate(record.createdAt)}
+                          {formatDate(record)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {formatTime(record.timeElapsed)}

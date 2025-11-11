@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { bankService } from "@/features/bank/services";
 
 interface FeedbackData {
   questions: string[];
@@ -11,6 +12,7 @@ interface FeedbackData {
   questionType: string;
   mode: string;
   timeElapsed: number;
+  interview_id?: string; // Optional interview_id from backend
 }
 
 export default function FeedbackPage() {
@@ -19,42 +21,72 @@ export default function FeedbackPage() {
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [recordId, setRecordId] = useState<string | null>(null);
+  const [interviewId, setInterviewId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get data from sessionStorage (passed from answering page)
+    // Get data from sessionStorage (passed from answering page or history page)
     const stored = sessionStorage.getItem("interview_feedback_data");
     if (stored) {
       try {
         const data = JSON.parse(stored);
         setFeedbackData(data);
         
-        // Calculate total score and create record ID
-        const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
-          const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
-          if (allScores.length === 0) return 0;
-          return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
-        };
-        
-        // Try to find existing record in history or create ID
-        const totalScore = calculateTotalScore(data.feedbacks);
-        const history = JSON.parse(localStorage.getItem('interview_history') || '[]');
-        const existingRecord = history.find((r: any) => 
-          r.questionType === data.questionType &&
-          r.timeElapsed === data.timeElapsed &&
-          Math.abs(r.totalScore - totalScore) < 0.1
-        );
-        
-        const id = existingRecord ? existingRecord.id : Date.now().toString();
-        setRecordId(id);
-        
-        // Check if favorite
-        const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
-        setIsFavorite(favorites.some((f: any) => f.id === id));
+        // Get interview_id if available (from backend)
+        if (data.interview_id) {
+          setInterviewId(data.interview_id);
+          setRecordId(data.interview_id);
+        } else {
+          // Calculate total score and create record ID (fallback for old data)
+          const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
+            const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
+            if (allScores.length === 0) return 0;
+            return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
+          };
+          
+          const totalScore = calculateTotalScore(data.feedbacks);
+          const history = JSON.parse(localStorage.getItem('interview_history') || '[]');
+          const existingRecord = history.find((r: any) => 
+            r.questionType === data.questionType &&
+            r.timeElapsed === data.timeElapsed &&
+            Math.abs(r.totalScore - totalScore) < 0.1
+          );
+          
+          const id = existingRecord ? existingRecord.id : Date.now().toString();
+          setRecordId(id);
+        }
       } catch (e) {
         console.error("Failed to parse feedback data", e);
       }
     }
   }, []);
+
+  // Load favorite status from API if interview_id is available
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      if (!interviewId) {
+        // Fallback to localStorage if no interview_id
+        const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+        setIsFavorite(favorites.some((f: any) => f.id === recordId));
+        return;
+      }
+
+      try {
+        const interview = await bankService.getById(interviewId);
+        if (interview) {
+          setIsFavorite(interview.is_like === true || interview.is_like === 1);
+        }
+      } catch (e) {
+        console.error('Failed to load favorite status from API', e);
+        // Fallback to localStorage
+        const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+        setIsFavorite(favorites.some((f: any) => f.id === recordId));
+      }
+    };
+
+    if (interviewId || recordId) {
+      loadFavoriteStatus();
+    }
+  }, [interviewId, recordId]);
 
   if (!feedbackData) {
     return (
@@ -132,36 +164,57 @@ export default function FeedbackPage() {
                 </h1>
                 {recordId && (
                   <button
-                    onClick={() => {
-                      if (!recordId || !feedbackData) return;
-                      
-                      const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
-                        const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
-                        if (allScores.length === 0) return 0;
-                        return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
-                      };
-                      
-                      const interviewRecord = {
-                        id: recordId,
-                        questionType: feedbackData.questionType,
-                        timeElapsed: feedbackData.timeElapsed,
-                        createdAt: new Date().toISOString(),
-                        totalScore: calculateTotalScore(feedbackData.feedbacks),
-                        questions: feedbackData.questions,
-                        answers: feedbackData.answers,
-                        feedbacks: feedbackData.feedbacks,
-                        mode: feedbackData.mode,
-                      };
-                      
-                      const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
-                      if (isFavorite) {
-                        const updated = favorites.filter((f: any) => f.id !== recordId);
-                        localStorage.setItem('interview_favorites', JSON.stringify(updated));
-                        setIsFavorite(false);
-                      } else {
-                        favorites.push(interviewRecord);
-                        localStorage.setItem('interview_favorites', JSON.stringify(favorites));
-                        setIsFavorite(true);
+                    onClick={async () => {
+                      const idToUse = interviewId || recordId;
+                      if (!idToUse) return;
+
+                      try {
+                        // Call backend API to toggle like status
+                        await bankService.toggleLike(idToUse);
+                        
+                        // Reload favorite status from API
+                        if (interviewId) {
+                          const interview = await bankService.getById(interviewId);
+                          if (interview) {
+                            setIsFavorite(interview.is_like === true || interview.is_like === 1);
+                          }
+                        } else {
+                          // Fallback: toggle local state if no interview_id
+                          setIsFavorite(!isFavorite);
+                        }
+                      } catch (e) {
+                        console.error('Failed to toggle favorite', e);
+                        // Fallback to localStorage if API fails
+                        if (!feedbackData) return;
+                        
+                        const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
+                          const allScores = Object.values(feedbacks).flatMap(f => f.scores || []);
+                          if (allScores.length === 0) return 0;
+                          return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
+                        };
+                        
+                        const interviewRecord = {
+                          id: recordId,
+                          questionType: feedbackData.questionType,
+                          timeElapsed: feedbackData.timeElapsed,
+                          createdAt: new Date().toISOString(),
+                          totalScore: calculateTotalScore(feedbackData.feedbacks),
+                          questions: feedbackData.questions,
+                          answers: feedbackData.answers,
+                          feedbacks: feedbackData.feedbacks,
+                          mode: feedbackData.mode,
+                        };
+                        
+                        const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+                        if (isFavorite) {
+                          const updated = favorites.filter((f: any) => f.id !== recordId);
+                          localStorage.setItem('interview_favorites', JSON.stringify(updated));
+                          setIsFavorite(false);
+                        } else {
+                          favorites.push(interviewRecord);
+                          localStorage.setItem('interview_favorites', JSON.stringify(favorites));
+                          setIsFavorite(true);
+                        }
                       }
                     }}
                     className="p-2 text-yellow-500 hover:text-yellow-600 transition-colors mt-1"
