@@ -1,4 +1,6 @@
+import os
 import json
+from dotenv import load_dotenv
 from textwrap import dedent
 from pprint import pprint
 from app.external_access import GPTAccessClient, FAQAccessClient, VerifyAccessClient
@@ -11,8 +13,13 @@ from app.services.user_service import get_user_detail, get_user_interview_summar
 from app.services.utils import with_db_session
 from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic
 from app.services.badge_service import check_badges_for_user
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ENV_PATH = os.path.join(BASE_DIR, '.env')
+
+load_dotenv(dotenv_path=ENV_PATH)
 # JWT Token
-JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjAwMDAzNTc4MzJ4ODkzODA2MjMzMDAzNDg1MDAwIiwiZW1haWwiOiJseWY0Nzc0NDkyMkBnbWFpbC5jb20iLCJpYXQiOjE3NjAwNTQ0ODcsIm5iZiI6MTc2MDA1NDQ4NywiZXhwIjoxNzYyNjQ2NDg3fQ.Bq9XVg2p_bmexvn9vtLpUKeeN3hVijjKiHiLxicCQfU"
+JWT_TOKEN = os.getenv("TEST_JWT")
 
 question = "Can you explain the differences between Python 2 and Python 3, and why it is important to use Python 3 for new projects?"
 answer = '''
@@ -138,6 +145,8 @@ def test_auth():
     # result = client.token_verify()
     result = login(email, google_jwt, apple_jwt)
     jwt = result["token"]
+    global JWT_TOKEN 
+    JWT_TOKEN = jwt
     user_info = get_user_id_and_email(jwt)
     print("user_info:\n", user_info)
     print()
