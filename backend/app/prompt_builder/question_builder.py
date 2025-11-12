@@ -1,7 +1,7 @@
 def build_question_prompt(
     job_description: str, 
     question_type: str,
-    question_number: int = 5
+    question_number: int = 3
 ) -> str:
     """
     Build a prompt asking GPT_ACCESS to generate an interview question.
