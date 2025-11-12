@@ -8,12 +8,29 @@ from app.services.utils import with_db_session
 from datetime import date
 
 def day_from_millis(ms: int):
-    """Convert millisecond timestamps to UTC days integers."""
+    """
+    Convert millisecond timestamps to UTC days integers.
+
+    Args:
+        ms: A int of Unix timestamp, this is obtained by multiplying a floating-point Unix timestamp by 1000 and then rounding it down.
+        
+    Returns:
+        int: A int of data form January 1, 1 AD.
+    """
     return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).date().toordinal()
 
 @with_db_session
 def get_user_detail(token: str, db = None):
-    """Integrates user basic information, interview records (including questions), and badge unlocking information."""
+    """
+    Integrates user basic information, interview records (including questions), and badge unlocking information.
+
+    Args:
+        token: A string of JWT token.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict of user detail.
+    """
     from app.services.auth_service import get_user_id_and_email
     id_email = get_user_id_and_email(token)
     user_id = id_email.get("id")
@@ -78,6 +95,17 @@ def get_user_detail(token: str, db = None):
 
 
 def create_new_user(user_id: str, user_email: str, db = None):
+    """
+    Create a new user entity and insert it into the users table.
+
+    Args:
+        user_id: A string of user id.
+        user_email: A string of user email.
+        db: The active SQLAlchemy database session.
+        
+    Returns:
+        user: A SQLAlchemy entry of user, if it is None, means fails.
+    """
     print("Create new user:", user_id)
     user = User(
         user_id=user_id,
@@ -106,6 +134,16 @@ def create_new_user(user_id: str, user_email: str, db = None):
 
 
 def update_user_login(user_id: str, db = None):
+    """
+    Update the user profile after the user logs in.
+
+    Args:
+        user_id: A string of user id.
+        db: The active SQLAlchemy database session.
+        
+    Returns:
+        user: A SQLAlchemy entry of user, if it is None, means fails.
+    """
     print("User login:", user_id)
     user = get_user_basic(user_id, db)
     if not user:
@@ -115,12 +153,14 @@ def update_user_login(user_id: str, db = None):
     if (new_login - user.last_login).days == 1 or user.total_logins == 0:
         update_data = {"last_login": new_login, 
                         "consecutive_days": user.consecutive_days + 1,
-                        "total_logins": user.total_logins + 1
+                        "total_logins": user.total_logins + 1,
+                        "xp": user.xp + 5
                         }
     elif (new_login - user.last_login).days > 1:
         update_data = {"last_login": new_login, 
                         "consecutive_days": 1,
-                        "total_logins": user.total_logins + 1
+                        "total_logins": user.total_logins + 1,
+                        "xp": user.xp + 5
                         }
     else:
         update_data = None
@@ -134,7 +174,16 @@ def update_user_login(user_id: str, db = None):
 
 @with_db_session
 def get_user_full_detail(token: str, db = None):
-    """Integrates user basic information, interview records (including questions), and badge unlocking information."""
+    """
+    Integrates user basic information, interview records (including questions), and badge unlocking information.
+
+    Args:
+        token: A string of JWT token.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict of user detail, in anther format.
+    """
     from app.services.auth_service import get_user_id_and_email
     id_email = get_user_id_and_email(token)
     user_id = id_email.get("id")
@@ -182,6 +231,16 @@ def get_user_full_detail(token: str, db = None):
 
 @with_db_session
 def get_user_interview_summary(token: str, db = None):
+    """
+    The system analyzes user interviews and returns the average score for each question.
+
+    Args:
+        token: A string of JWT token.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict of user avg score in each field.
+    """
     from app.services.auth_service import get_user_id_and_email
     id_email = get_user_id_and_email(token)
     user_id = id_email.get("id")
@@ -204,6 +263,9 @@ def get_user_interview_summary(token: str, db = None):
 
 
 class UserStatistics:
+    """
+    A class that conveniently displays user status information, containing all fields of the user database, as well as some fields of the corresponding sub-tables interviews and badges.
+    """
     def __init__(self, user, interviews=None, badges=None):
         self.user_id = user.user_id
         self.user_email = user.user_email
@@ -327,6 +389,17 @@ def get_user_statistics(user_id: str):
 
 @with_db_session
 def like_interview(token, interview_id, db = None):
+    """
+    Invert the is_like field of the determined interview.
+
+    Args:
+        token: A string of JWT token.
+        interview_id: A string of interview_id, it is a UUID.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict interview_id and new is_like value.
+    """
     from app.services.auth_service import get_user_id_and_email
     id_email = get_user_id_and_email(token)
     user_id = id_email.get("id")
