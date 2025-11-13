@@ -5,28 +5,44 @@ import { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import type { InterviewRecord } from '@/app/bank/history/type';
+import { getUserDetail } from '@/features/user/services';
+import { transformInterviewsToRecords } from '@/utils/dataTransform';
 
 export default function HomePage() {
   const router = useRouter();
   const [records, setRecords] = useState<InterviewRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load interview records from localStorage
+  // Load interview records
   useEffect(() => {
-    const loadRecords = () => {
-      const stored = localStorage.getItem('interview_history');
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          setRecords(data);
-        } catch (e) {
-          console.error('Failed to parse interview history', e);
+    const loadRecords = async () => {
+      try {
+        setLoading(true);
+        const userData = await getUserDetail();
+        console.log('User data from API:', userData);
+        console.log('Interviews count:', userData.interviews?.length || 0);
+        const transformedRecords = transformInterviewsToRecords(userData.interviews || []);
+        console.log('Transformed records:', transformedRecords);
+        setRecords(transformedRecords);
+      } catch (e) {
+        console.error('Failed to load interview history from API', e);
+        const stored = localStorage.getItem('interview_history');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            setRecords(data);
+          } catch (parseError) {
+            console.error('Failed to parse interview history from localStorage', parseError);
+          }
         }
+      } finally {
+        setLoading(false);
       }
     };
     loadRecords();
   }, []);
 
-  // Prepare chart data from records - count interviews per day
+  // Chart data 
   const chartData = useMemo(() => {
     const days = 7;
     interface ChartDataPoint {
@@ -36,13 +52,12 @@ export default function HomePage() {
     }
     const dataMap = new Map<string, ChartDataPoint>();
     
-    // Calculate the start date (7 days ago from today)
+    // Calculate the start date 
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset to start of day
+    today.setHours(0, 0, 0, 0); 
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - (days - 1)); // Include today, so go back 6 days
+    startDate.setDate(startDate.getDate() - (days - 1)); 
     
-    // Initialize all 7 days with 0
     const chartDataArray: ChartDataPoint[] = [];
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate);
@@ -55,34 +70,43 @@ export default function HomePage() {
     }
 
     if (records && records.length > 0) {
-      // Count interviews per day (only for dates in our 7-day range)
+      console.log('Processing records for chart:', records.length);
       records.forEach((record) => {
-        const recordDate = new Date(record.createdAt);
-        recordDate.setHours(0, 0, 0, 0); // Reset to start of day
+        let timestamp: number;
+        if (record.timestamp) {
+          timestamp = record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+        } else {
+          timestamp = new Date(record.createdAt).getTime();
+        }
+        
+        const recordDate = new Date(timestamp);
+        recordDate.setHours(0, 0, 0, 0); 
         const dateKey = recordDate.toISOString().split('T')[0];
+        
+        console.log(`Record date: ${dateKey}, timestamp: ${record.timestamp}, converted: ${timestamp}, createdAt: ${record.createdAt}`);
         
         if (dataMap.has(dateKey)) {
           const existing = dataMap.get(dateKey)!;
           existing.count += 1;
+          console.log(`Matched date ${dateKey}, count now: ${existing.count}`);
+        } else {
+          console.log(`Date ${dateKey} not in 7-day range. Available dates:`, Array.from(dataMap.keys()));
         }
       });
     } else {
-      // Generate mock data for demonstration
       chartDataArray.forEach((entry) => {
         entry.count = Math.floor(Math.random() * 3) + 1;
       });
     }
 
-    // Return the array (already sorted chronologically)
     return chartDataArray;
   }, [records]);
 
-  // Calculate total interviews in the last 7 days (from chart data)
+  // Calculate total interviews in the last 7 days
   const recentWeekTotal = useMemo(() => {
     if (chartData.length === 0) {
       return 0;
     }
-    // Sum up all counts from the chart data
     return chartData.reduce((sum, dataPoint) => sum + dataPoint.count, 0);
   }, [chartData]);
 
@@ -92,7 +116,6 @@ export default function HomePage() {
 
       <main className="flex-1 pt-20 px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Welcome Section */}
           <div className="mb-8 mt-8">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
@@ -100,12 +123,11 @@ export default function HomePage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Welcome User!</h1>
-                <p className="text-gray-600">Ready to land your next role as a Software Engineer? <span className="text-blue-600 cursor-pointer hover:underline">edit</span></p>
+                <p className="text-gray-600">Ready to land your next role as a Software Engineer?</p>
               </div>
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {[
               { label: 'Saved', count: 0, icon: 'bookmark', color: 'green' },
@@ -135,7 +157,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Main Action Card */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             <div className="modern-card p-12">
               <div className="text-center">
@@ -156,7 +177,11 @@ export default function HomePage() {
                 <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{recentWeekTotal} total</span>
               </div>
               <div className="h-64">
-                {chartData.length > 0 ? (
+                {loading ? (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Loading...
+                  </div>
+                ) : chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart 
                       data={chartData} 
