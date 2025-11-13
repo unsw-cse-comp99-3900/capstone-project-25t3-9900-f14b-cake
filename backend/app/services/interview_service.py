@@ -17,6 +17,19 @@ from app.services.utils import with_db_session
 # Database Functions
 # ---------------------------
 def save_interview(user_id: str, interview_id: str, interview_type: str, job_description: str, db = None):
+    """
+    The interview process stores the interview results in the database and updates the user information.
+
+    Args:
+        user_id: A string of user_id.
+        interview_id: A string of interview_id, it is a UUID.
+        interview_type: A string of interview types.
+        job_description: A string of job description.
+        db: The active SQLAlchemy database session.
+        
+    Returns:
+        interview: A SQLAlchemy entry of interview, if it is None, means fails.
+    """
     print(f"Saving interview for user={user_id}")
     timestamp = int(time.time() * 1000)
     new_interview = Interview(interview_id=interview_id, 
@@ -38,6 +51,21 @@ def save_interview(user_id: str, interview_id: str, interview_type: str, job_des
 
 
 def save_question(user_id: str, interview_id: str, question_type: str, question_text: str, answer: str, feedback: dict, db = None):
+    """
+    The question process stores the interview results in the database and updates the user information.
+
+    Args:
+        user_id: A string of user_id.
+        interview_id: A string of interview_id, it is a UUID.
+        question_type: A string of question types, which is the same as interview_type.
+        question_text: A string of question test.
+        answer: A string of answer text.
+        feedback: A dict of feedback of answer, including scores.
+        db: The active SQLAlchemy database session.
+        
+    Returns:
+        dict: A SQLAlchemy entry of interview, if it is None, means fails.
+    """
     print(f"Saving question for user={user_id}, interview={interview_id}")
     timestamp = int(time.time() * 1000)
     question_id = f"{interview_id}_{timestamp}"
@@ -65,6 +93,7 @@ def save_question(user_id: str, interview_id: str, question_type: str, question_
     overall = feedback.get("overall_score", 0.0)
 
     user_data = {
+        "xp": user.xp + int(overall * 2),
         "total_questions": user.total_questions + 1,
         "total_clarity": user.total_clarity + clarity,
         "total_relevance": user.total_relevance + relevance,
@@ -181,6 +210,16 @@ def _unwrap_api_answer(answer_text: str) -> str:
 # ---------------------------
 @with_db_session
 def change_interview_like(interview_id: str, db = None):
+    """
+    Invert the is_like field of the determined interview.
+
+    Args:
+        interview_id: A string of interview_id, it is a UUID.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict interview_id and new is_like value.
+    """
     interview = update_interview_like(interview_id, db)
     result = {
         "interview_id": interview_id,
@@ -192,6 +231,15 @@ def change_interview_like(interview_id: str, db = None):
 def interview_start(token: str, job_description: str, question_type: str, db = None) -> Dict[str, Any]:
     """
     Generate some interview questions for the given job description.
+
+    Args:
+        token: A string of JWT token.
+        job_description: A string of job description.
+        question_type: A string of question type, the same meaning of interview type.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict interview_id and a list of interview questions.
     """
     gpt = GPTAccessClient(token)
     prompt = build_question_prompt(job_description, question_type)
@@ -223,6 +271,17 @@ def interview_start(token: str, job_description: str, question_type: str, db = N
 def interview_feedback(token: str, interview_id: str, interview_type: str, interview_question: str, interview_answer: str, db = None) -> Dict[str, Any]:
     """
     Generate feedback and a 5-element score list.
+
+    Args:
+        token: A string of JWT token.
+        interview_id: A string of interview id.
+        interview_type: A string of interview type, the same meaning of question type.
+        interview_question: A string of interview question text, here is just only one question.
+        interview_answer: A string of answer text.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict interview_feedback, this is actually a feedback on only one question.
     """
     user_info: Dict[str, Any] = {}
     try:
