@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { ScoreDimension } from "@/types";
 import { SCORE_DIMENSION_CONFIGS } from "@/types/common";
@@ -21,6 +21,7 @@ import {
     CartesianGrid,
     Legend,
 } from "recharts";
+import { getProgressPageData } from "@/services";
 
 // Time range options for filtering interview sessions
 enum TimeRange {
@@ -28,9 +29,10 @@ enum TimeRange {
     RECENT_15 = "RECENT_15", // Last 15 sessions
 }
 
+// ===== MOCK DATA - COMMENTED OUT FOR BACKEND TESTING =====
 // Mock data for development - backend will provide real data
 // Changed from date-based to interview session-based
-const mockReadinessDataAll = [
+/* const mockReadinessDataAll = [
     { session: 1, score: 65 },
     { session: 2, score: 68 },
     { session: 3, score: 72 },
@@ -110,10 +112,88 @@ const radarChartData = mockCategoryPerformance.map((dim) => ({
     current: dim.percentage, // Current performance
     target: 85, // Target/benchmark score
     fullMark: 100,
-}));
+})); */
+// ===== END OF MOCK DATA =====
 
 export default function ProgressPage() {
     const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.RECENT_7);
+    const [progressData, setProgressData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch data from backend
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                // Get token from localStorage (set during login)
+                const token = localStorage.getItem("auth_token"); // 注意:登录页面使用的是 'auth_token'
+
+                if (!token) {
+                    setError("Please login first");
+                    setLoading(false);
+                    return;
+                }
+                const data = await getProgressPageData(token);
+                setProgressData(data);
+                setError(null);
+            } catch (err: any) {
+                console.error("Failed to fetch progress data:", err);
+                setError(err.message || "Failed to load progress data");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-50">
+                <Navbar />
+                <main className="flex-1 p-8 pt-24 max-w-7xl mx-auto w-full">
+                    <div className="text-center py-20">
+                        <p className="text-xl text-gray-600">
+                            Loading progress data...
+                        </p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-50">
+                <Navbar />
+                <main className="flex-1 p-8 pt-24 max-w-7xl mx-auto w-full">
+                    <div className="text-center py-20">
+                        <p className="text-xl text-red-600">{error}</p>
+                        <p className="text-gray-600 mt-2">
+                            Please try logging in again
+                        </p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    // Use real data from backend
+    const mockReadinessDataAll = progressData?.readinessScores || [];
+    const mockLoginData = progressData?.loginData || [];
+    const mockCategoryPerformance = progressData?.dimensionPerformance || [];
+
+    // Prepare radar chart data with dual layers (current vs target)
+    // Using 5-point scale (1-5) instead of percentage
+    const radarChartData = mockCategoryPerformance.map((dim: any) => ({
+        subject: dim.dimension_name.split(" ")[0], // Shortened names for radar chart
+        current: Number(dim.average_score.toFixed(2)), // Current performance (1-5 scale)
+        target: 4.25, // Target/benchmark score (85% of 5 = 4.25)
+        fullMark: 5,
+    }));
 
     // Filter data based on selected time range
     const mockReadinessData =
@@ -122,10 +202,10 @@ export default function ProgressPage() {
             : mockReadinessDataAll.slice(-15); // Last 15 sessions
 
     // Calculate statistics
-    const maxScore = Math.max(...mockReadinessData.map((d) => d.score));
-    const minScore = Math.min(...mockReadinessData.map((d) => d.score));
+    const maxScore = Math.max(...mockReadinessData.map((d: any) => d.score));
+    const minScore = Math.min(...mockReadinessData.map((d: any) => d.score));
     const averageScore =
-        mockReadinessData.reduce((sum, d) => sum + d.score, 0) /
+        mockReadinessData.reduce((sum: number, d: any) => sum + d.score, 0) /
         mockReadinessData.length;
     const improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(
         1
@@ -135,11 +215,11 @@ export default function ProgressPage() {
     const currentStreak = mockLoginData
         .slice()
         .reverse()
-        .findIndex((day) => !day.hasLogin);
+        .findIndex((day: any) => !day.hasLogin);
     const loginStreakDays =
         currentStreak === -1 ? mockLoginData.length : currentStreak;
-    const totalLoginDays = mockLoginData.filter((d) => d.hasLogin).length;
-    const maxLoginStreak = 7; // This should come from backend
+    const totalLoginDays = mockLoginData.filter((d: any) => d.hasLogin).length;
+    const maxLoginStreak = progressData?.maxLoginStreak || 7;
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -255,7 +335,7 @@ export default function ProgressPage() {
                                         tickFormatter={(value) => `#${value}`}
                                     />
                                     <YAxis
-                                        domain={[40, 100]}
+                                        domain={[0, 5]}
                                         stroke="#6b7280"
                                         style={{
                                             fontSize: "12px",
@@ -264,7 +344,7 @@ export default function ProgressPage() {
                                         tickLine={false}
                                         axisLine={{ stroke: "#e5e7eb" }}
                                         label={{
-                                            value: "Readiness Score",
+                                            value: "Readiness Score (1-5)",
                                             angle: -90,
                                             position: "insideLeft",
                                             style: {
@@ -273,7 +353,7 @@ export default function ProgressPage() {
                                                 fontWeight: 600,
                                             },
                                         }}
-                                        ticks={[40, 50, 60, 70, 80, 90, 100]}
+                                        ticks={[0, 1, 2, 3, 4, 5]}
                                     />
                                     <Tooltip
                                         contentStyle={{
@@ -473,7 +553,7 @@ export default function ProgressPage() {
                                             .toISOString()
                                             .split("T")[0];
                                         const hasLogin = mockLoginData.find(
-                                            (d) => d.date === dateStr
+                                            (d: any) => d.date === dateStr
                                         )?.hasLogin;
                                         return hasLogin
                                             ? "react-calendar__tile--hasLogin"
@@ -606,7 +686,7 @@ export default function ProgressPage() {
                                         />
                                         <PolarRadiusAxis
                                             angle={90}
-                                            domain={[0, 100]}
+                                            domain={[0, 5]}
                                             tick={{
                                                 fill: "#64748b",
                                                 fontSize: 12,
@@ -617,7 +697,7 @@ export default function ProgressPage() {
                                         />
                                         {/* Target/Benchmark Layer (behind) */}
                                         <Radar
-                                            name="Target (85%)"
+                                            name="Target (4.25/5)"
                                             dataKey="target"
                                             stroke="#10b981"
                                             strokeWidth={2}
@@ -674,7 +754,10 @@ export default function ProgressPage() {
                                             formatter={(
                                                 value: number,
                                                 name: string
-                                            ) => [`${value}%`, name]}
+                                            ) => [
+                                                `${value.toFixed(2)}/5`,
+                                                name,
+                                            ]}
                                         />
                                         <Legend
                                             wrapperStyle={{
@@ -699,7 +782,7 @@ export default function ProgressPage() {
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
                                         <span className="text-gray-700 font-medium">
-                                            Target Benchmark (85%)
+                                            Target Benchmark (4.25/5)
                                         </span>
                                     </div>
                                 </div>
@@ -710,7 +793,7 @@ export default function ProgressPage() {
                                 <h4 className="font-semibold text-gray-800 mb-3">
                                     Detailed Breakdown:
                                 </h4>
-                                {mockCategoryPerformance.map((dim) => (
+                                {mockCategoryPerformance.map((dim: any) => (
                                     <div
                                         key={dim.dimension}
                                         className="bg-gray-50 rounded-lg p-4 border border-gray-100"
@@ -719,7 +802,7 @@ export default function ProgressPage() {
                                             <span className="text-2xl">
                                                 {
                                                     SCORE_DIMENSION_CONFIGS[
-                                                        dim.dimension
+                                                        dim.dimension as ScoreDimension
                                                     ].icon
                                                 }
                                             </span>
@@ -729,21 +812,22 @@ export default function ProgressPage() {
                                                         {dim.dimension_name}
                                                     </h5>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-semibold text-gray-700">
-                                                            {dim.average_score}
-                                                            /5
-                                                        </span>
                                                         <span className="text-lg font-bold text-gray-800">
-                                                            {dim.percentage}%
+                                                            {dim.average_score.toFixed(
+                                                                2
+                                                            )}
+                                                            /5
                                                         </span>
                                                         <span
                                                             className={`text-xs px-3 py-1 rounded-full font-medium ${
-                                                                dim.is_strength
+                                                                dim.average_score >=
+                                                                3.5
                                                                     ? "bg-green-100 text-green-700"
                                                                     : "bg-orange-100 text-orange-700"
                                                             }`}
                                                         >
-                                                            {dim.is_strength
+                                                            {dim.average_score >=
+                                                            3.5
                                                                 ? "✓ Strength"
                                                                 : "⚠ Needs Work"}
                                                         </span>
@@ -752,19 +836,24 @@ export default function ProgressPage() {
                                                 <p className="text-sm text-gray-600 mb-3">
                                                     {
                                                         SCORE_DIMENSION_CONFIGS[
-                                                            dim.dimension
+                                                            dim.dimension as ScoreDimension
                                                         ].description
                                                     }
                                                 </p>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
                                                         className={`h-2 rounded-full transition-all ${
-                                                            dim.is_strength
+                                                            dim.average_score >=
+                                                            3.5
                                                                 ? "bg-green-500"
                                                                 : "bg-orange-500"
                                                         }`}
                                                         style={{
-                                                            width: `${dim.percentage}%`,
+                                                            width: `${
+                                                                (dim.average_score /
+                                                                    5) *
+                                                                100
+                                                            }%`,
                                                         }}
                                                     />
                                                 </div>
