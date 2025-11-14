@@ -1,10 +1,9 @@
 services:
-  # 开发环境服务
   app-dev:
     build:
       context: .
       dockerfile: Dockerfile
-      target: base
+      target: deps
     ports:
       - "0.0.0.0:3000:3000"
     volumes:
@@ -17,7 +16,6 @@ services:
     profiles:
       - dev
 
-  # 生产环境服务
   app-prod:
     build:
       context: .
@@ -29,7 +27,6 @@ services:
     profiles:
       - prod
 
-  # 构建服务（用于构建镜像）
   app-build:
     build:
       context: .

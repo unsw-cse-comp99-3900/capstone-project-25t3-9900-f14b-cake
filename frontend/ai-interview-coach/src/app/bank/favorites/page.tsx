@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
+import { bankService } from '@/features/bank/services';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,74 +14,52 @@ export default function FavoritesPage() {
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<InterviewRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load favorites from localStorage
-    const stored = localStorage.getItem('interview_favorites');
-    if (stored) {
+    // Show records that is_like is true
+    const loadRecords = async () => {
       try {
-        const data = JSON.parse(stored);
-        if (data.length > 0) {
-          setRecords(data);
-        } else {
-          // Mock data for development if no favorites exist
-          const mockData: InterviewRecord[] = [
-            {
-              id: '3',
-              questionType: 'psychometric',
-              timeElapsed: 750,
-              createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-              totalScore: 4.6,
-              questions: ['How do you handle stress?', 'What motivates you?'],
-              answers: { 0: { textAnswer: 'I handle stress by...', transcribedText: null } },
-              feedbacks: { 0: { text: 'Excellent response', scores: [5, 4, 5, 4, 5], error: false, loading: false } },
-              mode: 'text',
-            },
-            {
-              id: '5',
-              questionType: 'technical',
-              timeElapsed: 1450,
-              createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-              totalScore: 4.4,
-              questions: ['Explain database indexing', 'What is a REST API?'],
-              answers: { 0: { textAnswer: 'Database indexing is...', transcribedText: null } },
-              feedbacks: { 0: { text: 'Very detailed answer', scores: [4, 5, 4, 4, 4], error: false, loading: false } },
-              mode: 'audio',
-            },
-          ];
-          setRecords(mockData);
-        }
+        setLoading(true);
+        const favoriteRecords = await bankService.getFavorites();
+        // Sort by timestamp (newest first)
+        const sortedRecords = favoriteRecords.sort((a, b) => {
+          const getTimestamp = (record: InterviewRecord): number => {
+            if (record.timestamp) {
+              return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+            }
+            return new Date(record.createdAt).getTime();
+          };
+          return getTimestamp(b) - getTimestamp(a);
+        });
+        setRecords(sortedRecords);
       } catch (e) {
-        console.error('Failed to parse interview favorites', e);
+        console.error('Failed to load interview favorites from API', e);
+        const stored = localStorage.getItem('interview_favorites');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            // Sort by timestamp (newest first)
+            const sortedData = data.sort((a: InterviewRecord, b: InterviewRecord) => {
+              const getTimestamp = (record: InterviewRecord): number => {
+                if (record.timestamp) {
+                  return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+                }
+                return new Date(record.createdAt).getTime();
+              };
+              return getTimestamp(b) - getTimestamp(a);
+            });
+            setRecords(sortedData);
+          } catch (parseError) {
+            console.error('Failed to parse interview favorites from localStorage', parseError);
+          }
+        }
+      } finally {
+        setLoading(false);
       }
-    } else {
-      // Mock data for development
-      const mockData: InterviewRecord[] = [
-        {
-          id: '3',
-          questionType: 'psychometric',
-          timeElapsed: 750,
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          totalScore: 4.6,
-          questions: ['How do you handle stress?', 'What motivates you?'],
-          answers: { 0: { textAnswer: 'I handle stress by...', transcribedText: null } },
-          feedbacks: { 0: { text: 'Excellent response', scores: [5, 4, 5, 4, 5], error: false, loading: false } },
-          mode: 'text',
-        },
-        {
-          id: '5',
-          questionType: 'technical',
-          timeElapsed: 1450,
-          createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          totalScore: 4.4,
-          questions: ['Explain database indexing', 'What is a REST API?'],
-          answers: { 0: { textAnswer: 'Database indexing is...', transcribedText: null } },
-          feedbacks: { 0: { text: 'Very detailed answer', scores: [4, 5, 4, 4, 4], error: false, loading: false } },
-          mode: 'audio',
-        },
-      ];
-      setRecords(mockData);
-    }
+    };
+
+    loadRecords();
   }, []);
 
   const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {
@@ -89,8 +68,17 @@ export default function FavoritesPage() {
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
+  const formatDate = (record: InterviewRecord): string => {
+    // Trans timestamp to date
+    let timestamp: number;
+    const recordTimestamp = record.timestamp;
+    if (recordTimestamp !== undefined && recordTimestamp !== null) {
+      timestamp = recordTimestamp < 1e12 ? recordTimestamp * 1000 : recordTimestamp;
+    } else {
+      timestamp = new Date(record.createdAt).getTime();
+    }
+    
+    const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -107,7 +95,6 @@ export default function FavoritesPage() {
   };
 
   const viewDetails = (record: InterviewRecord) => {
-    // Store record data for detail view
     sessionStorage.setItem('interview_feedback_data', JSON.stringify({
       questions: record.questions,
       answers: record.answers,
@@ -115,15 +102,33 @@ export default function FavoritesPage() {
       questionType: record.questionType,
       mode: record.mode,
       timeElapsed: record.timeElapsed,
+      interview_id: record.id, 
     }));
     router.push('/interview/feedback');
   };
 
-  const removeFavorite = (recordId: string) => {
-    const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
-    const updated = favorites.filter((f: InterviewRecord) => f.id !== recordId);
-    localStorage.setItem('interview_favorites', JSON.stringify(updated));
-    setRecords(updated);
+  const removeFavorite = async (recordId: string) => {
+    try {
+      await bankService.toggleLike(recordId);
+      const favoriteRecords = await bankService.getFavorites();
+      // Sort by timestamp (newest first)
+      const sortedRecords = favoriteRecords.sort((a, b) => {
+        const getTimestamp = (record: InterviewRecord): number => {
+          if (record.timestamp) {
+            return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+          }
+          return new Date(record.createdAt).getTime();
+        };
+        return getTimestamp(b) - getTimestamp(a);
+      });
+      setRecords(sortedRecords);
+    } catch (e) {
+      console.error('Failed to toggle favorite', e);
+      const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
+      const updated = favorites.filter((f: InterviewRecord) => f.id !== recordId);
+      localStorage.setItem('interview_favorites', JSON.stringify(updated));
+      setRecords(updated);
+    }
   };
 
   const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
@@ -169,7 +174,11 @@ export default function FavoritesPage() {
             </div>
           </div>
 
-          {records.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <p className="text-gray-600 text-lg">Loading favorite records...</p>
+            </div>
+          ) : records.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-600 text-lg">No favorite records yet.</p>
               <Link href="/bank/history" className="text-blue-600 hover:underline mt-4 inline-block">
@@ -197,7 +206,7 @@ export default function FavoritesPage() {
                           <span className="capitalize">{record.questionType}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {formatDate(record.createdAt)}
+                          {formatDate(record)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {formatTime(record.timeElapsed)}

@@ -45,7 +45,7 @@ def add_user(user: User, db: Session = None):
     return user
 
 
-def update_user(user_id: str, update_data: dict, db=None):
+def update_user(user_id: str, update_data: dict, db: Session = None):
     """
     General user update functions. Excluding interviews and user_badges.
     update_data is a dictionary of fields to be updated, for example:

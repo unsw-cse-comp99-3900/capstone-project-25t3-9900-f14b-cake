@@ -31,10 +31,16 @@ export default function AnsweringPage() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const chunksRef = useState<Blob[]>([])[0];
 
-  // Feedback state for all questions
   const [feedbacks, setFeedbacks] = useState<Record<number, {
     text: string | null;
     scores: number[] | null;
+    feedbacks: {
+      clarity_structure_feedback: string | null;
+      relevance_feedback: string | null;
+      keyword_alignment_feedback: string | null;
+      confidence_feedback: string | null;
+      conciseness_feedback: string | null;
+    } | null;
     error: boolean;
     loading: boolean;
   }>>({});
@@ -55,7 +61,6 @@ export default function AnsweringPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Manage webcam preview when the transcription modal is open
   useEffect(() => {
     let active = true;
     const startPreview = async () => {
@@ -67,11 +72,9 @@ export default function AnsweringPage() {
         }
         setPreviewStream(stream);
         if (videoRef.current) {
-          // @ts-ignore - srcObject is supported in modern browsers
           videoRef.current.srcObject = stream as any;
         }
       } catch (e) {
-        // If camera permission denied, silently ignore and keep modal without preview
       }
     };
 
@@ -89,13 +92,11 @@ export default function AnsweringPage() {
     };
   }, [showTranscriptionModal]);
 
-  // Show feedback when switching to a question that has feedback
   useEffect(() => {
     const currentFeedback = getCurrentFeedback();
     setShowFeedback(!!currentFeedback.text || currentFeedback.error);
   }, [currentQuestionIndex]);
 
-  // Fetch questions when page loads
   useEffect(() => {
     let isCancelled = false;
     (async () => {
@@ -122,7 +123,6 @@ export default function AnsweringPage() {
     };
   }, [questionType, jobDescription]);
 
-  // Cleanup any ongoing speech on unmount
   useEffect(() => {
     return () => {
       if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -154,7 +154,6 @@ export default function AnsweringPage() {
   const startRecording = async () => {
     if (isRecording) return;
     
-    // Start real-time transcription instead of recording
     try {
       setShowTranscriptionModal(true);
       setIsTranscribing(true);
@@ -171,21 +170,18 @@ export default function AnsweringPage() {
   };
 
   const stopRecording = () => {
-    // Stop the speech recognition
     speechToTextService.stop();
     setShowTranscriptionModal(false);
     setIsTranscribing(false);
   };
 
   const reRecord = () => {
-    // Clear previous transcription and start new one
     setCurrentAnswer({ transcribedText: null });
     startRecording();
   };
 
   const [answers, setAnswers] = useState<Record<number, { textAnswer: string; transcribedText: string | null }>>({});
 
-  // Helper functions to get/set current question's answer
   const getCurrentAnswer = () => {
     return answers[currentQuestionIndex] || { textAnswer: "", transcribedText: null };
   };
@@ -202,18 +198,18 @@ export default function AnsweringPage() {
     }));
   };
 
-  // Helper functions to get/set current question's feedback
   const getCurrentFeedback = () => {
-    return feedbacks[currentQuestionIndex] || { text: null, scores: null, error: false, loading: false };
+    return feedbacks[currentQuestionIndex] || { text: null, scores: null, feedbacks: null, error: false, loading: false };
   };
 
-  const setCurrentFeedback = (updates: Partial<{ text: string | null; scores: number[] | null; error: boolean; loading: boolean }>) => {
+  const setCurrentFeedback = (updates: Partial<{ text: string | null; scores: number[] | null; feedbacks: { clarity_structure_feedback: string | null; relevance_feedback: string | null; keyword_alignment_feedback: string | null; confidence_feedback: string | null; conciseness_feedback: string | null; } | null; error: boolean; loading: boolean }>) => {
     setFeedbacks(prev => ({
       ...prev,
       [currentQuestionIndex]: {
         ...prev[currentQuestionIndex],
         text: null,
         scores: null,
+        feedbacks: null,
         error: false,
         loading: false,
         ...updates
@@ -231,7 +227,6 @@ export default function AnsweringPage() {
       setShowTranscriptionModal(true);
       setIsTranscribing(true);
 
-      // Start real-time speech recognition
       speechToTextService.transcribeWithWebSpeech()
         .then((result) => {
           setCurrentAnswer({ transcribedText: result.transcript });
@@ -284,7 +279,6 @@ export default function AnsweringPage() {
         interview_answer: answer,
       });
       
-      // Extract feedback data from the response object
       const feedback = res.interview_feedback;
       const feedbackText = feedback.overall_summary || 'No feedback available';
       const scores = [
@@ -295,15 +289,23 @@ export default function AnsweringPage() {
         feedback.conciseness_score
       ];
       
+      const feedbackDetails = {
+        clarity_structure_feedback: feedback.clarity_structure_feedback || null,
+        relevance_feedback: feedback.relevance_feedback || null,
+        keyword_alignment_feedback: feedback.keyword_alignment_feedback || null,
+        confidence_feedback: feedback.confidence_feedback || null,
+        conciseness_feedback: feedback.conciseness_feedback || null,
+      };
+      
       setCurrentFeedback({ 
         text: feedbackText, 
-        scores: scores, 
+        scores: scores,
+        feedbacks: feedbackDetails,
         error: false, 
         loading: false 
       });
       setShowFeedback(true);
       
-      // Mark current question as answered
       setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]));
     } catch (e) {
       setCurrentFeedback({ 
@@ -325,7 +327,6 @@ export default function AnsweringPage() {
   const allQuestionsAnswered = questions.length > 0 && answeredQuestions.size === questions.length;
 
   const handleCompleteInterview = () => {
-    // Store interview data for feedback page
     const feedbackData = {
       questions,
       answers,
@@ -333,10 +334,10 @@ export default function AnsweringPage() {
       questionType,
       mode,
       timeElapsed,
+      interview_id: interviewId, 
     };
     sessionStorage.setItem('interview_feedback_data', JSON.stringify(feedbackData));
     
-    // Navigate to feedback page
     router.push('/interview/feedback');
   };
 
@@ -346,7 +347,6 @@ export default function AnsweringPage() {
 
       <main className="flex-1 p-5 pt-24">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-2xl font-bold text-gray-800">
@@ -362,7 +362,6 @@ export default function AnsweringPage() {
             </div>
           </div>
 
-          {/* Question list + progress */}
           <div className="mb-6">
             {/* Progress bar */}
             <div className="mb-3">
@@ -382,7 +381,6 @@ export default function AnsweringPage() {
               </div>
             </div>
 
-            {/* Question chips */}
             <div className="flex flex-wrap gap-2">
               {questions.map((_, idx) => {
                 const isActive = idx === currentQuestionIndex;
@@ -404,7 +402,6 @@ export default function AnsweringPage() {
             </div>
           </div>
 
-          {/* Top controls */}
           <div className="flex justify-between items-center mb-8">
             <button
               onClick={() => {
@@ -440,7 +437,6 @@ export default function AnsweringPage() {
             )}
           </div>
 
-          {/* Current question */}
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Current question</h2>
@@ -462,7 +458,6 @@ export default function AnsweringPage() {
             </p>
           </div>
 
-          {/* Answer or Feedback area */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             {!showFeedback ? (
               <>
@@ -541,11 +536,36 @@ export default function AnsweringPage() {
                     <h4 className="text-lg font-semibold text-gray-800 mb-3">Performance Scores</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { name: "Clarity & Structure", description: "How clear and well-structured your answer is", score: getCurrentFeedback().scores![0] },
-                        { name: "Relevance to Question/Job", description: "How relevant your answer is to the question and job", score: getCurrentFeedback().scores![1] },
-                        { name: "Keyword & Skill Alignment", description: "How well you used relevant keywords and skills", score: getCurrentFeedback().scores![2] },
-                        { name: "Confidence & Delivery", description: "How confident and well-delivered your answer was", score: getCurrentFeedback().scores![3] },
-                        { name: "Conciseness & Focus", description: "How concise and focused your answer was", score: getCurrentFeedback().scores![4] }
+                        { 
+                          name: "Clarity & Structure", 
+                          description: "How clear and well-structured your answer is", 
+                          score: getCurrentFeedback().scores![0],
+                          feedback: getCurrentFeedback().feedbacks?.clarity_structure_feedback || null
+                        },
+                        { 
+                          name: "Relevance to Question/Job", 
+                          description: "How relevant your answer is to the question and job", 
+                          score: getCurrentFeedback().scores![1],
+                          feedback: getCurrentFeedback().feedbacks?.relevance_feedback || null
+                        },
+                        { 
+                          name: "Keyword & Skill Alignment", 
+                          description: "How well you used relevant keywords and skills", 
+                          score: getCurrentFeedback().scores![2],
+                          feedback: getCurrentFeedback().feedbacks?.keyword_alignment_feedback || null
+                        },
+                        { 
+                          name: "Confidence & Delivery", 
+                          description: "How confident and well-delivered your answer was", 
+                          score: getCurrentFeedback().scores![3],
+                          feedback: getCurrentFeedback().feedbacks?.confidence_feedback || null
+                        },
+                        { 
+                          name: "Conciseness & Focus", 
+                          description: "How concise and focused your answer was", 
+                          score: getCurrentFeedback().scores![4],
+                          feedback: getCurrentFeedback().feedbacks?.conciseness_feedback || null
+                        }
                       ].map((item, index) => (
                         <div key={index} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                           <div className="flex items-center justify-between mb-2">
@@ -560,7 +580,12 @@ export default function AnsweringPage() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-xs text-gray-600">{item.description}</p>
+                          <p className="text-xs text-gray-600 mb-2">{item.description}</p>
+                          {item.feedback && (
+                            <div className="mt-2 p-2 bg-white rounded border border-blue-200">
+                              <p className="text-xs text-gray-700 leading-relaxed">{item.feedback}</p>
+                            </div>
+                          )}
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full transition-all duration-500 ${
@@ -624,7 +649,6 @@ export default function AnsweringPage() {
         </div>
       )}
 
-      {/* Transcription Modal */}
       {showTranscriptionModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg w-[28rem] max-w-[90vw] relative border border-blue-100">

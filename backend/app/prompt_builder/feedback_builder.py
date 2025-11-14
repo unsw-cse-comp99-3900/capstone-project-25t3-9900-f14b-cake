@@ -75,6 +75,7 @@ def build_feedback_prompt(
         question: The interview question asked.
         answer: The candidate's answer text.
         user_info: A dict of user details.
+        job_description: The text of job description.
     Returns:
         str: A formatted prompt string.
     """

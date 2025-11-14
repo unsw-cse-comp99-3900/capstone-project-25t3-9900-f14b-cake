@@ -4,9 +4,11 @@ from dotenv import load_dotenv
 import json
 # from gpt_access import GPTAccessClient
 from pprint import pprint
+from app.external_access.gpt_access import GPTAccessClient
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ENV_PATH = os.path.join(BASE_DIR, '.env')
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
-
+load_dotenv(dotenv_path=ENV_PATH)
 API_URL = os.getenv("GPT_ACCESS_URL")
 
 # JWT Token
@@ -92,4 +94,4 @@ if __name__ == "__main__":
     # print(API_URL)
     # test_gpt()
     # test_faq()
-    test_token_verify()
+    # test_token_verify()
