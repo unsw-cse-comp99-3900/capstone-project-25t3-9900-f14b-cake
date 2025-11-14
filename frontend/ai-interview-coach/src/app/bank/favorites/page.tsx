@@ -22,14 +22,34 @@ export default function FavoritesPage() {
       try {
         setLoading(true);
         const favoriteRecords = await bankService.getFavorites();
-        setRecords(favoriteRecords);
+        // Sort by timestamp (newest first)
+        const sortedRecords = favoriteRecords.sort((a, b) => {
+          const getTimestamp = (record: InterviewRecord): number => {
+            if (record.timestamp) {
+              return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+            }
+            return new Date(record.createdAt).getTime();
+          };
+          return getTimestamp(b) - getTimestamp(a);
+        });
+        setRecords(sortedRecords);
       } catch (e) {
         console.error('Failed to load interview favorites from API', e);
         const stored = localStorage.getItem('interview_favorites');
         if (stored) {
           try {
             const data = JSON.parse(stored);
-            setRecords(data);
+            // Sort by timestamp (newest first)
+            const sortedData = data.sort((a: InterviewRecord, b: InterviewRecord) => {
+              const getTimestamp = (record: InterviewRecord): number => {
+                if (record.timestamp) {
+                  return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+                }
+                return new Date(record.createdAt).getTime();
+              };
+              return getTimestamp(b) - getTimestamp(a);
+            });
+            setRecords(sortedData);
           } catch (parseError) {
             console.error('Failed to parse interview favorites from localStorage', parseError);
           }
@@ -91,7 +111,17 @@ export default function FavoritesPage() {
     try {
       await bankService.toggleLike(recordId);
       const favoriteRecords = await bankService.getFavorites();
-      setRecords(favoriteRecords);
+      // Sort by timestamp (newest first)
+      const sortedRecords = favoriteRecords.sort((a, b) => {
+        const getTimestamp = (record: InterviewRecord): number => {
+          if (record.timestamp) {
+            return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+          }
+          return new Date(record.createdAt).getTime();
+        };
+        return getTimestamp(b) - getTimestamp(a);
+      });
+      setRecords(sortedRecords);
     } catch (e) {
       console.error('Failed to toggle favorite', e);
       const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');

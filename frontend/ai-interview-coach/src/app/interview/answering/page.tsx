@@ -34,6 +34,13 @@ export default function AnsweringPage() {
   const [feedbacks, setFeedbacks] = useState<Record<number, {
     text: string | null;
     scores: number[] | null;
+    feedbacks: {
+      clarity_structure_feedback: string | null;
+      relevance_feedback: string | null;
+      keyword_alignment_feedback: string | null;
+      confidence_feedback: string | null;
+      conciseness_feedback: string | null;
+    } | null;
     error: boolean;
     loading: boolean;
   }>>({});
@@ -192,16 +199,17 @@ export default function AnsweringPage() {
   };
 
   const getCurrentFeedback = () => {
-    return feedbacks[currentQuestionIndex] || { text: null, scores: null, error: false, loading: false };
+    return feedbacks[currentQuestionIndex] || { text: null, scores: null, feedbacks: null, error: false, loading: false };
   };
 
-  const setCurrentFeedback = (updates: Partial<{ text: string | null; scores: number[] | null; error: boolean; loading: boolean }>) => {
+  const setCurrentFeedback = (updates: Partial<{ text: string | null; scores: number[] | null; feedbacks: { clarity_structure_feedback: string | null; relevance_feedback: string | null; keyword_alignment_feedback: string | null; confidence_feedback: string | null; conciseness_feedback: string | null; } | null; error: boolean; loading: boolean }>) => {
     setFeedbacks(prev => ({
       ...prev,
       [currentQuestionIndex]: {
         ...prev[currentQuestionIndex],
         text: null,
         scores: null,
+        feedbacks: null,
         error: false,
         loading: false,
         ...updates
@@ -281,9 +289,18 @@ export default function AnsweringPage() {
         feedback.conciseness_score
       ];
       
+      const feedbackDetails = {
+        clarity_structure_feedback: feedback.clarity_structure_feedback || null,
+        relevance_feedback: feedback.relevance_feedback || null,
+        keyword_alignment_feedback: feedback.keyword_alignment_feedback || null,
+        confidence_feedback: feedback.confidence_feedback || null,
+        conciseness_feedback: feedback.conciseness_feedback || null,
+      };
+      
       setCurrentFeedback({ 
         text: feedbackText, 
-        scores: scores, 
+        scores: scores,
+        feedbacks: feedbackDetails,
         error: false, 
         loading: false 
       });
@@ -519,11 +536,36 @@ export default function AnsweringPage() {
                     <h4 className="text-lg font-semibold text-gray-800 mb-3">Performance Scores</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { name: "Clarity & Structure", description: "How clear and well-structured your answer is", score: getCurrentFeedback().scores![0] },
-                        { name: "Relevance to Question/Job", description: "How relevant your answer is to the question and job", score: getCurrentFeedback().scores![1] },
-                        { name: "Keyword & Skill Alignment", description: "How well you used relevant keywords and skills", score: getCurrentFeedback().scores![2] },
-                        { name: "Confidence & Delivery", description: "How confident and well-delivered your answer was", score: getCurrentFeedback().scores![3] },
-                        { name: "Conciseness & Focus", description: "How concise and focused your answer was", score: getCurrentFeedback().scores![4] }
+                        { 
+                          name: "Clarity & Structure", 
+                          description: "How clear and well-structured your answer is", 
+                          score: getCurrentFeedback().scores![0],
+                          feedback: getCurrentFeedback().feedbacks?.clarity_structure_feedback || null
+                        },
+                        { 
+                          name: "Relevance to Question/Job", 
+                          description: "How relevant your answer is to the question and job", 
+                          score: getCurrentFeedback().scores![1],
+                          feedback: getCurrentFeedback().feedbacks?.relevance_feedback || null
+                        },
+                        { 
+                          name: "Keyword & Skill Alignment", 
+                          description: "How well you used relevant keywords and skills", 
+                          score: getCurrentFeedback().scores![2],
+                          feedback: getCurrentFeedback().feedbacks?.keyword_alignment_feedback || null
+                        },
+                        { 
+                          name: "Confidence & Delivery", 
+                          description: "How confident and well-delivered your answer was", 
+                          score: getCurrentFeedback().scores![3],
+                          feedback: getCurrentFeedback().feedbacks?.confidence_feedback || null
+                        },
+                        { 
+                          name: "Conciseness & Focus", 
+                          description: "How concise and focused your answer was", 
+                          score: getCurrentFeedback().scores![4],
+                          feedback: getCurrentFeedback().feedbacks?.conciseness_feedback || null
+                        }
                       ].map((item, index) => (
                         <div key={index} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                           <div className="flex items-center justify-between mb-2">
@@ -538,7 +580,12 @@ export default function AnsweringPage() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-xs text-gray-600">{item.description}</p>
+                          <p className="text-xs text-gray-600 mb-2">{item.description}</p>
+                          {item.feedback && (
+                            <div className="mt-2 p-2 bg-white rounded border border-blue-200">
+                              <p className="text-xs text-gray-700 leading-relaxed">{item.feedback}</p>
+                            </div>
+                          )}
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full transition-all duration-500 ${

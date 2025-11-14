@@ -22,14 +22,34 @@ export default function HistoryPage() {
       try {
         setLoading(true);
         const records = await bankService.getRecords();
-        setRecords(records);
+        // Sort by timestamp (newest first)
+        const sortedRecords = records.sort((a, b) => {
+          const getTimestamp = (record: InterviewRecord): number => {
+            if (record.timestamp) {
+              return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+            }
+            return new Date(record.createdAt).getTime();
+          };
+          return getTimestamp(b) - getTimestamp(a);
+        });
+        setRecords(sortedRecords);
       } catch (e) {
         console.error('Failed to load interview history from API', e);
         const stored = localStorage.getItem('interview_history');
         if (stored) {
           try {
             const data = JSON.parse(stored);
-            setRecords(data);
+            // Sort by timestamp (newest first)
+            const sortedData = data.sort((a: InterviewRecord, b: InterviewRecord) => {
+              const getTimestamp = (record: InterviewRecord): number => {
+                if (record.timestamp) {
+                  return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+                }
+                return new Date(record.createdAt).getTime();
+              };
+              return getTimestamp(b) - getTimestamp(a);
+            });
+            setRecords(sortedData);
           } catch (parseError) {
             console.error('Failed to parse interview history from localStorage', parseError);
           }
@@ -98,7 +118,17 @@ export default function HistoryPage() {
     try {
       await bankService.toggleLike(record.id);
       const updatedRecords = await bankService.getRecords();
-      setRecords(updatedRecords);
+      // Sort by timestamp (newest first)
+      const sortedRecords = updatedRecords.sort((a, b) => {
+        const getTimestamp = (record: InterviewRecord): number => {
+          if (record.timestamp) {
+            return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
+          }
+          return new Date(record.createdAt).getTime();
+        };
+        return getTimestamp(b) - getTimestamp(a);
+      });
+      setRecords(sortedRecords);
     } catch (e) {
       console.error('Failed to toggle favorite', e);
       const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');

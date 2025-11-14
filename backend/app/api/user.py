@@ -1,3 +1,6 @@
+"""User API routes for user details, likes, interview summaries, and statistics.
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.user import (
     UserDetailResponse,
@@ -6,7 +9,12 @@ from app.models.user import (
     UserInterviewSummaryResponse,
     UserStatisticsResponse
 )
-from app.services.user_service import get_user_detail, get_user_full_detail, like_interview, get_user_interview_summary, get_user_statistics
+from app.services.user_service import (
+    get_user_detail,
+    like_interview,
+    get_user_interview_summary,
+    get_user_statistics,
+)
 from app.api.helper import get_token
 
 router = APIRouter(prefix="/user")
@@ -14,13 +22,14 @@ router = APIRouter(prefix="/user")
 @router.get(
     "/detail",
     summary="Get User Details",
-    description="Retrieves complete user profile including all interviews, questions, answers, feedback, and badges",
+    description="Retrieves complete user profile including full interviews detail and badges",
     response_model=UserDetailResponse
 )
 async def user_detail(token: str = Depends(get_token)):
     try:
         result = get_user_detail(token)
         return {
+            
             "user_id": result["user_id"],
             "user_email": result["user_email"],
             "xp": result["xp"],
@@ -30,7 +39,7 @@ async def user_detail(token: str = Depends(get_token)):
             "badges": result["badges"]
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post(
     "/like",
@@ -45,7 +54,7 @@ async def user_like(payload: UserLikeRequest, token: str = Depends(get_token)):
             "is_like": result["is_like"]
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get(
     "/interview_summary",
@@ -69,7 +78,7 @@ async def interview_summary(token: str = Depends(get_token)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get(
     "/statistics",
@@ -82,16 +91,16 @@ async def user_statistics(token: str = Depends(get_token)):
         from app.services.auth_service import get_user_id_and_email
         id_email = get_user_id_and_email(token)
         user_id = id_email.get("id")
-        
+
         user_stats = get_user_statistics(user_id)
         stats_dict = user_stats.get_dict()
-        
+
         # Convert last_login date to string if it's a date object
         if hasattr(stats_dict.get("last_login"), 'isoformat'):
             stats_dict["last_login"] = stats_dict["last_login"].isoformat()
-        
+
         return stats_dict
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
