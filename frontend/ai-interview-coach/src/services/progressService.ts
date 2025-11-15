@@ -8,7 +8,9 @@ import {
     getUserInterviewScores,
     getLatestInterviewQuestions,
     generateLoginCalendarData,
+    calculateCurrentStreak,
     calculateMaxLoginStreak,
+    calculateTotalLoginDays,
     type UserProgressData,
     type QuestionSummary,
 } from "./userStatsService";
@@ -84,6 +86,25 @@ export async function getProgressPageData(
         getLatestInterviewQuestions(token),
     ]);
 
+    // 🔍 DEBUG: Log raw interview data from backend
+    console.log("=== Backend Interview Data Debug ===");
+    console.log(
+        "Total interviews from /user/statistics:",
+        stats.interviews.length
+    );
+    console.log("Raw interview data:", stats.interviews);
+    console.log(
+        "Interview timestamps with dates:",
+        stats.interviews.map((i) => ({
+            id: i.interviewId,
+            timestamp: i.timestamp,
+            date: new Date(i.timestamp).toISOString(), // Timestamp is in milliseconds
+            localDate: new Date(i.timestamp).toLocaleDateString(),
+            dateOnly: new Date(i.timestamp).toISOString().split("T")[0],
+        }))
+    );
+    console.log("====================================");
+
     // Transform interview scores to readiness scores
     // Each interview gets its own calculated average score (1-5 scale)
     const readinessScores: ReadinessScoreData[] = interviewScores.map(
@@ -103,11 +124,14 @@ export async function getProgressPageData(
         });
     }
 
-    // Generate login calendar data
-    const loginData = generateLoginCalendarData(stats, 30);
+    // Generate login calendar data from interview timestamps
+    // Each day with at least one interview counts as a "check-in"
+    const loginData = generateLoginCalendarData(stats.interviews, 30);
 
-    // Calculate max login streak
-    const maxLoginStreak = calculateMaxLoginStreak(stats);
+    // Calculate check-in statistics from interview data
+    const currentStreak = calculateCurrentStreak(stats.interviews);
+    const maxLoginStreak = calculateMaxLoginStreak(stats.interviews);
+    const totalLoginDays = calculateTotalLoginDays(stats.interviews);
 
     // Transform dimension performance for radar chart
     const dimensionMapping: Record<
@@ -152,9 +176,9 @@ export async function getProgressPageData(
     return {
         readinessScores,
         loginData,
-        loginStreakDays: stats.loginStreak,
+        loginStreakDays: currentStreak,
         maxLoginStreak,
-        totalLoginDays: stats.totalLogins,
+        totalLoginDays,
         dimensionPerformance,
         latestInterviewQuestions: latestQuestions,
         userId: stats.userId,

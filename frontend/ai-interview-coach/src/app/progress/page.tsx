@@ -157,6 +157,24 @@ export default function ProgressPage() {
                     return;
                 }
                 const data = await getProgressPageData(token);
+
+                // 🔍 DEBUG: Log login/check-in data for verification
+                console.log("=== Login Activity Debug Info ===");
+                console.log("Current Streak:", data.loginStreakDays);
+                console.log("Max Streak:", data.maxLoginStreak);
+                console.log("Total Days:", data.totalLoginDays);
+                console.log("Login Calendar Data (ALL 30 days):");
+                data.loginData.forEach((day: any) => {
+                    if (day.hasLogin) {
+                        console.log(`  ✓ ${day.date} - HAS INTERVIEW`);
+                    }
+                });
+                console.log(
+                    "Today's date:",
+                    new Date().toISOString().split("T")[0]
+                );
+                console.log("=================================");
+
                 setProgressData(data);
                 setError(null);
             } catch (err: any) {
@@ -252,15 +270,11 @@ export default function ProgressPage() {
         improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(1);
     }
 
-    // Calculate login streak
-    const currentStreak = mockLoginData
-        .slice()
-        .reverse()
-        .findIndex((day: any) => !day.hasLogin);
-    const loginStreakDays =
-        currentStreak === -1 ? mockLoginData.length : currentStreak;
-    const totalLoginDays = mockLoginData.filter((d: any) => d.hasLogin).length;
-    const maxLoginStreak = progressData?.maxLoginStreak || 7;
+    // Get login/check-in statistics from backend data
+    // These are calculated based on interview timestamps
+    const loginStreakDays = progressData?.loginStreakDays || 0;
+    const totalLoginDays = progressData?.totalLoginDays || 0;
+    const maxLoginStreak = progressData?.maxLoginStreak || 0;
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -590,12 +604,40 @@ export default function ProgressPage() {
                                 <Calendar
                                     value={new Date()}
                                     tileClassName={({ date }) => {
-                                        const dateStr = date
-                                            .toISOString()
-                                            .split("T")[0];
+                                        // Use local date string instead of UTC to avoid timezone issues
+                                        // react-calendar passes local date objects at midnight
+                                        const year = date.getFullYear();
+                                        const month = String(
+                                            date.getMonth() + 1
+                                        ).padStart(2, "0");
+                                        const day = String(
+                                            date.getDate()
+                                        ).padStart(2, "0");
+                                        const dateStr = `${year}-${month}-${day}`;
+
                                         const hasLogin = mockLoginData.find(
                                             (d: any) => d.date === dateStr
                                         )?.hasLogin;
+
+                                        // 🔍 DEBUG: Log calendar tile date matching
+                                        if (hasLogin) {
+                                            console.log(
+                                                "📆 Calendar tile matched:",
+                                                {
+                                                    tileDate: date,
+                                                    tileDateISO:
+                                                        date.toISOString(),
+                                                    tileDateLocal: dateStr,
+                                                    matchedData:
+                                                        mockLoginData.find(
+                                                            (d: any) =>
+                                                                d.date ===
+                                                                dateStr
+                                                        ),
+                                                }
+                                            );
+                                        }
+
                                         return hasLogin
                                             ? "react-calendar__tile--hasLogin"
                                             : "";
