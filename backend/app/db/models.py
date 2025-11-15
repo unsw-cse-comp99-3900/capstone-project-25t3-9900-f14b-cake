@@ -71,6 +71,12 @@ class User(Base):
     total_conciseness = Column(Integer, default=0)
     total_overall = Column(Float, default=0.0)
 
+    target_clarity = Column(Integer, default=0)
+    target_relevance = Column(Integer, default=0)
+    target_keyword = Column(Integer, default=0)
+    target_confidence = Column(Integer, default=0)
+    target_conciseness = Column(Integer, default=0)
+
 
 
 class Badge(Base):
