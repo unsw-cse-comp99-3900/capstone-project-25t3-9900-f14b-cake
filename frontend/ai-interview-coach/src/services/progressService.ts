@@ -5,6 +5,7 @@
 
 import {
     getUserStatistics,
+    getUserInterviewScores,
     generateLoginCalendarData,
     calculateMaxLoginStreak,
     type UserProgressData,
@@ -71,27 +72,20 @@ export interface ProgressPageData {
 export async function getProgressPageData(
     token: string
 ): Promise<ProgressPageData> {
-    // Fetch user statistics
-    const stats = await getUserStatistics(token);
+    // Fetch user statistics and interview scores in parallel
+    const [stats, interviewScores] = await Promise.all([
+        getUserStatistics(token),
+        getUserInterviewScores(token),
+    ]);
 
-    // Transform readiness scores from interviews
-    // Sort interviews by timestamp and create session-based scores
-    const sortedInterviews = [...stats.interviews].sort(
-        (a, b) => a.timestamp - b.timestamp
-    );
-
-    const readinessScores: ReadinessScoreData[] = sortedInterviews.map(
-        (interview, index) => {
-            // Use overall average score directly (5-point scale)
-            // No conversion needed - keep the 1-5 scale
-            const score = Number(stats.overallScore.average.toFixed(2));
-
-            return {
-                session: index + 1,
-                score,
-                date: interview.date,
-            };
-        }
+    // Transform interview scores to readiness scores
+    // Each interview gets its own calculated average score (1-5 scale)
+    const readinessScores: ReadinessScoreData[] = interviewScores.map(
+        (interview, index) => ({
+            session: index + 1,
+            score: interview.averageScore, // Already in 1-5 scale
+            date: interview.date,
+        })
     );
 
     // If no interviews yet, provide a default

@@ -6,6 +6,55 @@
 import { API_ENDPOINTS, getAuthHeaders, apiFetch } from "./api";
 
 /**
+ * Question feedback structure from backend
+ */
+export interface QuestionFeedback {
+    clarity_structure_score: number;
+    relevance_score: number;
+    keyword_alignment_score: number;
+    confidence_score: number;
+    conciseness_score: number;
+    [key: string]: any; // Allow other fields
+}
+
+/**
+ * Question detail from /user/detail endpoint
+ */
+export interface QuestionDetail {
+    question_id: string;
+    question: string;
+    answer: string;
+    feedback: QuestionFeedback;
+    timestamp: number;
+}
+
+/**
+ * Interview detail from /user/detail endpoint
+ */
+export interface InterviewDetail {
+    interview_id: string;
+    interview_time: number;
+    is_like: boolean;
+    questions: QuestionDetail[];
+}
+
+/**
+ * User detail API response from /user/detail endpoint
+ */
+export interface UserDetailAPIResponse {
+    user_id: string;
+    user_email: string;
+    xp: number;
+    total_interviews: number;
+    total_questions: number;
+    interviews: InterviewDetail[];
+    badges: Array<{
+        badge_id: number;
+        unlock_date: number;
+    }>;
+}
+
+/**
  * Raw API response from /user/statistics endpoint
  */
 export interface UserStatisticsAPIResponse {
@@ -263,4 +312,72 @@ export function calculateMaxLoginStreak(stats: UserProgressData): number {
     // For now, return a calculated value
     // In production, this should come directly from backend
     return Math.max(stats.loginStreak, 7);
+}
+
+/**
+ * Interview score data with calculated average
+ */
+export interface InterviewScore {
+    interviewId: string;
+    timestamp: number;
+    date: Date;
+    averageScore: number; // Average of all questions in this interview (1-5 scale)
+    questionCount: number;
+}
+
+/**
+ * Fetches user interview details and calculates average score for each interview
+ * @param token - JWT authentication token
+ * @returns Array of interview scores
+ */
+export async function getUserInterviewScores(
+    token: string
+): Promise<InterviewScore[]> {
+    const data = await apiFetch<UserDetailAPIResponse>(
+        API_ENDPOINTS.user.detail,
+        {
+            method: "GET",
+            headers: getAuthHeaders(token),
+        }
+    );
+
+    // Calculate average score for each interview
+    const interviewScores: InterviewScore[] = data.interviews.map(
+        (interview) => {
+            // Calculate average score across all questions in this interview
+            let totalScore = 0;
+            let validQuestionCount = 0;
+
+            interview.questions.forEach((question) => {
+                if (question.feedback) {
+                    // Sum up all 5 dimensions for this question
+                    const questionScore =
+                        (question.feedback.clarity_structure_score +
+                            question.feedback.relevance_score +
+                            question.feedback.keyword_alignment_score +
+                            question.feedback.confidence_score +
+                            question.feedback.conciseness_score) /
+                        5;
+
+                    totalScore += questionScore;
+                    validQuestionCount++;
+                }
+            });
+
+            // Average score for this interview (1-5 scale)
+            const averageScore =
+                validQuestionCount > 0 ? totalScore / validQuestionCount : 0;
+
+            return {
+                interviewId: interview.interview_id,
+                timestamp: interview.interview_time,
+                date: new Date(interview.interview_time),
+                averageScore: Number(averageScore.toFixed(2)),
+                questionCount: interview.questions.length,
+            };
+        }
+    );
+
+    // Sort by timestamp (oldest first)
+    return interviewScores.sort((a, b) => a.timestamp - b.timestamp);
 }
