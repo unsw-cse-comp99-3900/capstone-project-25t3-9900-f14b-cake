@@ -67,6 +67,10 @@ def get_user_detail(token: str, db = None):
         "xp": user.xp,
         "total_interviews": user.total_interviews,
         "total_questions": user.total_questions,
+        "total_active_days": user.total_active_days,
+        "last_active_day": user.last_active_day,
+        "consecutive_active_days": user.consecutive_active_days,
+        "max_consecutive_active_days": user.max_consecutive_active_days,
         "interviews": [
             {
                 "interview_id": i.interview_id,
@@ -114,9 +118,10 @@ def create_new_user(user_id: str, user_email: str, db = None):
         total_questions=0,
         total_interviews=0,
         total_badges=0,
-        total_logins=0,
-        last_login=date.today(),
-        consecutive_days=0,
+        total_active_days=0,
+        last_active_day=date.today(),
+        consecutive_active_days=0,
+        max_consecutive_active_days=0,
         max_clarity=0,
         max_relevance=0,
         max_keyword=0,
@@ -133,9 +138,9 @@ def create_new_user(user_id: str, user_email: str, db = None):
     return user
 
 
-def update_user_login(user_id: str, db = None):
+def update_user_active(user_id: str, db = None):
     """
-    Update the user profile after the user logs in.
+    Update the user profile after the user start interview for check user active.
 
     Args:
         user_id: A string of user id.
@@ -144,22 +149,31 @@ def update_user_login(user_id: str, db = None):
     Returns:
         user: A SQLAlchemy entry of user, if it is None, means fails.
     """
-    print("User login:", user_id)
+    print("User active:", user_id)
     user = get_user_basic(user_id, db)
     if not user:
         return None
     
-    new_login = date.today()
-    if (new_login - user.last_login).days == 1 or user.total_logins == 0:
-        update_data = {"last_login": new_login, 
-                        "consecutive_days": user.consecutive_days + 1,
-                        "total_logins": user.total_logins + 1,
-                        "xp": user.xp + 5
-                        }
-    elif (new_login - user.last_login).days > 1:
-        update_data = {"last_login": new_login, 
-                        "consecutive_days": 1,
-                        "total_logins": user.total_logins + 1,
+    new_active_day = date.today()
+    if (new_active_day - user.last_active_day).days == 1 or user.total_active_days == 0:
+        max_consecutive_active_days = user.max_consecutive_active_days
+        if max_consecutive_active_days <= user.consecutive_active_days:
+            update_data = {"last_active_day": new_active_day, 
+                            "consecutive_active_days": user.consecutive_active_days + 1,
+                            "max_consecutive_active_days": user.max_consecutive_active_days + 1,
+                            "total_active_days": user.total_active_days + 1,
+                            "xp": user.xp + 5
+                            }
+        else:
+            update_data = {"last_active_day": new_active_day, 
+                            "consecutive_active_days": user.consecutive_active_days + 1,
+                            "total_active_days": user.total_active_days + 1,
+                            "xp": user.xp + 5
+                            }
+    elif (new_active_day - user.last_active_day).days > 1:
+        update_data = {"last_active_day": new_active_day, 
+                        "consecutive_active_days": 1,
+                        "total_active_days": user.total_active_days + 1,
                         "xp": user.xp + 5
                         }
     else:
@@ -203,6 +217,10 @@ def get_user_full_detail(token: str, db = None):
         "xp": user.xp,
         "total_interviews": user.total_interviews,
         "total_questions": user.total_questions,
+        "total_active_days": user.total_active_days,
+        "last_active_day": user.last_active_day,
+        "consecutive_active_days": user.consecutive_active_days,
+        "max_consecutive_active_days": user.max_consecutive_active_days,
         "interviews": [
             {
                 "interview_id": i.interview_id,
@@ -278,9 +296,10 @@ class UserStatistics:
         self.total_interviews = user.total_interviews
         self.total_badges = user.total_badges
 
-        self.total_logins = user.total_logins
-        self.last_login = user.last_login
-        self.consecutive_days = user.consecutive_days
+        self.total_active_days = user.total_active_days
+        self.last_active_day = user.last_active_day
+        self.consecutive_active_days = user.consecutive_active_days
+        self.max_consecutive_active_days = user.max_consecutive_active_days
 
         self.max_clarity = user.max_clarity
         self.max_relevance = user.max_relevance
@@ -316,9 +335,11 @@ class UserStatistics:
         print(f"total_questions: {self.total_questions}")
         print(f"total_interviews: {self.total_interviews}")
         print(f"total_badges: {self.total_badges}")
-        print(f"total_logins: {self.total_logins}")
-        print(f"last_login: {self.last_login}")
-        print(f"consecutive_days: {self.consecutive_days}")
+
+        print(f"total_active_days: {self.total_active_days}")
+        print(f"last_active_day: {self.last_active_day}")
+        print(f"consecutive_active_days: {self.consecutive_active_days}")
+        print(f"max_consecutive_active_days: {self.max_consecutive_active_days}")
 
         print(f"max_clarity: {self.max_clarity}")
         print(f"max_relevance: {self.max_relevance}")
@@ -360,9 +381,10 @@ class UserStatistics:
         result["total_interviews"] = self.total_interviews
         result["total_badges"] = self.total_badges
 
-        result["total_logins"] = self.total_logins
-        result["last_login"] = self.last_login
-        result["consecutive_days"] = self.consecutive_days
+        result["total_active_days"] = self.total_active_days
+        result["last_active_day"] = self.last_active_day
+        result["consecutive_active_days"] = self.consecutive_active_days
+        result["max_consecutive_active_days"] = self.max_consecutive_active_days
 
         result["max_clarity"] = self.max_clarity
         result["max_relevance"] = self.max_relevance

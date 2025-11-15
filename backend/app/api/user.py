@@ -25,6 +25,10 @@ async def user_detail(token: str = Depends(get_token)):
             "xp": result["xp"],
             "total_interviews": result["total_interviews"],
             "total_questions": result["total_questions"],
+            "total_active_days": result["total_active_days"],
+            "last_active_day": result["last_active_day"],
+            "consecutive_active_days": result["consecutive_active_days"],
+            "max_consecutive_active_days": result["max_consecutive_active_days"],
             "interviews": result["interviews"],
             "badges": result["badges"]
         }

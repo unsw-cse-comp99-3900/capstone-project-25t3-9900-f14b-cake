@@ -30,7 +30,8 @@ def save_interview(user_id: str, interview_id: str, interview_type: str, job_des
     Returns:
         interview: A SQLAlchemy entry of interview, if it is None, means fails.
     """
-    print(f"Saving interview for user={user_id}")
+    from app.services.user_service import update_user_active
+    print(f"Saving interview for user: {user_id}")
     timestamp = int(time.time() * 1000)
     new_interview = Interview(interview_id=interview_id, 
                               user_id=user_id, 
@@ -44,6 +45,7 @@ def save_interview(user_id: str, interview_id: str, interview_type: str, job_des
     user = get_user_basic(user_id, db)
     if not user:
         return None
+    user = update_user_active(user_id, db)
     user_data = {"total_interviews": interview.user.total_interviews + 1}
     user = update_user(user_id, user_data, db)
     print(f"Saved interview: {interview_id}")
@@ -66,7 +68,7 @@ def save_question(user_id: str, interview_id: str, question_type: str, question_
     Returns:
         dict: A SQLAlchemy entry of interview, if it is None, means fails.
     """
-    print(f"Saving question for user={user_id}, interview={interview_id}")
+    print(f"Saving question for user: {user_id}, interview: {interview_id}")
     timestamp = int(time.time() * 1000)
     question_id = f"{interview_id}_{timestamp}"
     question = Question(question_id=question_id,

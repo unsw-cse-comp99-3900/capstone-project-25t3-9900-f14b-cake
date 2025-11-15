@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
+from datetime import date
 
 class QuestionDetail(BaseModel):
     question_id: str = Field(
@@ -105,6 +106,22 @@ class UserDetailResponse(BaseModel):
     total_questions: int = Field(
         description="Total number of questions answered",
         example=75
+    )
+    total_active_days: int = Field(
+        description="Total days of active",
+        example=10
+    )
+    last_active_day: date = Field(
+        description="Last active day",
+        example=2025-11-11
+    )
+    consecutive_active_days: int = Field(
+        description="Number of consecutive active days",
+        example=10
+    )
+    max_consecutive_active_days: int = Field(
+        description="Max number of consecutive active days",
+        example=10
     )
     interviews: List[InterviewDetail] = Field(
         description="List of all interviews with their questions",
