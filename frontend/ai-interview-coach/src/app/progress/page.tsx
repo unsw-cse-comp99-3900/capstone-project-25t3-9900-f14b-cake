@@ -120,6 +120,28 @@ export default function ProgressPage() {
     const [progressData, setProgressData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [targetScore, setTargetScore] = useState<number>(4.25); // Default target: 4.25 (85% of 5)
+    const [showTargetInput, setShowTargetInput] = useState(false);
+
+    // Load saved target score from localStorage on mount
+    useEffect(() => {
+        const savedTarget = localStorage.getItem("progress_target_score");
+        if (savedTarget) {
+            const parsedTarget = parseFloat(savedTarget);
+            if (
+                !isNaN(parsedTarget) &&
+                parsedTarget >= 0 &&
+                parsedTarget <= 5
+            ) {
+                setTargetScore(parsedTarget);
+            }
+        }
+    }, []);
+
+    // Save target score to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem("progress_target_score", targetScore.toString());
+    }, [targetScore]);
 
     // Fetch data from backend
     useEffect(() => {
@@ -191,7 +213,7 @@ export default function ProgressPage() {
     const radarChartData = mockCategoryPerformance.map((dim: any) => ({
         subject: dim.dimension_name.split(" ")[0], // Shortened names for radar chart
         current: Number(dim.average_score.toFixed(2)), // Current performance (1-5 scale)
-        target: 4.25, // Target/benchmark score (85% of 5 = 4.25)
+        target: targetScore, // User-customizable target score
         fullMark: 5,
     }));
 
@@ -635,14 +657,69 @@ export default function ProgressPage() {
 
                         {/* Performance Dimensions - Right Side (2 cols) */}
                         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="mb-6">
-                                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                    Performance Dimensions Analysis
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                    5-dimensional breakdown of your interview
-                                    skills
-                                </p>
+                            <div className="mb-6 flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                        Performance Dimensions Analysis
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                        5-dimensional breakdown of your
+                                        interview skills
+                                    </p>
+                                </div>
+
+                                {/* Target Score Settings */}
+                                <div className="flex items-center gap-2">
+                                    {showTargetInput ? (
+                                        <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Target:
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="5"
+                                                step="0.1"
+                                                value={targetScore}
+                                                onChange={(e) => {
+                                                    const value = parseFloat(
+                                                        e.target.value
+                                                    );
+                                                    if (
+                                                        value >= 0 &&
+                                                        value <= 5
+                                                    ) {
+                                                        setTargetScore(value);
+                                                    }
+                                                }}
+                                                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                            <span className="text-sm text-gray-600">
+                                                /5
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    setShowTargetInput(false)
+                                                }
+                                                className="ml-2 text-green-600 hover:text-green-700 font-medium text-sm"
+                                            >
+                                                ✓
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() =>
+                                                setShowTargetInput(true)
+                                            }
+                                            className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm font-medium text-gray-700"
+                                        >
+                                            <span>⚙️</span>
+                                            <span>
+                                                Set Target ({targetScore}/5)
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Radar Chart */}
@@ -714,7 +791,7 @@ export default function ProgressPage() {
                                         />
                                         {/* Target/Benchmark Layer (behind) */}
                                         <Radar
-                                            name="Target (4.25/5)"
+                                            name={`Target (${targetScore}/5)`}
                                             dataKey="target"
                                             stroke="#10b981"
                                             strokeWidth={2}
@@ -799,7 +876,7 @@ export default function ProgressPage() {
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
                                         <span className="text-gray-700 font-medium">
-                                            Target Benchmark (4.25/5)
+                                            Target Benchmark ({targetScore}/5)
                                         </span>
                                     </div>
                                 </div>
