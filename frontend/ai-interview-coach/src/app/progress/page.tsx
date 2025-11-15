@@ -207,9 +207,26 @@ export default function ProgressPage() {
     const averageScore =
         mockReadinessData.reduce((sum: number, d: any) => sum + d.score, 0) /
         mockReadinessData.length;
-    const improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(
-        1
-    );
+
+    // Calculate improvement rate
+    // If minScore is 0 or very close to 0, use first non-zero score or calculate absolute improvement
+    let improvementRate: string;
+    if (minScore === 0 || minScore < 0.1) {
+        // If starting from 0, show absolute improvement from first to last
+        const firstScore = mockReadinessData[0]?.score || 0;
+        const lastScore =
+            mockReadinessData[mockReadinessData.length - 1]?.score || 0;
+        if (firstScore === 0) {
+            improvementRate = lastScore > 0 ? "100.0" : "0.0";
+        } else {
+            improvementRate = (
+                ((lastScore - firstScore) / firstScore) *
+                100
+            ).toFixed(1);
+        }
+    } else {
+        improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(1);
+    }
 
     // Calculate login streak
     const currentStreak = mockLoginData
