@@ -207,6 +207,8 @@ export default function ProgressPage() {
     const mockReadinessDataAll = progressData?.readinessScores || [];
     const mockLoginData = progressData?.loginData || [];
     const mockCategoryPerformance = progressData?.dimensionPerformance || [];
+    const latestInterviewQuestions =
+        progressData?.latestInterviewQuestions || [];
 
     // Prepare radar chart data with dual layers (current vs target)
     // Using 5-point scale (1-5) instead of percentage
@@ -882,91 +884,96 @@ export default function ProgressPage() {
                                 </div>
                             </div>
 
-                            {/* Detailed Dimension Analysis */}
+                            {/* Latest Interview Questions Summary */}
                             <div className="space-y-4">
                                 <h4 className="font-semibold text-gray-800 mb-3">
-                                    Detailed Breakdown:
+                                    Latest Interview - Question Summaries:
                                 </h4>
-                                {mockCategoryPerformance.map((dim: any) => (
-                                    <div
-                                        key={dim.dimension}
-                                        className="bg-gray-50 rounded-lg p-4 border border-gray-100"
-                                    >
-                                        <div className="flex items-start gap-3 mb-3">
-                                            <span className="text-2xl">
-                                                {
-                                                    SCORE_DIMENSION_CONFIGS[
-                                                        dim.dimension as ScoreDimension
-                                                    ].icon
-                                                }
-                                            </span>
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h5 className="font-semibold text-gray-800">
-                                                        {dim.dimension_name}
-                                                    </h5>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-lg font-bold text-gray-800">
-                                                            {dim.average_score.toFixed(
-                                                                2
-                                                            )}
-                                                            /5
-                                                        </span>
-                                                        <span
-                                                            className={`text-xs px-3 py-1 rounded-full font-medium ${
-                                                                dim.average_score >=
-                                                                3.5
-                                                                    ? "bg-green-100 text-green-700"
-                                                                    : "bg-orange-100 text-orange-700"
-                                                            }`}
-                                                        >
-                                                            {dim.average_score >=
-                                                            3.5
-                                                                ? "✓ Strength"
-                                                                : "⚠ Needs Work"}
-                                                        </span>
+                                {latestInterviewQuestions.length === 0 ? (
+                                    <div className="bg-gray-50 rounded-lg p-6 border border-gray-100 text-center">
+                                        <p className="text-gray-600">
+                                            No interview data available yet.
+                                            Complete your first interview to see
+                                            detailed feedback here!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    latestInterviewQuestions.map(
+                                        (question: any, index: number) => (
+                                            <div
+                                                key={question.questionId}
+                                                className="bg-gray-50 rounded-lg p-4 border border-gray-100"
+                                            >
+                                                <div className="flex items-start gap-3 mb-3">
+                                                    <span className="text-2xl">
+                                                        💬
+                                                    </span>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h5 className="font-semibold text-gray-800">
+                                                                Question #
+                                                                {index + 1}
+                                                            </h5>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-lg font-bold text-gray-800">
+                                                                    {question.averageScore.toFixed(
+                                                                        2
+                                                                    )}
+                                                                    /5
+                                                                </span>
+                                                                <span
+                                                                    className={`text-xs px-3 py-1 rounded-full font-medium ${
+                                                                        question.averageScore >=
+                                                                        3.5
+                                                                            ? "bg-green-100 text-green-700"
+                                                                            : "bg-orange-100 text-orange-700"
+                                                                    }`}
+                                                                >
+                                                                    {question.averageScore >=
+                                                                    3.5
+                                                                        ? "✓ Good"
+                                                                        : "⚠ Needs Work"}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-sm text-gray-700 font-medium mb-2">
+                                                            {
+                                                                question.questionText
+                                                            }
+                                                        </p>
+                                                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                                            <div
+                                                                className={`h-2 rounded-full transition-all ${
+                                                                    question.averageScore >=
+                                                                    3.5
+                                                                        ? "bg-green-500"
+                                                                        : "bg-orange-500"
+                                                                }`}
+                                                                style={{
+                                                                    width: `${
+                                                                        (question.averageScore /
+                                                                            5) *
+                                                                        100
+                                                                    }%`,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="mt-3 p-3 bg-white rounded border border-gray-200">
+                                                            <p className="text-xs text-gray-700">
+                                                                <strong>
+                                                                    📝 Summary:
+                                                                </strong>{" "}
+                                                                {
+                                                                    question.overallSummary
+                                                                }
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mb-3">
-                                                    {
-                                                        SCORE_DIMENSION_CONFIGS[
-                                                            dim.dimension as ScoreDimension
-                                                        ].description
-                                                    }
-                                                </p>
-                                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className={`h-2 rounded-full transition-all ${
-                                                            dim.average_score >=
-                                                            3.5
-                                                                ? "bg-green-500"
-                                                                : "bg-orange-500"
-                                                        }`}
-                                                        style={{
-                                                            width: `${
-                                                                (dim.average_score /
-                                                                    5) *
-                                                                100
-                                                            }%`,
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="mt-3 p-3 bg-white rounded border border-gray-200">
-                                                    <p className="text-xs text-gray-700">
-                                                        <strong>
-                                                            {dim.is_strength
-                                                                ? "💡 Keep it up:"
-                                                                : "📈 Improvement tip:"}
-                                                        </strong>{" "}
-                                                        {dim.is_strength
-                                                            ? "You're excelling in this area! Continue leveraging this strength in your interviews."
-                                                            : "Focus on practicing this dimension more. Review feedback and work on specific examples."}
-                                                    </p>
-                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                        )
+                                    )
+                                )}
                             </div>
                         </div>
                     </div>

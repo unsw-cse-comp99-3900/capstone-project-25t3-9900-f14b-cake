@@ -10,10 +10,17 @@ import { API_ENDPOINTS, getAuthHeaders, apiFetch } from "./api";
  */
 export interface QuestionFeedback {
     clarity_structure_score: number;
+    clarity_structure_feedback?: string;
     relevance_score: number;
+    relevance_feedback?: string;
     keyword_alignment_score: number;
+    keyword_alignment_feedback?: string;
     confidence_score: number;
+    confidence_feedback?: string;
     conciseness_score: number;
+    conciseness_feedback?: string;
+    overall_summary?: string;
+    overall_score?: number;
     [key: string]: any; // Allow other fields
 }
 
@@ -380,4 +387,70 @@ export async function getUserInterviewScores(
 
     // Sort by timestamp (oldest first)
     return interviewScores.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+/**
+ * Question summary for display
+ */
+export interface QuestionSummary {
+    questionId: string;
+    questionText: string;
+    answer: string;
+    overallSummary: string;
+    overallScore: number;
+    averageScore: number; // Average of 5 dimensions
+}
+
+/**
+ * Fetches the most recent interview's question summaries
+ * @param token - JWT authentication token
+ * @returns Array of question summaries from the most recent interview
+ */
+export async function getLatestInterviewQuestions(
+    token: string
+): Promise<QuestionSummary[]> {
+    const data = await apiFetch<UserDetailAPIResponse>(
+        API_ENDPOINTS.user.detail,
+        {
+            method: "GET",
+            headers: getAuthHeaders(token),
+        }
+    );
+
+    // If no interviews, return empty array
+    if (!data.interviews || data.interviews.length === 0) {
+        return [];
+    }
+
+    // Sort interviews by timestamp to get the most recent one
+    const sortedInterviews = [...data.interviews].sort(
+        (a, b) => b.interview_time - a.interview_time
+    );
+    const latestInterview = sortedInterviews[0];
+
+    // Transform questions to question summaries
+    const questionSummaries: QuestionSummary[] = latestInterview.questions.map(
+        (question) => {
+            // Calculate average score from 5 dimensions
+            const averageScore =
+                (question.feedback.clarity_structure_score +
+                    question.feedback.relevance_score +
+                    question.feedback.keyword_alignment_score +
+                    question.feedback.confidence_score +
+                    question.feedback.conciseness_score) /
+                5;
+
+            return {
+                questionId: question.question_id,
+                questionText: question.question,
+                answer: question.answer,
+                overallSummary:
+                    question.feedback.overall_summary || "No summary available",
+                overallScore: question.feedback.overall_score || averageScore,
+                averageScore: Number(averageScore.toFixed(2)),
+            };
+        }
+    );
+
+    return questionSummaries;
 }

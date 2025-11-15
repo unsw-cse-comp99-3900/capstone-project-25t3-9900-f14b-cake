@@ -6,9 +6,11 @@
 import {
     getUserStatistics,
     getUserInterviewScores,
+    getLatestInterviewQuestions,
     generateLoginCalendarData,
     calculateMaxLoginStreak,
     type UserProgressData,
+    type QuestionSummary,
 } from "./userStatsService";
 import { ScoreDimension } from "@/types";
 
@@ -56,6 +58,9 @@ export interface ProgressPageData {
     // Performance dimensions
     dimensionPerformance: DimensionPerformance[];
 
+    // Latest interview questions (NEW)
+    latestInterviewQuestions: QuestionSummary[];
+
     // User info
     userId: string;
     userEmail: string;
@@ -72,10 +77,11 @@ export interface ProgressPageData {
 export async function getProgressPageData(
     token: string
 ): Promise<ProgressPageData> {
-    // Fetch user statistics and interview scores in parallel
-    const [stats, interviewScores] = await Promise.all([
+    // Fetch user statistics, interview scores, and latest interview questions in parallel
+    const [stats, interviewScores, latestQuestions] = await Promise.all([
         getUserStatistics(token),
         getUserInterviewScores(token),
+        getLatestInterviewQuestions(token),
     ]);
 
     // Transform interview scores to readiness scores
@@ -150,6 +156,7 @@ export async function getProgressPageData(
         maxLoginStreak,
         totalLoginDays: stats.totalLogins,
         dimensionPerformance,
+        latestInterviewQuestions: latestQuestions,
         userId: stats.userId,
         userEmail: stats.userEmail,
         xp: stats.xp,
