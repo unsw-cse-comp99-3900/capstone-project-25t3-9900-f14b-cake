@@ -192,10 +192,11 @@ export async function getUserStatistics(
     }));
 
     // Transform interviews data
+    // Note: Backend returns timestamp in milliseconds, not seconds
     const interviews = data.interviews.map((interview) => ({
         interviewId: interview.interview_id,
         timestamp: interview.timestamp,
-        date: new Date(interview.timestamp * 1000),
+        date: new Date(interview.timestamp), // Already in milliseconds
     }));
 
     // Calculate averages and percentages for each dimension (5-point scale to percentage)
@@ -277,32 +278,57 @@ export async function getUserStatistics(
 }
 
 /**
- * Generate mock login data for calendar visualization
- * This converts the login statistics into calendar-compatible format
- * @param stats - User progress data
+ * Generate login/check-in data from interview timestamps
+ * Each day with at least one interview counts as a "check-in"
+ * @param interviews - Array of interview data with timestamps
  * @param daysBack - Number of days to look back (default 30)
  * @returns Array of login dates with hasLogin flag
  */
 export function generateLoginCalendarData(
-    stats: UserProgressData,
+    interviews: Array<{ timestamp: number }>,
     daysBack: number = 30
 ): Array<{ date: string; hasLogin: boolean }> {
     const result: Array<{ date: string; hasLogin: boolean }> = [];
     const today = new Date();
 
-    // Generate dates for the last N days
+    // Create a Set of interview dates (YYYY-MM-DD format) for O(1) lookup
+    // Note: Backend returns timestamp in milliseconds, not seconds
+    // Use local date to avoid timezone offset issues
+    const interviewDates = new Set<string>();
+    interviews.forEach((interview) => {
+        const interviewDate = new Date(interview.timestamp);
+        console.log("🔍 Debug interview timestamp:", {
+            rawTimestamp: interview.timestamp,
+            timestampLength: String(interview.timestamp).length,
+            dateObject: interviewDate,
+            toISOString: interviewDate.toISOString(),
+            getFullYear: interviewDate.getFullYear(),
+            getMonth: interviewDate.getMonth() + 1,
+            getDate: interviewDate.getDate(),
+            toLocaleDateString: interviewDate.toLocaleDateString("en-CA"),
+        });
+        // Use local date instead of UTC to avoid timezone issues
+        const year = interviewDate.getFullYear();
+        const month = String(interviewDate.getMonth() + 1).padStart(2, "0");
+        const day = String(interviewDate.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+        console.log("📅 Generated dateStr:", dateStr);
+        interviewDates.add(dateStr);
+    });
+
+    // Generate dates for the last N days and check if each has an interview
     for (let i = daysBack - 1; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(today.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
-
-        // For now, mark recent days as logged in based on streak
-        // In production, this should come from backend with actual login dates
-        const hasLogin = i < stats.loginStreak;
+        // Use local date instead of UTC
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
 
         result.push({
             date: dateStr,
-            hasLogin,
+            hasLogin: interviewDates.has(dateStr),
         });
     }
 
@@ -310,15 +336,124 @@ export function generateLoginCalendarData(
 }
 
 /**
- * Calculate max login streak from login history
- * This is a helper function until backend provides this data
- * @param stats - User progress data
- * @returns Maximum consecutive login streak
+ * Calculate current consecutive check-in streak (strict: every day must have interview)
+ * @param interviews - Array of interview data with timestamps
+ * @returns Number of consecutive days with interviews (counting backwards from today)
  */
-export function calculateMaxLoginStreak(stats: UserProgressData): number {
-    // For now, return a calculated value
-    // In production, this should come directly from backend
-    return Math.max(stats.loginStreak, 7);
+export function calculateCurrentStreak(
+    interviews: Array<{ timestamp: number }>
+): number {
+    if (interviews.length === 0) return 0;
+
+    // Create a Set of interview dates for O(1) lookup
+    // Note: Backend returns timestamp in milliseconds, not seconds
+    // Use local date to avoid timezone offset issues
+    const interviewDates = new Set<string>();
+    interviews.forEach((interview) => {
+        const interviewDate = new Date(interview.timestamp);
+        const year = interviewDate.getFullYear();
+        const month = String(interviewDate.getMonth() + 1).padStart(2, "0");
+        const day = String(interviewDate.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+        interviewDates.add(dateStr);
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+
+    let streak = 0;
+    let currentDate = new Date(today);
+
+    // Count backwards from today until we find a day without an interview
+    while (true) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const day = String(currentDate.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+        if (!interviewDates.has(dateStr)) {
+            break;
+        }
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+    }
+
+    return streak;
+}
+
+/**
+ * Calculate maximum consecutive check-in streak from all interview history
+ * @param interviews - Array of interview data with timestamps
+ * @returns Maximum number of consecutive days with interviews
+ */
+export function calculateMaxLoginStreak(
+    interviews: Array<{ timestamp: number }>
+): number {
+    if (interviews.length === 0) return 0;
+
+    // Create a sorted Set of unique interview dates
+    // Note: Backend returns timestamp in milliseconds, not seconds
+    // Use local date to avoid timezone offset issues
+    const interviewDates = new Set<string>();
+    interviews.forEach((interview) => {
+        const interviewDate = new Date(interview.timestamp);
+        const year = interviewDate.getFullYear();
+        const month = String(interviewDate.getMonth() + 1).padStart(2, "0");
+        const day = String(interviewDate.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+        interviewDates.add(dateStr);
+    });
+
+    // Convert to sorted array
+    const sortedDates = Array.from(interviewDates).sort();
+
+    let maxStreak = 1;
+    let currentStreak = 1;
+
+    for (let i = 1; i < sortedDates.length; i++) {
+        const prevDate = new Date(sortedDates[i - 1]);
+        const currDate = new Date(sortedDates[i]);
+
+        // Calculate difference in days
+        const diffTime = currDate.getTime() - prevDate.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            // Consecutive day
+            currentStreak++;
+            maxStreak = Math.max(maxStreak, currentStreak);
+        } else {
+            // Streak broken
+            currentStreak = 1;
+        }
+    }
+
+    return maxStreak;
+}
+
+/**
+ * Calculate total unique check-in days from interview history
+ * @param interviews - Array of interview data with timestamps
+ * @returns Total number of unique days with at least one interview
+ */
+export function calculateTotalLoginDays(
+    interviews: Array<{ timestamp: number }>
+): number {
+    if (interviews.length === 0) return 0;
+
+    // Create a Set of unique interview dates
+    // Note: Backend returns timestamp in milliseconds, not seconds
+    // Use local date to avoid timezone offset issues
+    const interviewDates = new Set<string>();
+    interviews.forEach((interview) => {
+        const interviewDate = new Date(interview.timestamp);
+        const year = interviewDate.getFullYear();
+        const month = String(interviewDate.getMonth() + 1).padStart(2, "0");
+        const day = String(interviewDate.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+        interviewDates.add(dateStr);
+    });
+
+    return interviewDates.size;
 }
 
 /**
