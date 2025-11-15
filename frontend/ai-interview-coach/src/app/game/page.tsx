@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { BadgeType, BADGE_CONFIGS } from "@/types";
+import { BadgeType, BADGE_CONFIGS, DAILY_QUOTES } from "@/types";
 import { getGamePageData } from "@/services";
-import { getTodayQuote } from "@/data/dailyQuotes";
 
 // ===== MOCK DATA - COMMENTED OUT FOR BACKEND TESTING =====
 // Mock user badge data - backend will provide real data
@@ -21,7 +20,9 @@ import { getTodayQuote } from "@/data/dailyQuotes";
 
 export default function GamePage() {
     const router = useRouter();
+    const [showDailyQuote, setShowDailyQuote] = useState(false);
     const [selectedBadge, setSelectedBadge] = useState<BadgeType | null>(null);
+    const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
     const [gameData, setGameData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -53,8 +54,14 @@ export default function GamePage() {
         fetchData();
     }, []);
 
-    // Get today's quote using the new daily quote system
-    const todayQuote = getTodayQuote();
+    // Get today's quote
+    const todayQuote = DAILY_QUOTES[new Date().getDate() % DAILY_QUOTES.length];
+
+    // Handle daily check-in
+    const handleDailyCheckIn = () => {
+        setShowDailyQuote(true);
+        setHasCheckedInToday(true);
+    };
 
     // Navigate to Home page
     const handleStartPractice = () => {
@@ -113,45 +120,29 @@ export default function GamePage() {
             <Navbar />
 
             <main className="flex-1 p-10 pt-24">
-                {/* Page Title */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                        Gamification System
-                    </h1>
-                    <p className="text-lg text-gray-600">
-                        Improve your interview skills through gamification
-                    </p>
-                </div>
-
-                {/* Daily Quote Card */}
-                <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="text-5xl">🌟</div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                                <h3 className="text-lg font-bold text-gray-800">
-                                    Daily Quote
-                                </h3>
-                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                                    {todayQuote.category}
-                                </span>
-                            </div>
-                            <p className="text-gray-700 italic leading-relaxed mb-2">
-                                "{todayQuote.text}"
-                            </p>
-                            {todayQuote.author && (
-                                <p className="text-sm text-gray-500 mb-4">
-                                    — {todayQuote.author}
-                                </p>
-                            )}
-                            <button
-                                onClick={handleStartPractice}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                            >
-                                Start Practice →
-                            </button>
-                        </div>
+                {/* Page Title and Daily Check-in Button */}
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                            Gamification System
+                        </h1>
+                        <p className="text-lg text-gray-600">
+                            Improve your interview skills through gamification
+                        </p>
                     </div>
+
+                    {/* Daily Check-in Button */}
+                    <button
+                        onClick={handleDailyCheckIn}
+                        disabled={hasCheckedInToday}
+                        className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                            hasCheckedInToday
+                                ? "bg-green-100 text-green-700 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg"
+                        }`}
+                    >
+                        {hasCheckedInToday ? "✓ Checked In" : "Daily Check-in"}
+                    </button>
                 </div>
 
                 {/* Badge Display Area */}
@@ -185,18 +176,42 @@ export default function GamePage() {
                         {gameData?.badges?.map((badge: any) => {
                             const isUnlocked = badge.isUnlocked;
 
-                            // Assign icon based on badge ID
-                            const badgeIcons: { [key: number]: string } = {
-                                1: "🎯", // First Steps
-                                2: "❄️", // Ice Breaker
-                                3: "🌱", // Answer Rookie
-                                4: "⭐", // Answer Expert
-                                5: "👑", // Answer Master
-                                6: "🌙", // Night Owl
-                                7: "🌅", // Early Bird
+                            // Map badge names to icons (case-insensitive matching)
+                            const badgeIconMap: { [key: string]: string } = {
+                                // XP Progression (4)
+                                "first steps": "⭐",
+                                "xp novice": "🏆",
+                                "xp expert": "🥇",
+                                "xp master": "👑",
+
+                                // Answering Progress (4)
+                                "ice breaker": "❄️",
+                                "answer rookie": "🌱",
+                                "answer expert": "📚",
+                                "answer master": "🎓",
+
+                                // Login Streaks (3)
+                                persistent: "🔥",
+                                dedicated: "⚡",
+                                relentless: "💪",
+
+                                // Dimension Masters (5)
+                                "clarity champion": "💎",
+                                "relevance expert": "🎯",
+                                "keyword wizard": "🔮",
+                                "confidence king/queen": "👑",
+                                "conciseness master": "✨",
+
+                                // Special Achievements (2)
+                                "first session": "🎉",
+                                "night owl": "�",
+                                "early bird": "🌅",
                             };
 
-                            const icon = badgeIcons[badge.badgeId] || "🏆";
+                            const badgeName = (badge.name || "")
+                                .toLowerCase()
+                                .trim();
+                            const icon = badgeIconMap[badgeName] || "�";
 
                             return (
                                 <button
@@ -282,6 +297,37 @@ export default function GamePage() {
                         ))}
                 </div>
             </main>
+
+            {/* Daily Quote Modal */}
+            {showDailyQuote && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all border-4 border-blue-200">
+                        <div className="text-center">
+                            <div className="text-6xl mb-4">🌟</div>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                                Daily Quote
+                            </h3>
+                            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+                                "{todayQuote}"
+                            </p>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={handleStartPractice}
+                                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                >
+                                    Start Today's Practice
+                                </button>
+                                <button
+                                    onClick={() => setShowDailyQuote(false)}
+                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Badge Details Modal */}
             {selectedBadge && (
