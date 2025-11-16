@@ -244,17 +244,21 @@ class UserStatisticsResponse(BaseModel):
         description="Total number of badges earned",
         example=5
     )
-    total_logins: int = Field(
-        description="Total number of login sessions",
+    total_active_days: int = Field(
+        description="Total days user has been active",
         example=42
     )
-    last_login: str = Field(
-        description="Last login date",
+    last_active_day: str = Field(
+        description="Last active date",
         example="2024-11-08"
     )
-    consecutive_days: int = Field(
-        description="Current consecutive login streak in days",
+    consecutive_active_days: int = Field(
+        description="Current consecutive active streak in days",
         example=7
+    )
+    max_consecutive_active_days: int = Field(
+        description="Maximum consecutive active streak achieved",
+        example=15
     )
     max_clarity: int = Field(
         description="Maximum clarity score achieved",
@@ -303,4 +307,82 @@ class UserStatisticsResponse(BaseModel):
     total_overall: float = Field(
         description="Sum of all overall scores",
         example=325.5
+    )
+    target_clarity: int = Field(
+        description="User's target clarity score",
+        example=5
+    )
+    target_relevance: int = Field(
+        description="User's target relevance score",
+        example=5
+    )
+    target_keyword: int = Field(
+        description="User's target keyword score",
+        example=5
+    )
+    target_confidence: int = Field(
+        description="User's target confidence score",
+        example=5
+    )
+    target_conciseness: int = Field(
+        description="User's target conciseness score",
+        example=5
+    )
+    
+class UserTargetRequest(BaseModel):
+    target_clarity: int = Field(
+        description="Target clarity score (1-5)",
+        example=5,
+        ge=1,
+        le=5
+    )
+    target_relevance: int = Field(
+        description="Target relevance score (1-5)",
+        example=5,
+        ge=1,
+        le=5
+    )
+    target_keyword: int = Field(
+        description="Target keyword alignment score (1-5)",
+        example=5,
+        ge=1,
+        le=5
+    )
+    target_confidence: int = Field(
+        description="Target confidence score (1-5)",
+        example=5,
+        ge=1,
+        le=5
+    )
+    target_conciseness: int = Field(
+        description="Target conciseness score (1-5)",
+        example=5,
+        ge=1,
+        le=5
+    )
+
+class UserTargetResponse(BaseModel):
+    user_id: str = Field(
+        description="Unique user identifier",
+        example="550e8400-e29b-41d4-a716-446655440000"
+    )
+    target_clarity: int = Field(
+        description="Target clarity score",
+        example=5
+    )
+    target_relevance: int = Field(
+        description="Target relevance score",
+        example=5
+    )
+    target_keyword: int = Field(
+        description="Target keyword alignment score",
+        example=5
+    )
+    target_confidence: int = Field(
+        description="Target confidence score",
+        example=5
+    )
+    target_conciseness: int = Field(
+        description="Target conciseness score",
+        example=5
     )

@@ -1,19 +1,20 @@
-"""User API routes for user details, likes, interview summaries, and statistics.
-"""
-
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.user import (
     UserDetailResponse,
     UserLikeRequest,
     UserLikeResponse,
     UserInterviewSummaryResponse,
-    UserStatisticsResponse
+    UserStatisticsResponse,
+    UserTargetRequest,
+    UserTargetResponse
 )
 from app.services.user_service import (
     get_user_detail,
     like_interview,
     get_user_interview_summary,
     get_user_statistics,
+    set_user_target,
+    get_user_target
 )
 from app.api.helper import get_token
 
@@ -87,7 +88,7 @@ async def interview_summary(token: str = Depends(get_token)):
 @router.get(
     "/statistics",
     summary="Get User Statistics",
-    description="Retrieves comprehensive user statistics including all performance metrics, login history, and achievement records",
+    description="Retrieves comprehensive user statistics including all performance metrics, active days history, and achievement records",
     response_model=UserStatisticsResponse
 )
 async def user_statistics(token: str = Depends(get_token)):
@@ -99,12 +100,55 @@ async def user_statistics(token: str = Depends(get_token)):
         user_stats = get_user_statistics(user_id)
         stats_dict = user_stats.get_dict()
 
-        # Convert last_login date to string if it's a date object
-        if hasattr(stats_dict.get("last_login"), 'isoformat'):
-            stats_dict["last_login"] = stats_dict["last_login"].isoformat()
+        # Convert last_active_day date to string if it's a date object
+        if hasattr(stats_dict.get("last_active_day"), 'isoformat'):
+            stats_dict["last_active_day"] = stats_dict["last_active_day"].isoformat()
 
         return stats_dict
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post(
+    "/target",
+    summary="Set User Target Scores",
+    description="Sets the user's target scores for each evaluation criterion (clarity, relevance, keyword, confidence, conciseness)",
+    response_model=UserTargetResponse
+)
+async def set_target(payload: UserTargetRequest, token: str = Depends(get_token)):
+    try:
+        target = {
+            "target_clarity": payload.target_clarity,
+            "target_relevance": payload.target_relevance,
+            "target_keyword": payload.target_keyword,
+            "target_confidence": payload.target_confidence,
+            "target_conciseness": payload.target_conciseness
+        }
+        result = set_user_target(token, target)
+        if result is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get(
+    "/target",
+    summary="Get User Target Scores",
+    description="Retrieves the user's target scores for each evaluation criterion",
+    response_model=UserTargetResponse
+)
+async def get_target(token: str = Depends(get_token)):
+    try:
+        result = get_user_target(token)
+        if result is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

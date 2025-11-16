@@ -9,7 +9,7 @@ from typing import List, Optional, Any, Dict
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
 from app.services.interview_service import interview_start, interview_feedback, change_interview_like, get_interview_detail
-from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics, like_interview, UserStatistics
+from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics, like_interview
 from app.services.utils import with_db_session
 from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic, get_user_interviews, get_user_badges, update_user
 from app.services.badge_service import check_badges_for_user
@@ -229,29 +229,6 @@ def test_target():
     pprint(target)
     print()
     
-
-    # Print a readable summary of unlocked badges
-    unlocked_badges = get_unlocked_badges(user_id, db)
-    names = [b.name for b in unlocked_badges]
-    print({"newly_unlocked": [b.name for b in (newly_unlocked or [])], "all_unlocked": names})
-
-    # Simulate 3-day streak for testing 'Persistent'
-    update_user(user_id, {"consecutive_days": 30}, db)
-    user = get_user_basic(user_id, db)
-    newly_unlocked_streak = check_badges_for_user(user, db)
-    unlocked_badges = get_unlocked_badges(user_id, db)
-    names = [b.name for b in unlocked_badges]
-    print({"streak_newly_unlocked": [b.name for b in (newly_unlocked_streak or [])], "all_unlocked_after_streak": names})
-
-@with_db_session
-def test_user_statistics(db = None):
-    user_id = "1760000357832x893806233003485000"
-    user = get_user_basic(user_id, db)
-    interviews = get_user_interviews(user_id, db)
-    badges = get_user_badges(user_id, db)
-    user_statistics = UserStatistics(user, interviews=interviews, badges=badges)
-    print(user_statistics.get_dict())
-
 
 if __name__ == "__main__":
     # print_format_answer()
