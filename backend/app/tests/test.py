@@ -8,7 +8,7 @@ from typing import List, Optional, Any, Dict
 # from prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.prompt_builder import build_question_prompt, build_feedback_prompt, build_multicrit_feedback_prompt, build_answer_prompt
 from app.services.auth_service import login, get_user_id_and_email
-from app.services.interview_service import interview_start, interview_feedback, change_interview_like
+from app.services.interview_service import interview_start, interview_feedback, change_interview_like, get_interview_detail
 from app.services.user_service import get_user_detail, get_user_interview_summary, get_user_statistics, like_interview, UserStatistics
 from app.services.utils import with_db_session
 from app.db.crud import unlock_badge, get_unlocked_badges, get_user_basic, get_user_interviews, get_user_badges, update_user
@@ -168,6 +168,11 @@ def test_interview():
     print("change interview like:\n", {"interview_like": result.get("is_like", None)})
     print()
 
+    interview_detail = get_interview_detail(token, interview_id)
+    print("interview_detail: ")
+    pprint(interview_detail)
+    print()
+
 def test_user():
     result = get_user_detail(JWT_TOKEN)
     print("user_detail:")
@@ -200,6 +205,30 @@ def test_badges(db = None):
     # Re-check and unlock any badges the user now qualifies for
     user = get_user_basic(user_id, db)
     newly_unlocked = check_badges_for_user(user, db)
+    print(newly_unlocked)
+
+
+
+def test_target():
+    from app.services.user_service import set_user_target, get_user_target
+    token = JWT_TOKEN
+    target_dict = {
+        "target_clarity": 4,
+        "target_relevance": 4,
+        "target_keyword": 4,
+        "target_confidence": 4,
+        "target_conciseness": 4
+    }
+    target_db = get_user_target(token)
+    print("target_db (before setting target): ")
+    pprint(target_db)
+    print()
+
+    target = set_user_target(token, target_dict)
+    print("target (after setting target): ")
+    pprint(target)
+    print()
+    
 
     # Print a readable summary of unlocked badges
     unlocked_badges = get_unlocked_badges(user_id, db)
@@ -232,6 +261,7 @@ if __name__ == "__main__":
     test_auth()
     test_interview()
     test_user()
+    test_target()
     test_badges()
     # test_user_statistics()
 

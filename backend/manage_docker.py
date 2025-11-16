@@ -137,7 +137,7 @@ Available commands:
   stop                Stop all containers
   reset               Remove containers and volumes, rebuild everything
   initdb              Initialize database schema inside backend container
-  reset_db            Drop all tables and recreate them.
+  reset_db            Drop all tables and recreate them
   status              Show container status
   logs                Follow backend logs
   test                Run all unit tests inside the container

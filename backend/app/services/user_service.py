@@ -67,6 +67,10 @@ def get_user_detail(token: str, db = None):
         "xp": user.xp,
         "total_interviews": user.total_interviews,
         "total_questions": user.total_questions,
+        "total_active_days": user.total_active_days,
+        "last_active_day": user.last_active_day,
+        "consecutive_active_days": user.consecutive_active_days,
+        "max_consecutive_active_days": user.max_consecutive_active_days,
         "interviews": [
             {
                 "interview_id": i.interview_id,
@@ -111,31 +115,43 @@ def create_new_user(user_id: str, user_email: str, db = None):
         user_id=user_id,
         user_email=user_email,
         xp=0,
+
         total_questions=0,
         total_interviews=0,
         total_badges=0,
-        total_logins=0,
-        last_login=date.today(),
-        consecutive_days=0,
+
+        total_active_days=0,
+        last_active_day=date.today(),
+        consecutive_active_days=0,
+        max_consecutive_active_days=0,
+
         max_clarity=0,
         max_relevance=0,
         max_keyword=0,
         max_confidence=0,
         max_conciseness=0,
+        max_overall=0,
+
         total_clarity=0,
         total_relevance=0,
         total_keyword=0,
         total_confidence=0,
         total_conciseness=0,
-        total_overall=0.0
+        total_overall=0.0,
+
+        target_clarity=0,
+        target_relevance=0,
+        target_keyword=0,
+        target_confidence=0,
+        target_conciseness=0
     )
     user = add_user(user, db)
     return user
 
 
-def update_user_login(user_id: str, db = None):
+def update_user_active(user_id: str, db = None):
     """
-    Update the user profile after the user logs in.
+    Update the user profile after the user start interview for check user active.
 
     Args:
         user_id: A string of user id.
@@ -144,22 +160,31 @@ def update_user_login(user_id: str, db = None):
     Returns:
         user: A SQLAlchemy entry of user, if it is None, means fails.
     """
-    print("User login:", user_id)
+    print("User active:", user_id)
     user = get_user_basic(user_id, db)
     if not user:
         return None
     
-    new_login = date.today()
-    if (new_login - user.last_login).days == 1 or user.total_logins == 0:
-        update_data = {"last_login": new_login, 
-                        "consecutive_days": user.consecutive_days + 1,
-                        "total_logins": user.total_logins + 1,
-                        "xp": user.xp + 5
-                        }
-    elif (new_login - user.last_login).days > 1:
-        update_data = {"last_login": new_login, 
-                        "consecutive_days": 1,
-                        "total_logins": user.total_logins + 1,
+    new_active_day = date.today()
+    if (new_active_day - user.last_active_day).days == 1 or user.total_active_days == 0:
+        max_consecutive_active_days = user.max_consecutive_active_days
+        if max_consecutive_active_days <= user.consecutive_active_days:
+            update_data = {"last_active_day": new_active_day, 
+                            "consecutive_active_days": user.consecutive_active_days + 1,
+                            "max_consecutive_active_days": user.max_consecutive_active_days + 1,
+                            "total_active_days": user.total_active_days + 1,
+                            "xp": user.xp + 5
+                            }
+        else:
+            update_data = {"last_active_day": new_active_day, 
+                            "consecutive_active_days": user.consecutive_active_days + 1,
+                            "total_active_days": user.total_active_days + 1,
+                            "xp": user.xp + 5
+                            }
+    elif (new_active_day - user.last_active_day).days > 1:
+        update_data = {"last_active_day": new_active_day, 
+                        "consecutive_active_days": 1,
+                        "total_active_days": user.total_active_days + 1,
                         "xp": user.xp + 5
                         }
     else:
@@ -203,6 +228,10 @@ def get_user_full_detail(token: str, db = None):
         "xp": user.xp,
         "total_interviews": user.total_interviews,
         "total_questions": user.total_questions,
+        "total_active_days": user.total_active_days,
+        "last_active_day": user.last_active_day,
+        "consecutive_active_days": user.consecutive_active_days,
+        "max_consecutive_active_days": user.max_consecutive_active_days,
         "interviews": [
             {
                 "interview_id": i.interview_id,
@@ -278,9 +307,10 @@ class UserStatistics:
         self.total_interviews = user.total_interviews
         self.total_badges = user.total_badges
 
-        self.total_logins = user.total_logins
-        self.last_login = user.last_login
-        self.consecutive_days = user.consecutive_days
+        self.total_active_days = user.total_active_days
+        self.last_active_day = user.last_active_day
+        self.consecutive_active_days = user.consecutive_active_days
+        self.max_consecutive_active_days = user.max_consecutive_active_days
 
         self.max_clarity = user.max_clarity
         self.max_relevance = user.max_relevance
@@ -296,9 +326,14 @@ class UserStatistics:
         self.total_conciseness = user.total_conciseness
         self.total_overall = user.total_overall
 
+        self.target_clarity = user.target_clarity
+        self.target_relevance = user.target_relevance
+        self.target_keyword = user.target_keyword
+        self.target_confidence = user.target_confidence
+        self.target_conciseness = user.target_conciseness
+
 
     @classmethod
-    @with_db_session
     def from_db(cls, user_id, db = None):
         user = get_user_basic(user_id, db)
         interviews = get_user_interviews(user_id, db)
@@ -316,9 +351,11 @@ class UserStatistics:
         print(f"total_questions: {self.total_questions}")
         print(f"total_interviews: {self.total_interviews}")
         print(f"total_badges: {self.total_badges}")
-        print(f"total_logins: {self.total_logins}")
-        print(f"last_login: {self.last_login}")
-        print(f"consecutive_days: {self.consecutive_days}")
+
+        print(f"total_active_days: {self.total_active_days}")
+        print(f"last_active_day: {self.last_active_day}")
+        print(f"consecutive_active_days: {self.consecutive_active_days}")
+        print(f"max_consecutive_active_days: {self.max_consecutive_active_days}")
 
         print(f"max_clarity: {self.max_clarity}")
         print(f"max_relevance: {self.max_relevance}")
@@ -334,6 +371,13 @@ class UserStatistics:
         print(f"total_conciseness: {self.total_conciseness}")
         print(f"total_overall: {self.total_overall}")
 
+        print(f"target_clarity: {self.target_clarity}")
+        print(f"target_relevance: {self.target_relevance}")
+        print(f"target_keyword: {self.target_keyword}")
+        print(f"target_confidence: {self.target_confidence}")
+        print(f"target_conciseness: {self.target_conciseness}")
+
+        print("interives: ")
         print("interviews: ")
         for i in self.interviews:
             interview_id = i["interview_id"]
@@ -360,9 +404,10 @@ class UserStatistics:
         result["total_interviews"] = self.total_interviews
         result["total_badges"] = self.total_badges
 
-        result["total_logins"] = self.total_logins
-        result["last_login"] = self.last_login
-        result["consecutive_days"] = self.consecutive_days
+        result["total_active_days"] = self.total_active_days
+        result["last_active_day"] = self.last_active_day
+        result["consecutive_active_days"] = self.consecutive_active_days
+        result["max_consecutive_active_days"] = self.max_consecutive_active_days
 
         result["max_clarity"] = self.max_clarity
         result["max_relevance"] = self.max_relevance
@@ -378,17 +423,33 @@ class UserStatistics:
         result["total_conciseness"] = self.total_conciseness
         result["total_overall"] = self.total_overall
 
+        result["target_clarity"] = self.target_clarity
+        result["target_relevance"] = self.target_relevance
+        result["target_keyword"] = self.target_keyword
+        result["target_confidence"] = self.target_confidence
+        result["target_conciseness"] = self.target_conciseness
+
         return result
 
 
+@with_db_session
+def get_user_statistics(user_id: str, db = None):
+    """
+    Create a UserStatistics object from the database using user_id..
 
-def get_user_statistics(user_id: str):
-    user_statistics = UserStatistics.from_db(user_id)
+    Args:
+        user_id: A string of user id.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        UserStatistics: A UserStatistics entity containing user information.
+    """
+    user_statistics = UserStatistics.from_db(user_id, db)
     return user_statistics
 
 
 @with_db_session
-def like_interview(token, interview_id, db = None):
+def like_interview(token: str, interview_id: str, db = None):
     """
     Invert the is_like field of the determined interview.
 
@@ -409,5 +470,76 @@ def like_interview(token, interview_id, db = None):
     result = {
         "interview_id": interview.interview_id,
         "is_like": interview.is_like
+    }
+    return result
+
+
+
+@with_db_session
+def set_user_target(token: str, target: dict, db = None):
+    """
+    Set target scores for users across various dimensions.
+
+    Args:
+        token: A string of JWT token.
+        target: A dict of target, include target_clarity, target_relevance, target_keyword, target_confidence and target_conciseness.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict of target from database.
+    """
+    from app.services.auth_service import get_user_id_and_email
+    id_email = get_user_id_and_email(token)
+    user_id = id_email.get("id")
+
+    update_data = {
+        "target_clarity": target.get("target_clarity", 5),
+        "target_relevance": target.get("target_relevance", 5),
+        "target_keyword": target.get("target_keyword", 5),
+        "target_confidence": target.get("target_confidence", 5),
+        "target_conciseness": target.get("target_conciseness", 5)
+    }
+
+    user = update_user(user_id, update_data, db)
+    if not user:
+        return None
+    
+    result = {
+        "user_id": user.user_id,
+        "target_clarity": user.target_clarity,
+        "target_relevance": user.target_relevance,
+        "target_keyword": user.target_keyword,
+        "target_confidence": user.target_confidence,
+        "target_conciseness": user.target_conciseness
+    }
+    
+    return result
+
+
+@with_db_session
+def get_user_target(token: str, db = None):
+    """
+    Get target scores for users across various dimensions.
+
+    Args:
+        token: A string of JWT token.
+        db: The active SQLAlchemy database session, automatically injected by the @with_db_session decorator.
+        
+    Returns:
+        dict: A dict of target from database.
+    """
+    from app.services.auth_service import get_user_id_and_email
+    id_email = get_user_id_and_email(token)
+    user_id = id_email.get("id")
+    user = get_user_basic(user_id, db)
+    if not user:
+        return None
+    result = {
+        "user_id": user.user_id,
+        "target_clarity": user.target_clarity,
+        "target_relevance": user.target_relevance,
+        "target_keyword": user.target_keyword,
+        "target_confidence": user.target_confidence,
+        "target_conciseness": user.target_conciseness
     }
     return result
