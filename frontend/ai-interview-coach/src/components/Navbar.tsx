@@ -3,11 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 
-interface NavbarProps {
-  showBackButton?: boolean;
-  title?: string;
-  showUserButton?: boolean;
-}
+import type { NavbarProps } from "./type";
 
 export default function Navbar({ 
   showBackButton = false, 
@@ -80,16 +76,12 @@ export default function Navbar({
           <button className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-600 transition-all duration-200">
             <span className="material-symbols-outlined" style={{ fontSize: 24 }}>notifications</span>
           </button>
-          <button
-            onClick={() => router.push('/login')}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
-            aria-label="User account"
-          >
+          <div className="flex items-center gap-2 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
               U
             </div>
             <span className="text-gray-700 font-medium hidden md:block">User</span>
-          </button>
+          </div>
         </div>
       )}
     </nav>

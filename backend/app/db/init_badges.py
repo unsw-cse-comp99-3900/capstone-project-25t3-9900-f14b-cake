@@ -1,15 +1,14 @@
 """
 init_badges.py
 --------------
-初始化徽章数据到数据库
-运行方式: python -m app.db.init_badges
+Initialize badge data to database
 """
 
 from app.db.db_config import SessionLocal
 from app.db.models import Badge
 
 def init_badges():
-    """初始化所有徽章数据"""
+    """Initialize all badge data"""
     db = SessionLocal()
     
     badges_data = [
@@ -17,10 +16,23 @@ def init_badges():
             "name": "First Steps",
             "description": "Start your interview preparation journey"
         },
-        
-        # 问题回答相关徽章
+        # XP progression
         {
-            "name": "Ice Breaker",
+            "name": "XP Novice",
+            "description": "Reach 100 XP"
+        },
+        {
+            "name": "XP Expert",
+            "description": "Reach 500 XP"
+        },
+        {
+            "name": "XP Master",
+            "description": "Reach 1000 XP"
+        },
+        
+        # Answer related badges
+        {
+            "name": "Ice breaker",
             "description": "Take the first step!"
         },
         {
@@ -36,7 +48,49 @@ def init_badges():
             "description": "True answering expert"
         },
 
-        # 时间段练习相关徽章
+        # Consecutive login streaks
+        {
+            "name": "Persistent",
+            "description": "3-day login streak"
+        },
+        {
+            "name": "Dedicated",
+            "description": "7-day login streak"
+        },
+        {
+            "name": "Relentless",
+            "description": "30-day login streak"
+        },
+
+        # Dimensional average score
+        {
+            "name": "Clarity Champion",
+            "description": "Clarity dimension avg ≥90%"
+        },
+        {
+            "name": "Relevance Expert",
+            "description": "Relevance dimension avg ≥90%"
+        },
+        {
+            "name": "Keyword Wizard",
+            "description": "Keyword dimension avg ≥90%"
+        },
+        {
+            "name": "Confidence King/Queen",
+            "description": "Confidence dimension avg ≥90%"
+        },
+        {
+            "name": "Conciseness Master",
+            "description": "Conciseness dimension avg ≥90%"
+        },
+
+        # Session related badges
+        {
+            "name": "First Session",
+            "description": "Complete first interview session"
+        },
+
+        # Time-of-day related badges
         {
             "name": "Night Owl",
             "description": "Dedicated night worker"
@@ -52,27 +106,27 @@ def init_badges():
     skipped_count = 0
     
     for badge_data in badges_data:
-        # 检查徽章是否已存在
+        # Check if badge already exists
         existing = db.query(Badge).filter(Badge.name == badge_data["name"]).first()
         
         if existing:
-            print(f"⏭️  Skipped: {badge_data['name']} (already exists)")
+            print(f"Skipped: {badge_data['name']} (already exists)")
             skipped_count += 1
         else:
             badge = Badge(**badge_data)
             db.add(badge)
-            print(f"✅ Created: {badge_data['name']}")
+            print(f"Created: {badge_data['name']}")
             created_count += 1
     
     db.commit()
     db.close()
     
-    print(f"\n{'='*60}")
+    print(f"\n{'='*40}")
     print(f"Badge initialization complete!")
     print(f"  Created: {created_count}")
     print(f"  Skipped: {skipped_count}")
     print(f"  Total: {created_count + skipped_count}")
-    print(f"{'='*60}")
+    print(f"{'='*40}")
 
 
 if __name__ == "__main__":

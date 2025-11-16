@@ -3,6 +3,7 @@ export interface InterviewRecord {
   questionType: string;
   timeElapsed: number;
   createdAt: string;
+  timestamp?: number; // Unix timestamp in seconds from backend
   totalScore: number;
   questions: string[];
   answers: Record<
@@ -19,4 +20,5 @@ export interface InterviewRecord {
     }
   >;
   mode: string;
+  is_like?: boolean | number; // Add is_like field from backend
 }

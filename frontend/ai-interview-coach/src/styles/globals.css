@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Custom styles for modern dashboard look */
 :root {
   --primary-blue: #3b82f6;
   --primary-pink: #ec4899;
@@ -24,7 +23,6 @@ body {
   min-height: 100vh;
 }
 
-/* Modern card styles */
 .modern-card {
   background: white;
   border-radius: 16px;
@@ -38,7 +36,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Gradient backgrounds */
 .gradient-blue {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
@@ -51,7 +48,6 @@ body {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
-/* Modern button styles */
 .btn-primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
@@ -84,7 +80,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Progress bar styles */
 .progress-bar {
   background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
   border-radius: 8px;
@@ -92,7 +87,6 @@ body {
   transition: width 0.3s ease-in-out;
 }
 
-/* Status indicators */
 .status-dot {
   width: 8px;
   height: 8px;

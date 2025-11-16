@@ -378,6 +378,7 @@ class UserStatistics:
         print(f"target_conciseness: {self.target_conciseness}")
 
         print("interives: ")
+        print("interviews: ")
         for i in self.interviews:
             interview_id = i["interview_id"]
             timestamp = i["timestamp"]
@@ -396,7 +397,7 @@ class UserStatistics:
         result["user_email"] = self.user_email
         result["xp"] = self.xp
 
-        result["interives"] = self.interviews
+        result["interviews"] = self.interviews
         result["badges"] = self.badges
 
         result["total_questions"] = self.total_questions

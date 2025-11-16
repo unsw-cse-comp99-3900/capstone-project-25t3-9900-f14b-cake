@@ -1,36 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { BadgeType, BADGE_CONFIGS, DAILY_QUOTES } from "@/types";
+import { getGamePageData } from "@/services";
 
-// 模拟用户徽章数据 - 后端会提供真实数据
-const mockUserBadges = [
+// ===== MOCK DATA - COMMENTED OUT FOR BACKEND TESTING =====
+// Mock user badge data - backend will provide real data
+/* const mockUserBadges = [
     { id: BadgeType.FIRST_XP, unlockedAt: new Date("2025-10-10") },
     { id: BadgeType.FIRST_ANSWER, unlockedAt: new Date("2025-10-12") },
     { id: BadgeType.LOGIN_STREAK_3, unlockedAt: new Date("2025-10-14") },
-    { id: BadgeType.XP_100, unlockedAt: null }, // 未解锁
-    { id: BadgeType.ANSWER_10, unlockedAt: null }, // 未解锁
-    { id: BadgeType.LOGIN_STREAK_7, unlockedAt: null }, // 未解锁
-];
+    { id: BadgeType.XP_100, unlockedAt: null }, // Locked
+    { id: BadgeType.ANSWER_10, unlockedAt: null }, // Locked
+    { id: BadgeType.LOGIN_STREAK_7, unlockedAt: null }, // Locked
+]; */
+// ===== END OF MOCK DATA =====
 
 export default function GamePage() {
     const router = useRouter();
     const [showDailyQuote, setShowDailyQuote] = useState(false);
     const [selectedBadge, setSelectedBadge] = useState<BadgeType | null>(null);
     const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+    const [gameData, setGameData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // 获取今日金句
+    // Fetch data from backend
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                // Get token from localStorage (set during login)
+                const token = localStorage.getItem("auth_token");
+
+                if (!token) {
+                    setError("Please login first");
+                    setLoading(false);
+                    return;
+                }
+                const data = await getGamePageData(token);
+                setGameData(data);
+                setError(null);
+            } catch (err: any) {
+                console.error("Failed to fetch game data:", err);
+                setError(err.message || "Failed to load game data");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Get today's quote
     const todayQuote = DAILY_QUOTES[new Date().getDate() % DAILY_QUOTES.length];
 
-    // 处理每日签到
+    // Handle daily check-in
     const handleDailyCheckIn = () => {
         setShowDailyQuote(true);
         setHasCheckedInToday(true);
     };
 
-    // 跳转到 Home 页面
+    // Navigate to Home page
     const handleStartPractice = () => {
         router.push("/home");
     };
@@ -40,12 +73,47 @@ export default function GamePage() {
         setSelectedBadge(badgeType);
     };
 
-    // 检查徽章是否已解锁
+    // 检查徽章是否已解锁 - Use real data from backend
     const isBadgeUnlocked = (badgeType: BadgeType) => {
+        if (!gameData?.badges) return false;
         return (
-            mockUserBadges.find((b) => b.id === badgeType)?.unlockedAt !== null
+            gameData.badges.find((b: any) => b.badgeType === badgeType)
+                ?.isUnlocked || false
         );
     };
+
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-50">
+                <Navbar />
+                <main className="flex-1 p-10 pt-24">
+                    <div className="text-center py-20">
+                        <p className="text-xl text-gray-600">
+                            Loading game data...
+                        </p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-50">
+                <Navbar />
+                <main className="flex-1 p-10 pt-24">
+                    <div className="text-center py-20">
+                        <p className="text-xl text-red-600">{error}</p>
+                        <p className="text-gray-600 mt-2">
+                            Please try logging in again
+                        </p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -83,68 +151,126 @@ export default function GamePage() {
                         Achievement Badges
                     </h2>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {Object.entries(BADGE_CONFIGS).map(
-                            ([badgeType, config]) => {
-                                const isUnlocked = isBadgeUnlocked(
-                                    badgeType as BadgeType
-                                );
+                    {/* Badge Statistics Display */}
+                    {gameData?.badges && (
+                        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-gray-700">
+                                <span className="font-semibold text-blue-600">
+                                    {
+                                        gameData.badges.filter(
+                                            (b: any) => b.isUnlocked
+                                        ).length
+                                    }
+                                </span>
+                                {" / "}
+                                <span className="font-semibold">
+                                    {gameData.badges.length}
+                                </span>{" "}
+                                badges unlocked
+                            </p>
+                        </div>
+                    )}
 
-                                return (
-                                    <button
-                                        key={badgeType}
-                                        onClick={() =>
-                                            handleBadgeClick(
-                                                badgeType as BadgeType
-                                            )
-                                        }
-                                        className={`p-6 rounded-lg border-2 transition-all hover:scale-105 ${
-                                            isUnlocked
-                                                ? "border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-md hover:shadow-lg"
-                                                : "border-gray-200 bg-gray-50 hover:border-gray-300"
-                                        }`}
-                                    >
-                                        <div className="text-center">
-                                            <div
-                                                className={`text-4xl mb-3 ${
-                                                    isUnlocked
-                                                        ? ""
-                                                        : "grayscale opacity-50"
-                                                }`}
-                                            >
-                                                {config.icon}
-                                            </div>
-                                            <h3
-                                                className={`font-semibold text-sm mb-1 ${
-                                                    isUnlocked
-                                                        ? "text-gray-800"
-                                                        : "text-gray-500"
-                                                }`}
-                                            >
-                                                {config.name}
-                                            </h3>
-                                            <p
-                                                className={`text-xs ${
-                                                    isUnlocked
-                                                        ? "text-gray-600"
-                                                        : "text-gray-400"
-                                                }`}
-                                            >
-                                                {config.description}
-                                            </p>
-                                            {isUnlocked && (
-                                                <div className="mt-2">
-                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                                                        ✓ Unlocked
-                                                    </span>
-                                                </div>
-                                            )}
+                    {/* Use backend badge data */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {gameData?.badges?.map((badge: any) => {
+                            const isUnlocked = badge.isUnlocked;
+
+                            // Assign icon based on badge ID
+                            const badgeIcons: { [key: number]: string } = {
+                                1: "🎯", // First Steps
+                                2: "❄️", // Ice Breaker
+                                3: "🌱", // Answer Rookie
+                                4: "⭐", // Answer Expert
+                                5: "👑", // Answer Master
+                                6: "🌙", // Night Owl
+                                7: "🌅", // Early Bird
+                            };
+
+                            const icon = badgeIcons[badge.badgeId] || "🏆";
+
+                            return (
+                                <button
+                                    key={badge.badgeId}
+                                    onClick={() => {
+                                        // Show badge details
+                                        const unlockDate = isUnlocked
+                                            ? new Date(
+                                                  badge.unlockedTimestamp * 1000
+                                              ).toLocaleDateString("en-US")
+                                            : "Locked";
+                                        alert(
+                                            `Badge: ${
+                                                badge.name ||
+                                                `Badge #${badge.badgeId}`
+                                            }\n\n${
+                                                badge.description ||
+                                                "No description"
+                                            }\n\n${
+                                                isUnlocked
+                                                    ? `✅ Unlocked on: ${unlockDate}`
+                                                    : "🔒 Not yet unlocked"
+                                            }`
+                                        );
+                                    }}
+                                    className={`p-6 rounded-lg border-2 transition-all hover:scale-105 ${
+                                        isUnlocked
+                                            ? "border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-md hover:shadow-lg"
+                                            : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                                    }`}
+                                >
+                                    <div className="text-center">
+                                        <div
+                                            className={`text-4xl mb-3 ${
+                                                isUnlocked
+                                                    ? ""
+                                                    : "grayscale opacity-50"
+                                            }`}
+                                        >
+                                            {icon}
                                         </div>
-                                    </button>
-                                );
-                            }
-                        )}
+                                        <h3
+                                            className={`font-semibold text-sm mb-1 ${
+                                                isUnlocked
+                                                    ? "text-gray-800"
+                                                    : "text-gray-500"
+                                            }`}
+                                        >
+                                            {badge.name ||
+                                                `Badge #${badge.badgeId}`}
+                                        </h3>
+                                        <p
+                                            className={`text-xs line-clamp-2 ${
+                                                isUnlocked
+                                                    ? "text-gray-600"
+                                                    : "text-gray-400"
+                                            }`}
+                                        >
+                                            {badge.description ||
+                                                "No description"}
+                                        </p>
+                                        {isUnlocked && (
+                                            <div className="mt-2">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                                    ✓ Unlocked
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
+
+                    {/* If no badge data */}
+                    {!gameData?.badges ||
+                        (gameData.badges.length === 0 && (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500">
+                                    No badge data available
+                                </p>
+                            </div>
+                        ))}
                 </div>
             </main>
 
