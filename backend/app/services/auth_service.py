@@ -2,7 +2,7 @@
 import base64
 import json
 from app.external_access.verify_access import VerifyAccessClient
-from app.services.user_service import create_new_user, update_user_login
+from app.services.user_service import create_new_user
 from app.db.crud import get_user_basic
 from app.services.utils import with_db_session
 
@@ -58,9 +58,6 @@ def login(email: str, google_jwt: str = None, apple_jwt: str = None, db = None) 
         if not user:
             print("No user:", user_id)
             user = create_new_user(user_id, user_email, db)
-            user = update_user_login(user_id, db)
-        else:
-            user = update_user_login(user_id, db)
     else:
         user_id = None
 

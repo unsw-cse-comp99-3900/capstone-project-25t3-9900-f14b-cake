@@ -51,10 +51,11 @@ class User(Base):
     total_questions = Column(Integer, default=0)
     total_interviews = Column(Integer, default=0)
     total_badges = Column(Integer, default=0)
-    total_logins = Column(Integer, default=0)
-
-    last_login = Column(Date, default=date.today)
-    consecutive_days = Column(Integer, default=0)
+    
+    total_active_days = Column(Integer, default=0)
+    last_active_day = Column(Date, default=date.today)
+    consecutive_active_days = Column(Integer, default=0)
+    max_consecutive_active_days = Column(Integer, default=0)
 
     max_clarity = Column(Integer, default=0)
     max_relevance = Column(Integer, default=0)
@@ -69,6 +70,12 @@ class User(Base):
     total_confidence = Column(Integer, default=0)
     total_conciseness = Column(Integer, default=0)
     total_overall = Column(Float, default=0.0)
+
+    target_clarity = Column(Integer, default=0)
+    target_relevance = Column(Integer, default=0)
+    target_keyword = Column(Integer, default=0)
+    target_confidence = Column(Integer, default=0)
+    target_conciseness = Column(Integer, default=0)
 
 
 
