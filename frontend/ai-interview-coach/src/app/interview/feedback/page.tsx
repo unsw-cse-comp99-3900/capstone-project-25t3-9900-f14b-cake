@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { bankService } from "@/features/bank/services";
 import type { FeedbackData } from "./type";
 
-export default function FeedbackPage() {
+function FeedbackContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [recordId, setRecordId] = useState<string | null>(null);
@@ -352,6 +351,25 @@ export default function FeedbackPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function FeedbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col bg-white">
+        <Navbar />
+        <main className="flex-1 p-5 pt-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-20">
+              <p className="text-gray-600">Loading feedback...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    }>
+      <FeedbackContent />
+    </Suspense>
   );
 }
 
