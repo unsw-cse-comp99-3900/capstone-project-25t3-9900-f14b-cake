@@ -1,7 +1,7 @@
 export type QuestionType = "behavioural" | "technical" | "psychometric";
 
 export interface StartInterviewPayload {
-  job_description?: string;
+  job_description: string;
   question_type: QuestionType;
 }
 
