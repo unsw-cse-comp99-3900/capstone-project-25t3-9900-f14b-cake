@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { PlayIcon, StopIcon, MicrophoneIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,7 @@ import { interviewService } from "@/features/interview/services";
 import { speechToTextService } from "@/utils/speechToText";
 import "./type";
 
-export default function AnsweringPage() {
+function AnsweringContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [timeElapsed, setTimeElapsed] = useState(0);
@@ -679,5 +679,24 @@ export default function AnsweringPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AnsweringPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col bg-white">
+        <Navbar />
+        <main className="flex-1 p-5 pt-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-20">
+              <p className="text-gray-600">Loading interview...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    }>
+      <AnsweringContent />
+    </Suspense>
   );
 }

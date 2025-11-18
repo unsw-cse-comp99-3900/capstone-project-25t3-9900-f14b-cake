@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import { bankService } from '@/features/bank/services';
 
 const ITEMS_PER_PAGE = 10;
 
-export default function FavoritesPage() {
+function FavoritesContent() {
   const router = useRouter();
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -289,6 +289,25 @@ export default function FavoritesPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function FavoritesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col bg-white">
+        <Navbar />
+        <main className="flex-1 p-5 pt-24">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center py-20">
+              <p className="text-gray-600">Loading...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    }>
+      <FavoritesContent />
+    </Suspense>
   );
 }
 
