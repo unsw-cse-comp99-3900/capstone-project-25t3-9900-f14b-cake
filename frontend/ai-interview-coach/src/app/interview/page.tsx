@@ -52,7 +52,7 @@ export default function InterviewPage() {
                   htmlFor="jobDescription"
                   className="block text-sm font-semibold text-gray-700 mb-3"
                 >
-                  Job Description (Optional)
+                  Job Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="jobDescription"
@@ -60,15 +60,16 @@ export default function InterviewPage() {
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the job description here to get more targeted questions..."
                   className="w-full h-48 resize-y border border-gray-200 rounded-xl p-4 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all"
+                  required
                 />
               </div>
 
               <div className="pt-4">
                 <button
                   onClick={() => setShowModal(true)}
-                  disabled={!questionType}
+                  disabled={!questionType || !jobDescription.trim()}
                   className={`w-full py-4 rounded-xl text-lg font-semibold transition-all duration-200 ${
-                    questionType
+                    questionType && jobDescription.trim()
                       ? "btn-primary"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
@@ -102,7 +103,7 @@ export default function InterviewPage() {
               <button 
                 onClick={() => {
                   const params = new URLSearchParams();
-                  if (jobDescription.trim()) params.set("job", jobDescription.trim());
+                  params.set("job", jobDescription.trim());
                   params.set("type", questionType);
                   params.set("mode", "audio");
                   router.push(`/interview/answering?${params.toString()}`);
@@ -119,7 +120,7 @@ export default function InterviewPage() {
               <button 
                 onClick={() => {
                   const params = new URLSearchParams();
-                  if (jobDescription.trim()) params.set("job", jobDescription.trim());
+                  params.set("job", jobDescription.trim());
                   params.set("type", questionType);
                   params.set("mode", "text");
                   router.push(`/interview/answering?${params.toString()}`);

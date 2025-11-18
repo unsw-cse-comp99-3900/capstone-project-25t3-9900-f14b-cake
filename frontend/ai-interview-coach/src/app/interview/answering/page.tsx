@@ -103,7 +103,7 @@ export default function AnsweringPage() {
       try {
         const res = await interviewService.start({
           question_type: questionType as any,
-          job_description: jobDescription || undefined,
+          job_description: jobDescription,
         });
         if (!isCancelled) {
           setQuestions(res.interview_questions || []);
