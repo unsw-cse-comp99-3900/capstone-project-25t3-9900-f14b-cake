@@ -2,7 +2,6 @@ services:
   - type: web
     name: interview-api
     runtime: docker
-    region: singapore
     plan: free
     rootDir: ./backend
     dockerfilePath: ./Dockerfile
