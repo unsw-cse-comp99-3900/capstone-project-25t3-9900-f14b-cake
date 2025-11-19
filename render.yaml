@@ -39,7 +39,7 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://interview-api-jo0i.onrender.com
+        value: value: https://interview-api-i4oo.onrender.com
 
 databases:
   - name: interview-db
