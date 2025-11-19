@@ -9,7 +9,11 @@ app = FastAPI(title="Interview API", version="1.0.0")
 # --- CORS ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://capstone-project-25t3-9900-f14b-cake.onrender.com",  # Production frontend
+        "http://localhost:3000",                                      # Local development
+        "http://172.19.0.2:3000",                                     # Docker local
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
