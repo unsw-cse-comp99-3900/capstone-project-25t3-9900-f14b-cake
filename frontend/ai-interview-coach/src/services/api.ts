@@ -3,7 +3,7 @@
  * Centralized API endpoint management
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * API endpoints for the application
@@ -29,29 +29,29 @@ export const API_ENDPOINTS = {
  * Common fetch options with authentication
  */
 export const getAuthHeaders = (token: string) => ({
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`,
 });
 
 /**
  * Generic API error handler
  */
 export class APIError extends Error {
-    constructor(message: string, public status?: number, public details?: any) {
-        super(message);
-        this.name = "APIError";
-    }
+  constructor(message: string, public status?: number, public details?: any) {
+    super(message);
+    this.name = "APIError";
+  }
 }
 
 /**
  * Generic fetch wrapper with error handling
  */
 export async function apiFetch<T>(
-    url: string,
-    options?: RequestInit
+  url: string,
+  options?: RequestInit
 ): Promise<T> {
-    try {
-        const response = await fetch(url, options);
+  try {
+    const response = await fetch(url, options);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -74,17 +74,17 @@ export async function apiFetch<T>(
             throw new APIError(errorMessage, response.status, errorData);
         }
 
-        return response.json();
-    } catch (error) {
-        if (error instanceof APIError) {
-            throw error;
-        }
-        throw new APIError(
-            error instanceof Error ? error.message : "Unknown error occurred",
-            undefined,
-            error
-        );
+    return response.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
     }
+    throw new APIError(
+      error instanceof Error ? error.message : "Unknown error occurred",
+      undefined,
+      error
+    );
+  }
 }
 
 /**
