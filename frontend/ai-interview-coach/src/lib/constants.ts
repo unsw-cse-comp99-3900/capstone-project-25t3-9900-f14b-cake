@@ -1,4 +1,4 @@
 // Application constants
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://interview-api-i4oo.onrender.com";
+// Read from environment variable (set in render.yaml or .env.local)
+// Falls back to default if not set
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;

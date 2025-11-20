@@ -3,8 +3,7 @@
  * Centralized API endpoint management
  */
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://interview-api-i4oo.onrender.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * API endpoints for the application
