@@ -378,7 +378,7 @@ export default function ProgressPage() {
                                         tickLine={false}
                                         axisLine={{ stroke: "#e5e7eb" }}
                                         label={{
-                                            value: "Interview Session Number",
+                                            value: "Interview Sessions",
                                             position: "insideBottom",
                                             offset: -10,
                                             style: {
@@ -387,7 +387,9 @@ export default function ProgressPage() {
                                                 fontWeight: 600,
                                             },
                                         }}
-                                        tickFormatter={(value) => `#${value}`}
+                                        tickFormatter={(value) =>
+                                            `Session ${value}`
+                                        }
                                     />
                                     <YAxis
                                         domain={[0, 5]}
@@ -399,16 +401,19 @@ export default function ProgressPage() {
                                         tickLine={false}
                                         axisLine={{ stroke: "#e5e7eb" }}
                                         label={{
-                                            value: "Readiness Score (1-5)",
+                                            value: "Readiness Score",
                                             angle: -90,
-                                            position: "insideLeft",
+                                            position: "center",
+                                            offset: 15,
                                             style: {
-                                                fontSize: "13px",
+                                                fontSize: "14px",
                                                 fill: "#374151",
                                                 fontWeight: 600,
+                                                textAnchor: "middle",
                                             },
                                         }}
                                         ticks={[0, 1, 2, 3, 4, 5]}
+                                        width={85}
                                     />
                                     <Tooltip
                                         contentStyle={{
@@ -461,7 +466,15 @@ export default function ProgressPage() {
                         {/* Statistics Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="bg-blue-50 rounded-lg p-4">
-                                <div className="text-sm text-blue-600 font-medium mb-1">
+                                <div className="text-sm text-blue-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/star.svg"
+                                        alt="Current Score"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(200deg) brightness(0.9)",
+                                        }}
+                                    />
                                     Current Score
                                 </div>
                                 <div className="text-3xl font-bold text-blue-700">
@@ -473,7 +486,15 @@ export default function ProgressPage() {
                                 </div>
                             </div>
                             <div className="bg-green-50 rounded-lg p-4">
-                                <div className="text-sm text-green-600 font-medium mb-1">
+                                <div className="text-sm text-green-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/show_chart.svg"
+                                        alt="Average Score"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(50%) sepia(100%) saturate(1000%) hue-rotate(80deg) brightness(0.8)",
+                                        }}
+                                    />
                                     Average Score
                                 </div>
                                 <div className="text-3xl font-bold text-green-700">
@@ -481,7 +502,15 @@ export default function ProgressPage() {
                                 </div>
                             </div>
                             <div className="bg-purple-50 rounded-lg p-4">
-                                <div className="text-sm text-purple-600 font-medium mb-1">
+                                <div className="text-sm text-purple-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/military_tech.svg"
+                                        alt="Best Score"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(260deg) brightness(0.9)",
+                                        }}
+                                    />
                                     Best Score
                                 </div>
                                 <div className="text-3xl font-bold text-purple-700">
@@ -489,7 +518,15 @@ export default function ProgressPage() {
                                 </div>
                             </div>
                             <div className="bg-orange-50 rounded-lg p-4">
-                                <div className="text-sm text-orange-600 font-medium mb-1">
+                                <div className="text-sm text-orange-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/trending_up.svg"
+                                        alt="Improvement"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(50%) sepia(100%) saturate(2000%) hue-rotate(10deg) brightness(0.9)",
+                                        }}
+                                    />
                                     Improvement
                                 </div>
                                 <div className="text-3xl font-bold text-orange-700">
@@ -500,8 +537,16 @@ export default function ProgressPage() {
 
                         {/* Detailed Analysis */}
                         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                            <h4 className="font-semibold text-blue-900 mb-2">
-                                📊 Performance Analysis
+                            <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                <img
+                                    src="/icons/assessment.svg"
+                                    alt="Analysis"
+                                    className="w-5 h-5"
+                                    style={{
+                                        filter: "invert(20%) sepia(100%) saturate(3000%) hue-rotate(200deg)",
+                                    }}
+                                />
+                                Performance Analysis
                             </h4>
                             <p className="text-sm text-blue-800">
                                 Your readiness score has improved from{" "}
