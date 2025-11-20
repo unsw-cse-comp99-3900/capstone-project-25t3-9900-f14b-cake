@@ -249,26 +249,8 @@ export default function ProgressPage() {
     const averageScore =
         mockReadinessData.reduce((sum: number, d: any) => sum + d.score, 0) /
         mockReadinessData.length;
-
-    // Calculate improvement rate
-    // If minScore is 0 or very close to 0, use first non-zero score or calculate absolute improvement
-    let improvementRate: string;
-    if (minScore === 0 || minScore < 0.1) {
-        // If starting from 0, show absolute improvement from first to last
-        const firstScore = mockReadinessData[0]?.score || 0;
-        const lastScore =
-            mockReadinessData[mockReadinessData.length - 1]?.score || 0;
-        if (firstScore === 0) {
-            improvementRate = lastScore > 0 ? "100.0" : "0.0";
-        } else {
-            improvementRate = (
-                ((lastScore - firstScore) / firstScore) *
-                100
-            ).toFixed(1);
-        }
-    } else {
-        improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(1);
-    }
+    const lastScore =
+        mockReadinessData[mockReadinessData.length - 1]?.score || 0;
 
     // Get login/check-in statistics from backend data
     // These are calculated based on interview timestamps
@@ -464,7 +446,7 @@ export default function ProgressPage() {
                         </div>
 
                         {/* Statistics Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-blue-50 rounded-lg p-4">
                                 <div className="text-sm text-blue-600 font-medium mb-1 flex items-center gap-1.5">
                                     <img
@@ -517,22 +499,6 @@ export default function ProgressPage() {
                                     {maxScore}
                                 </div>
                             </div>
-                            <div className="bg-orange-50 rounded-lg p-4">
-                                <div className="text-sm text-orange-600 font-medium mb-1 flex items-center gap-1.5">
-                                    <img
-                                        src="/icons/trending_up.svg"
-                                        alt="Improvement"
-                                        className="w-4 h-4"
-                                        style={{
-                                            filter: "invert(50%) sepia(100%) saturate(2000%) hue-rotate(10deg) brightness(0.9)",
-                                        }}
-                                    />
-                                    Improvement
-                                </div>
-                                <div className="text-3xl font-bold text-orange-700">
-                                    +{improvementRate}%
-                                </div>
-                            </div>
                         </div>
 
                         {/* Detailed Analysis */}
@@ -549,14 +515,15 @@ export default function ProgressPage() {
                                 Performance Analysis
                             </h4>
                             <p className="text-sm text-blue-800">
-                                Your readiness score has improved from{" "}
-                                <strong>{minScore}</strong> to{" "}
-                                <strong>{maxScore}</strong> over{" "}
-                                {mockReadinessData.length} interview sessions.
-                                This represents a{" "}
-                                <strong>{improvementRate}%</strong> improvement,
-                                showing consistent progress in your interview
-                                skills. Keep up the great work!
+                                Over the selected {mockReadinessData.length}{" "}
+                                interview sessions, your average readiness score
+                                is <strong>{averageScore.toFixed(2)}</strong>,
+                                with a best score of{" "}
+                                <strong>{maxScore.toFixed(2)}</strong>. Your
+                                current score is{" "}
+                                <strong>{lastScore.toFixed(2)}</strong>, showing
+                                consistent progress in your interview skills.
+                                Keep up the great work!
                             </p>
                         </div>
                     </div>
