@@ -13,6 +13,7 @@ app.add_middleware(
         "https://interview-frontend-kukr.onrender.com",               # Frontend
         "http://localhost:3000",                                      # Local development
         "http://172.19.0.2:3000",                                     # Docker local
+        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
