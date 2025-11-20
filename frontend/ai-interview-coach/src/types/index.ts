@@ -1,9 +1,9 @@
 /**
- * 类型定义统一导出文件
- * 集中导出所有类型定义，便于其他模块使用
+ * Centralized Type Definition Export File
+ * Exports all type definitions for use by other modules
  */
 
-// 游戏化相关类型
+// Gamification-related types
 export type {
     Badge,
     XPLevel,
@@ -15,7 +15,7 @@ export type {
 
 export { BadgeType } from "./gamification";
 
-// 进度追踪相关类型
+// Progress tracking related types
 export type {
     AnswerRecord,
     SessionRecord,
@@ -36,7 +36,7 @@ export {
     TimeRange,
 } from "./progress";
 
-// 通用类型和常量
+// Common types and constants
 export type {
     ApiResponse,
     PaginationParams,

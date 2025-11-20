@@ -74,8 +74,8 @@ function getAllBadgeIds(): number[] {
 }
 
 /**
- * 所有徽章的静态信息(基于后端数据库)
- * 这些信息与后端 badge 表对应
+ * Static information for all badges (based on backend database)
+ * This information corresponds to the backend badge table
  */
 const ALL_BADGES_INFO = [
     // XP Progression (4)
@@ -212,12 +212,12 @@ export async function getGamePageData(token: string): Promise<GamePageData> {
     // Fetch user statistics
     const stats = await getUserStatistics(token);
 
-    // 创建已解锁徽章的 Map (badge_id -> unlock_timestamp)
+    // Create a Map of unlocked badges (badge_id -> unlock_timestamp)
     const unlockedBadgesMap = new Map(
         stats.badges.map((badge) => [badge.badgeId, badge.unlockedTimestamp])
     );
 
-    // 合并所有徽章信息(静态信息 + 解锁状态)
+    // Merge all badge information (static info + unlock status)
     const badges: BadgeUnlockData[] = ALL_BADGES_INFO.map((badgeInfo) => {
         const unlockedTimestamp = unlockedBadgesMap.get(badgeInfo.badgeId) || 0;
         const isUnlocked = unlockedTimestamp > 0;
@@ -237,7 +237,7 @@ export async function getGamePageData(token: string): Promise<GamePageData> {
     // Calculate XP and level
     const xpData = calculateLevel(stats.xp);
 
-    // 统计已解锁的徽章数量
+    // Count the number of unlocked badges
     const unlockedCount = badges.filter((b) => b.isUnlocked).length;
 
     return {

@@ -1,13 +1,13 @@
 /**
  * Daily Quotes System
- * 每日金句系统 - 完整实现版本
+ * Complete implementation version
  *
- * 特性:
- * - 265+条精选金句,全年循环使用
- * - 根据日期自动循环
- * - 自动智能分类
- * - 包含作者信息
- * - 涵盖名人名言和动漫经典语录
+ * Features:
+ * - 265+ curated quotes, cycling throughout the year
+ * - Automatic cycling based on date
+ * - Automatic intelligent categorization
+ * - Includes author information
+ * - Covers famous quotes and classic anime lines
  */
 
 import quotesData from "./quotes.json";
@@ -25,9 +25,9 @@ export interface DailyQuote {
 }
 
 /**
- * 根据金句内容智能分配类别
- * @param quote - 金句文本
- * @returns 分类标签
+ * Intelligently assign category based on quote content
+ * @param quote - Quote text
+ * @returns Category label
  */
 function categorizeQuote(quote: string): DailyQuote["category"] {
     const lowerQuote = quote.toLowerCase();
@@ -73,8 +73,8 @@ function categorizeQuote(quote: string): DailyQuote["category"] {
 }
 
 /**
- * 从 JSON 文件导入并处理所有金句
- * 自动添加 ID 和智能分类
+ * Import and process all quotes from JSON file
+ * Automatically add ID and intelligent categorization
  */
 export const DAILY_QUOTES: DailyQuote[] = quotesData.map((item, index) => ({
     id: index + 1,
@@ -84,30 +84,30 @@ export const DAILY_QUOTES: DailyQuote[] = quotesData.map((item, index) => ({
 }));
 
 /**
- * 获取今日金句
- * 根据当前日期从金句库中循环选择
+ * Get today's quote
+ * Cyclically select from quote library based on current date
  *
- * @returns 当天的金句对象
+ * @returns Today's quote object
  */
 export function getTodayQuote(): DailyQuote {
     const now = new Date();
-    // 计算今天是一年中的第几天 (1-365/366)
+    // Calculate which day of the year it is (1-365/366)
     const start = new Date(now.getFullYear(), 0, 0);
     const diff = now.getTime() - start.getTime();
     const oneDay = 1000 * 60 * 60 * 24;
     const dayOfYear = Math.floor(diff / oneDay);
 
-    // 使用模运算循环选择金句
+    // Use modulo operation to cyclically select quote
     const quoteIndex = dayOfYear % DAILY_QUOTES.length;
 
     return DAILY_QUOTES[quoteIndex];
 }
 
 /**
- * 获取指定日期的金句
+ * Get quote for a specific date
  *
- * @param date - 指定的日期
- * @returns 该日期对应的金句
+ * @param date - The specified date
+ * @returns The quote for that date
  */
 export function getQuoteForDate(date: Date): DailyQuote {
     const start = new Date(date.getFullYear(), 0, 0);
@@ -121,15 +121,15 @@ export function getQuoteForDate(date: Date): DailyQuote {
 }
 
 /**
- * 获取本周的所有金句
+ * Get all quotes for the week
  *
- * @returns 本周7天的金句数组
+ * @returns Array of quotes for the 7 days of the week
  */
 export function getWeekQuotes(): DailyQuote[] {
     const quotes: DailyQuote[] = [];
     const today = new Date();
 
-    // 获取本周的7天
+    // Get the 7 days of the week
     for (let i = 0; i < 7; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() - today.getDay() + i);
@@ -140,10 +140,10 @@ export function getWeekQuotes(): DailyQuote[] {
 }
 
 /**
- * 按类别获取金句
+ * Get quotes by category
  *
- * @param category - 金句类别
- * @returns 该类别的所有金句
+ * @param category - Quote category
+ * @returns All quotes in that category
  */
 export function getQuotesByCategory(
     category: DailyQuote["category"]
@@ -152,9 +152,9 @@ export function getQuotesByCategory(
 }
 
 /**
- * 获取随机金句
+ * Get a random quote
  *
- * @returns 随机选择的一条金句
+ * @returns A randomly selected quote
  */
 export function getRandomQuote(): DailyQuote {
     const randomIndex = Math.floor(Math.random() * DAILY_QUOTES.length);
@@ -162,9 +162,9 @@ export function getRandomQuote(): DailyQuote {
 }
 
 /**
- * 获取金句统计信息
+ * Get quote statistics
  *
- * @returns 各类别的金句数量统计
+ * @returns Statistics on the number of quotes by category
  */
 export function getQuoteStats() {
     const stats = {
