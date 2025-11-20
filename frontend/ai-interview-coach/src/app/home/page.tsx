@@ -93,10 +93,6 @@ export default function HomePage() {
           console.log(`Date ${dateKey} not in 7-day range. Available dates:`, Array.from(dataMap.keys()));
         }
       });
-    } else {
-      chartDataArray.forEach((entry) => {
-        entry.count = Math.floor(Math.random() * 3) + 1;
-      });
     }
 
     return chartDataArray;
