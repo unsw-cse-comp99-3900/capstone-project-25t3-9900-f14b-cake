@@ -672,7 +672,14 @@ export default function ProgressPage() {
                                             {loginStreakDays} days
                                         </div>
                                     </div>
-                                    <div className="text-3xl">🔥</div>
+                                    <img
+                                        src="/icons/local_fire_department.svg"
+                                        alt="Fire"
+                                        className="w-8 h-8"
+                                        style={{
+                                            filter: "invert(45%) sepia(100%) saturate(1000%) hue-rotate(100deg) brightness(0.9)",
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -684,7 +691,14 @@ export default function ProgressPage() {
                                             {maxLoginStreak} days
                                         </div>
                                     </div>
-                                    <div className="text-3xl">⚡</div>
+                                    <img
+                                        src="/icons/bolt.svg"
+                                        alt="Lightning"
+                                        className="w-8 h-8"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(200deg) brightness(0.9)",
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
@@ -696,17 +710,34 @@ export default function ProgressPage() {
                                             {totalLoginDays} days
                                         </div>
                                     </div>
-                                    <div className="text-3xl">📅</div>
+                                    <img
+                                        src="/icons/event.svg"
+                                        alt="Calendar"
+                                        className="w-8 h-8"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(260deg) brightness(0.9)",
+                                        }}
+                                    />
                                 </div>
                             </div>
 
                             {/* Motivational Message */}
                             <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100">
-                                <p className="text-sm text-gray-700 italic">
-                                    💪 You&apos;ve maintained a{" "}
-                                    <strong>{loginStreakDays}-day</strong> login
-                                    streak. Consistent practice is the key to
-                                    interview success!
+                                <p className="text-sm text-gray-700 italic flex items-center gap-2">
+                                    <img
+                                        src="/icons/psychology.svg"
+                                        alt="Motivation"
+                                        className="w-5 h-5 flex-shrink-0"
+                                        style={{
+                                            filter: "invert(35%) sepia(50%) saturate(1000%) hue-rotate(150deg) brightness(0.9)",
+                                        }}
+                                    />
+                                    <span>
+                                        You&apos;ve maintained a{" "}
+                                        <strong>{loginStreakDays}-day</strong>{" "}
+                                        login streak. Consistent practice is the
+                                        key to interview success!
+                                    </span>
                                 </p>
                             </div>
                         </div>
