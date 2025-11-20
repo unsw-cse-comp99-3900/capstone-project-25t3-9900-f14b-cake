@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
         statistics: `${API_BASE_URL}/user/statistics`,
         interviewSummary: `${API_BASE_URL}/user/interview_summary`,
         like: `${API_BASE_URL}/user/like`,
+        target: `${API_BASE_URL}/user/target`,
     },
     auth: {
         login: `${API_BASE_URL}/auth/login`,
@@ -54,12 +55,23 @@ export async function apiFetch<T>(
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new APIError(
-                errorData.detail ||
-                    `HTTP ${response.status}: ${response.statusText}`,
-                response.status,
-                errorData
-            );
+
+            // Handle different error formats
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            if (errorData.detail) {
+                if (Array.isArray(errorData.detail)) {
+                    // FastAPI validation errors are arrays
+                    errorMessage = errorData.detail
+                        .map((err: any) => `${err.loc?.join(".")}: ${err.msg}`)
+                        .join(", ");
+                } else if (typeof errorData.detail === "string") {
+                    errorMessage = errorData.detail;
+                } else {
+                    errorMessage = JSON.stringify(errorData.detail);
+                }
+            }
+
+            throw new APIError(errorMessage, response.status, errorData);
         }
 
         return response.json();
@@ -73,4 +85,51 @@ export async function apiFetch<T>(
             error
         );
     }
+}
+
+/**
+ * Target score management API
+ */
+
+/**
+ * Get user's target scores
+ */
+export async function getUserTarget(token: string): Promise<{
+    target_clarity: number;
+    target_relevance: number;
+    target_keyword: number;
+    target_confidence: number;
+    target_conciseness: number;
+}> {
+    return apiFetch(API_ENDPOINTS.user.target, {
+        method: "GET",
+        headers: getAuthHeaders(token),
+    });
+}
+
+/**
+ * Set user's target scores
+ */
+export async function setUserTarget(
+    token: string,
+    targets: {
+        target_clarity: number;
+        target_relevance: number;
+        target_keyword: number;
+        target_confidence: number;
+        target_conciseness: number;
+    }
+): Promise<{
+    user_id: string;
+    target_clarity: number;
+    target_relevance: number;
+    target_keyword: number;
+    target_confidence: number;
+    target_conciseness: number;
+}> {
+    return apiFetch(API_ENDPOINTS.user.target, {
+        method: "POST",
+        headers: getAuthHeaders(token),
+        body: JSON.stringify(targets),
+    });
 }

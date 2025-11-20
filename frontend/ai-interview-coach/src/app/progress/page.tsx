@@ -21,7 +21,7 @@ import {
     CartesianGrid,
     Legend,
 } from "recharts";
-import { getProgressPageData } from "@/services";
+import { getProgressPageData, getUserTarget, setUserTarget } from "@/services";
 
 // Time range options for filtering interview sessions
 enum TimeRange {
@@ -122,49 +122,35 @@ export default function ProgressPage() {
     const [error, setError] = useState<string | null>(null);
     const [targetScore, setTargetScore] = useState<number>(4.25); // Default target: 4.25 (85% of 5)
     const [showTargetInput, setShowTargetInput] = useState(false);
+    const [savingTarget, setSavingTarget] = useState(false);
 
-    // Load saved target score from localStorage on mount
-    useEffect(() => {
-        const savedTarget = localStorage.getItem("progress_target_score");
-        if (savedTarget) {
-            const parsedTarget = parseFloat(savedTarget);
-            if (
-                !isNaN(parsedTarget) &&
-                parsedTarget >= 0 &&
-                parsedTarget <= 5
-            ) {
-                setTargetScore(parsedTarget);
-            }
-        }
-    }, []);
-
-    // Save target score to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem("progress_target_score", targetScore.toString());
-    }, [targetScore]);
-
-    // Fetch data from backend
+    // Fetch data from backend (including target scores from statistics)
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
                 // Get token from localStorage (set during login)
-                const token = localStorage.getItem("auth_token"); // 注意:登录页面使用的是 'auth_token'
+                const token = localStorage.getItem("auth_token");
 
                 if (!token) {
                     setError("Please login first");
                     setLoading(false);
                     return;
                 }
-                const data = await getProgressPageData(token);
+
+                // Fetch progress data and target scores in parallel
+                const [progressData, targetData] = await Promise.all([
+                    getProgressPageData(token),
+                    getUserTarget(token).catch(() => null), // If target doesn't exist yet, use default
+                ]);
 
                 // 🔍 DEBUG: Log login/check-in data for verification
                 console.log("=== Login Activity Debug Info ===");
-                console.log("Current Streak:", data.loginStreakDays);
-                console.log("Max Streak:", data.maxLoginStreak);
-                console.log("Total Days:", data.totalLoginDays);
+                console.log("Current Streak:", progressData.loginStreakDays);
+                console.log("Max Streak:", progressData.maxLoginStreak);
+                console.log("Total Days:", progressData.totalLoginDays);
                 console.log("Login Calendar Data (ALL 30 days):");
-                data.loginData.forEach((day: any) => {
+                progressData.loginData.forEach((day: any) => {
                     if (day.hasLogin) {
                         console.log(`  ✓ ${day.date} - HAS INTERVIEW`);
                     }
@@ -175,7 +161,20 @@ export default function ProgressPage() {
                 );
                 console.log("=================================");
 
-                setProgressData(data);
+                // If target data exists, calculate average and set it
+                if (targetData) {
+                    const avgTarget =
+                        (targetData.target_clarity +
+                            targetData.target_relevance +
+                            targetData.target_keyword +
+                            targetData.target_confidence +
+                            targetData.target_conciseness) /
+                        5;
+                    setTargetScore(Number(avgTarget.toFixed(2)));
+                    console.log("Loaded target from backend:", avgTarget);
+                }
+
+                setProgressData(progressData);
                 setError(null);
             } catch (err: any) {
                 console.error("Failed to fetch progress data:", err);
@@ -220,6 +219,49 @@ export default function ProgressPage() {
             </div>
         );
     }
+
+    // Save target score to backend
+    const handleSaveTarget = async () => {
+        try {
+            setSavingTarget(true);
+            const token = localStorage.getItem("auth_token");
+            if (!token) {
+                alert("Please login first");
+                return;
+            }
+
+            // Prepare target data - backend requires integers
+            const targetValue = Math.round(targetScore);
+            const targetData = {
+                target_clarity: targetValue,
+                target_relevance: targetValue,
+                target_keyword: targetValue,
+                target_confidence: targetValue,
+                target_conciseness: targetValue,
+            };
+
+            console.log("Sending target data:", targetData);
+            console.log("Target data JSON:", JSON.stringify(targetData));
+
+            // Set all dimensions to the same target value
+            const result = await setUserTarget(token, targetData);
+
+            console.log("Target saved successfully:", result);
+            setShowTargetInput(false);
+        } catch (err: any) {
+            console.error("Failed to save target:", err);
+            console.error("Error details:", {
+                message: err.message,
+                status: err.status,
+                details: err.details,
+            });
+            const errorMsg =
+                err.details?.detail || err.message || "Unknown error";
+            alert(`Failed to save target score: ${errorMsg}`);
+        } finally {
+            setSavingTarget(false);
+        }
+    };
 
     // Use real data from backend
     const mockReadinessDataAll = progressData?.readinessScores || [];
@@ -762,35 +804,73 @@ export default function ProgressPage() {
                                             <label className="text-sm font-medium text-gray-700">
                                                 Target:
                                             </label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="5"
-                                                step="0.1"
-                                                value={targetScore}
-                                                onChange={(e) => {
-                                                    const value = parseFloat(
-                                                        e.target.value
+                                            {/* Decrease Button */}
+                                            <button
+                                                onClick={() => {
+                                                    const newValue = Math.max(
+                                                        0,
+                                                        Math.round(
+                                                            targetScore
+                                                        ) - 1
                                                     );
-                                                    if (
-                                                        value >= 0 &&
-                                                        value <= 5
-                                                    ) {
-                                                        setTargetScore(value);
-                                                    }
+                                                    setTargetScore(newValue);
                                                 }}
-                                                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                            <span className="text-sm text-gray-600">
-                                                /5
-                                            </span>
+                                                disabled={
+                                                    Math.round(targetScore) <= 0
+                                                }
+                                                className="w-7 h-7 flex items-center justify-center bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                <span className="text-gray-600 font-bold">
+                                                    −
+                                                </span>
+                                            </button>
+                                            {/* Display Score */}
+                                            <div className="min-w-[50px] text-center">
+                                                <span className="text-lg font-semibold text-gray-800">
+                                                    {Math.round(targetScore)}
+                                                </span>
+                                                <span className="text-sm text-gray-600 ml-1">
+                                                    /5
+                                                </span>
+                                            </div>
+                                            {/* Increase Button */}
+                                            <button
+                                                onClick={() => {
+                                                    const newValue = Math.min(
+                                                        5,
+                                                        Math.round(
+                                                            targetScore
+                                                        ) + 1
+                                                    );
+                                                    setTargetScore(newValue);
+                                                }}
+                                                disabled={
+                                                    Math.round(targetScore) >= 5
+                                                }
+                                                className="w-7 h-7 flex items-center justify-center bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                <span className="text-gray-600 font-bold">
+                                                    +
+                                                </span>
+                                            </button>
+                                            {/* Save Button */}
+                                            <button
+                                                onClick={handleSaveTarget}
+                                                disabled={savingTarget}
+                                                className="ml-2 px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                {savingTarget
+                                                    ? "Saving..."
+                                                    : "Save"}
+                                            </button>
+                                            {/* Cancel Button */}
                                             <button
                                                 onClick={() =>
                                                     setShowTargetInput(false)
                                                 }
-                                                className="ml-2 text-green-600 hover:text-green-700 font-medium text-sm"
+                                                className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-sm font-medium transition-colors"
                                             >
-                                                ✓
+                                                Cancel
                                             </button>
                                         </div>
                                     ) : (
@@ -809,7 +889,8 @@ export default function ProgressPage() {
                                                 }}
                                             />
                                             <span>
-                                                Set Target ({targetScore}/5)
+                                                Set Target (
+                                                {Math.round(targetScore)}/5)
                                             </span>
                                         </button>
                                     )}
