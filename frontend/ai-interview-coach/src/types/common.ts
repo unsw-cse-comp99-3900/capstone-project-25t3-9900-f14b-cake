@@ -1,51 +1,51 @@
 /**
- * 通用数据类型和常量定义
- * 包含共享的接口、工具类型和配置常量
+ * Common Data Types and Constant Definitions
+ * Contains shared interfaces, utility types, and configuration constants
  */
 
 import { BadgeType, XPLevel, XPReward } from "./gamification";
 import { InterviewCategory, DifficultyLevel, ScoreDimension } from "./progress";
 
 // ===============================
-// 通用工具类型
+// Common Utility Types
 // ===============================
 
 /**
- * API响应包装器
+ * API Response Wrapper
  */
 export interface ApiResponse<T> {
-    success: boolean; // 请求是否成功
-    data?: T; // 响应数据（可选）
-    error?: string; // 错误信息（可选）
-    message?: string; // 提示信息（可选）
-    timestamp: string; // 响应时间戳
+    success: boolean; // Whether the request was successful
+    data?: T; // Response data (optional)
+    error?: string; // Error message (optional)
+    message?: string; // Notification message (optional)
+    timestamp: string; // Response timestamp
 }
 
 /**
- * 分页参数
+ * Pagination Parameters
  */
 export interface PaginationParams {
-    page: number; // 页码（从1开始）
-    limit: number; // 每页数量
-    sortBy?: string; // 排序字段（可选）
-    sortOrder?: "ASC" | "DESC"; // 排序顺序（可选）
+    page: number; // Page number (starting from 1)
+    limit: number; // Number of items per page
+    sortBy?: string; // Sort field (optional)
+    sortOrder?: "ASC" | "DESC"; // Sort order (optional)
 }
 
 /**
- * 分页响应
+ * Paginated Response
  */
 export interface PaginatedResponse<T> {
-    items: T[]; // 数据项列表
-    total: number; // 总数量
-    page: number; // 当前页码
-    limit: number; // 每页数量
-    totalPages: number; // 总页数
-    hasNext: boolean; // 是否有下一页
-    hasPrev: boolean; // 是否有上一页
+    items: T[]; // List of data items
+    total: number; // Total count
+    page: number; // Current page number
+    limit: number; // Items per page
+    totalPages: number; // Total number of pages
+    hasNext: boolean; // Whether there is a next page
+    hasPrev: boolean; // Whether there is a previous page
 }
 
 /**
- * 本地存储键枚举
+ * Local Storage Keys Enumeration
  */
 export enum LocalStorageKeys {
     AUTH_TOKEN = "auth_token",
@@ -57,37 +57,37 @@ export enum LocalStorageKeys {
 }
 
 /**
- * 应用设置接口
+ * Application Settings Interface
  */
 export interface AppSettings {
-    // 主题设置
-    theme: "light" | "dark" | "auto"; // 主题模式
+    // Theme settings
+    theme: "light" | "dark" | "auto"; // Theme mode
 
-    // 通知设置
-    enableNotifications: boolean; // 是否启用通知
-    enableXPNotifications: boolean; // 是否启用XP获得通知
-    enableBadgeNotifications: boolean; // 是否启用徽章解锁通知
-    enableDailyReminders: boolean; // 是否启用每日提醒
+    // Notification settings
+    enableNotifications: boolean; // Whether to enable notifications
+    enableXPNotifications: boolean; // Whether to enable XP gain notifications
+    enableBadgeNotifications: boolean; // Whether to enable badge unlock notifications
+    enableDailyReminders: boolean; // Whether to enable daily reminders
 
-    // 显示设置
-    showAnimations: boolean; // 是否显示动画
-    compactMode: boolean; // 是否使用紧凑模式
-    showProgressDetails: boolean; // 是否显示详细进度
+    // Display settings
+    showAnimations: boolean; // Whether to show animations
+    compactMode: boolean; // Whether to use compact mode
+    showProgressDetails: boolean; // Whether to show detailed progress
 
-    // 隐私设置
-    shareAnalytics: boolean; // 是否共享分析数据
-    autoSaveProgress: boolean; // 是否自动保存进度
+    // Privacy settings
+    shareAnalytics: boolean; // Whether to share analytics data
+    autoSaveProgress: boolean; // Whether to auto-save progress
 
-    // 时间戳
-    lastUpdated: string; // 最后更新时间
+    // Timestamp
+    lastUpdated: string; // Last updated time
 }
 
 // ===============================
-// 配置常量
+// Configuration Constants
 // ===============================
 
 /**
- * XP等级配置
+ * XP Level Configuration
  */
 export const XP_LEVELS: XPLevel[] = [
     { level: 1, minXP: 0, maxXP: 99, title: "Novice", color: "text-gray-500" },
@@ -157,7 +157,7 @@ export const XP_LEVELS: XPLevel[] = [
 ];
 
 /**
- * XP奖励配置
+ * XP Reward Configuration
  */
 export const XP_REWARDS: Record<string, XPReward> = {
     // Basic Answer Rewards
@@ -211,7 +211,7 @@ export const XP_REWARDS: Record<string, XPReward> = {
 };
 
 /**
- * 徽章配置映射
+ * Badge Configuration Mapping
  */
 export const BADGE_CONFIGS: Record<
     BadgeType,
@@ -354,58 +354,58 @@ export const BADGE_CONFIGS: Record<
 };
 
 /**
- * 类别阈值配置
+ * Category Threshold Configuration
  */
 export const CATEGORY_THRESHOLDS = {
-    WEAK_AREA_THRESHOLD: 60, // 弱项阈值（低于此分数视为弱项）
-    MASTERY_THRESHOLD: 80, // 掌握阈值（高于此分数视为掌握）
-    EXCELLENT_THRESHOLD: 90, // 优秀阈值（高于此分数视为优秀）
+    WEAK_AREA_THRESHOLD: 60, // Weak area threshold (below this score is considered weak)
+    MASTERY_THRESHOLD: 80, // Mastery threshold (above this score is considered mastered)
+    EXCELLENT_THRESHOLD: 90, // Excellent threshold (above this score is considered excellent)
 };
 
 /**
- * 评分维度配置（对应 interview_score 数组的 5 个维度）
+ * Score Dimension Configuration (corresponding to 5 dimensions in interview_score array)
  */
 export const SCORE_DIMENSION_CONFIGS: Record<
     ScoreDimension,
     {
-        name: string;
-        description: string;
-        index: number; // 在 interview_score 数组中的索引
-        color: string; // 用于图表显示的颜色
-        icon: string; // 图标
+        displayName: string;
+        shortName: string;
+        index: number; // Index in interview_score array
+        color: string; // Color for chart display
+        icon: string; // Icon
     }
 > = {
     [ScoreDimension.CLARITY_STRUCTURE]: {
-        name: "Clarity & Structure",
-        description: "How clear and well-structured your answer is",
+        displayName: "Clarity & Structure",
+        shortName: "Clarity",
         index: 0,
         color: "#3b82f6", // blue
         icon: "📝",
     },
     [ScoreDimension.RELEVANCE]: {
-        name: "Relevance to Question/Job",
-        description: "How relevant your answer is to the question and job",
+        displayName: "Relevance to Question/Job",
+        shortName: "Relevance",
         index: 1,
         color: "#8b5cf6", // purple
         icon: "🎯",
     },
     [ScoreDimension.KEYWORD_ALIGNMENT]: {
-        name: "Keyword & Skill Alignment",
-        description: "How well you used relevant keywords and skills",
+        displayName: "Keyword & Skill Alignment",
+        shortName: "Keywords",
         index: 2,
         color: "#ec4899", // pink
         icon: "🔑",
     },
     [ScoreDimension.CONFIDENCE_DELIVERY]: {
-        name: "Confidence & Delivery",
-        description: "How confident and well-delivered your answer was",
+        displayName: "Confidence & Delivery",
+        shortName: "Confidence",
         index: 3,
         color: "#f59e0b", // amber
         icon: "💪",
     },
     [ScoreDimension.CONCISENESS_FOCUS]: {
-        name: "Conciseness & Focus",
-        description: "How concise and focused your answer was",
+        displayName: "Conciseness & Focus",
+        shortName: "Conciseness",
         index: 4,
         color: "#10b981", // green
         icon: "✨",
@@ -413,27 +413,27 @@ export const SCORE_DIMENSION_CONFIGS: Record<
 };
 
 /**
- * 维度分数阈值（基于百分比）
+ * Dimension Score Thresholds (based on percentage)
  */
 export const DIMENSION_THRESHOLDS = {
-    STRENGTH_THRESHOLD: 75, // 优势项阈值（>= 75% 为优势）
-    WEAKNESS_THRESHOLD: 75, // 弱项阈值（< 75% 为弱项）
+    STRENGTH_THRESHOLD: 75, // Strength threshold (>= 75% is considered strength)
+    WEAKNESS_THRESHOLD: 75, // Weakness threshold (< 75% is considered weakness)
 };
 
 /**
- * 默认配置值
+ * Default Configuration Values
  */
 export const DEFAULT_CONFIG = {
-    MAX_SESSIONS_PER_DAY: 10, // 每日最大会话数
-    DEFAULT_SESSION_DURATION: 30, // 默认会话时长（分钟）
-    AUTOSAVE_INTERVAL: 30000, // 自动保存间隔（毫秒）
-    NOTIFICATION_DURATION: 5000, // 通知显示时长（毫秒）
-    CHART_MAX_POINTS: 50, // 图表最大数据点数
-    DAILY_QUOTE_CACHE_DURATION: 86400000, // 每日语录缓存时长（毫秒）
+    MAX_SESSIONS_PER_DAY: 10, // Maximum sessions per day
+    DEFAULT_SESSION_DURATION: 30, // Default session duration (minutes)
+    AUTOSAVE_INTERVAL: 30000, // Auto-save interval (milliseconds)
+    NOTIFICATION_DURATION: 5000, // Notification display duration (milliseconds)
+    CHART_MAX_POINTS: 50, // Maximum chart data points
+    DAILY_QUOTE_CACHE_DURATION: 86400000, // Daily quote cache duration (milliseconds)
 };
 
 /**
- * 每日励志语录
+ * Daily Motivational Quotes
  */
 export const DAILY_QUOTES = [
     "Today's effort is tomorrow's strength!",

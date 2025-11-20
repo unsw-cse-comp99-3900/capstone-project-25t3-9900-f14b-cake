@@ -74,50 +74,131 @@ function getAllBadgeIds(): number[] {
 }
 
 /**
- * 所有徽章的静态信息(基于后端数据库)
- * 这些信息与后端 badge 表对应
+ * Static information for all badges (based on backend database)
+ * This information corresponds to the backend badge table
  */
 const ALL_BADGES_INFO = [
+    // XP Progression (4)
     {
         badgeId: 1,
         name: "First Steps",
         description: "Start your interview preparation journey",
-        icon: "🎯",
-    },
-    {
-        badgeId: 2,
-        name: "Ice Breaker",
-        description: "Take the first step!",
-        icon: "❄️",
-    },
-    {
-        badgeId: 3,
-        name: "Answer Rookie",
-        description: "Continuous practice",
-        icon: "🌱",
-    },
-    {
-        badgeId: 4,
-        name: "Answer Expert",
-        description: "Rich experience!",
         icon: "⭐",
     },
     {
-        badgeId: 5,
-        name: "Answer Master",
-        description: "True answering expert",
+        badgeId: 2,
+        name: "XP Novice",
+        description: "Accumulate 100 experience points",
+        icon: "🏆",
+    },
+    {
+        badgeId: 3,
+        name: "XP Expert",
+        description: "Accumulate 500 experience points",
+        icon: "🥇",
+    },
+    {
+        badgeId: 4,
+        name: "XP Master",
+        description: "Accumulate 1000 experience points",
         icon: "👑",
+    },
+
+    // Answering Progress (4)
+    {
+        badgeId: 5,
+        name: "Ice Breaker",
+        description: "Answer your first question",
+        icon: "❄️",
     },
     {
         badgeId: 6,
-        name: "Night Owl",
-        description: "Dedicated night worker",
-        icon: "🌙",
+        name: "Answer Rookie",
+        description: "Answer 10 questions",
+        icon: "🌱",
     },
     {
         badgeId: 7,
+        name: "Answer Expert",
+        description: "Answer 50 questions",
+        icon: "📚",
+    },
+    {
+        badgeId: 8,
+        name: "Answer Master",
+        description: "Answer 100 questions",
+        icon: "🎓",
+    },
+
+    // Login Streaks (3)
+    {
+        badgeId: 9,
+        name: "Persistent",
+        description: "Log in for 3 consecutive days",
+        icon: "🔥",
+    },
+    {
+        badgeId: 10,
+        name: "Dedicated",
+        description: "Log in for 7 consecutive days",
+        icon: "⚡",
+    },
+    {
+        badgeId: 11,
+        name: "Relentless",
+        description: "Log in for 30 consecutive days",
+        icon: "💪",
+    },
+
+    // Dimension Masters (5)
+    {
+        badgeId: 12,
+        name: "Clarity Champion",
+        description: "Achieve average clarity score ≥ 90",
+        icon: "💎",
+    },
+    {
+        badgeId: 13,
+        name: "Relevance Expert",
+        description: "Achieve average relevance score ≥ 90",
+        icon: "🎯",
+    },
+    {
+        badgeId: 14,
+        name: "Keyword Wizard",
+        description: "Achieve average keyword alignment ≥ 90",
+        icon: "🔮",
+    },
+    {
+        badgeId: 15,
+        name: "Confidence King/Queen",
+        description: "Achieve average confidence score ≥ 90",
+        icon: "👑",
+    },
+    {
+        badgeId: 16,
+        name: "Conciseness Master",
+        description: "Achieve average conciseness score ≥ 90",
+        icon: "✨",
+    },
+
+    // Special Achievements (2)
+    {
+        badgeId: 17,
+        name: "First Session",
+        description: "Complete your first interview session",
+        icon: "🎉",
+    },
+    {
+        badgeId: 18,
+        name: "Night Owl",
+        description: "Practice after 22:00",
+        icon: "🌙",
+    },
+    {
+        badgeId: 19,
         name: "Early Bird",
-        description: "Morning motivation",
+        description: "Practice before 07:00",
         icon: "🌅",
     },
 ];
@@ -131,12 +212,12 @@ export async function getGamePageData(token: string): Promise<GamePageData> {
     // Fetch user statistics
     const stats = await getUserStatistics(token);
 
-    // 创建已解锁徽章的 Map (badge_id -> unlock_timestamp)
+    // Create a Map of unlocked badges (badge_id -> unlock_timestamp)
     const unlockedBadgesMap = new Map(
         stats.badges.map((badge) => [badge.badgeId, badge.unlockedTimestamp])
     );
 
-    // 合并所有徽章信息(静态信息 + 解锁状态)
+    // Merge all badge information (static info + unlock status)
     const badges: BadgeUnlockData[] = ALL_BADGES_INFO.map((badgeInfo) => {
         const unlockedTimestamp = unlockedBadgesMap.get(badgeInfo.badgeId) || 0;
         const isUnlocked = unlockedTimestamp > 0;
@@ -156,7 +237,7 @@ export async function getGamePageData(token: string): Promise<GamePageData> {
     // Calculate XP and level
     const xpData = calculateLevel(stats.xp);
 
-    // 统计已解锁的徽章数量
+    // Count the number of unlocked badges
     const unlockedCount = badges.filter((b) => b.isUnlocked).length;
 
     return {

@@ -1,241 +1,241 @@
 /**
- * 进度追踪系统数据类型定义
- * 包含会话记录、分数统计、类别表现等功能的TypeScript接口
+ * Progress Tracking System Data Type Definitions
+ * Contains TypeScript interfaces for session records, score statistics, category performance, and other features
  */
 
 // ===============================
-// 基础枚举类型
+// Basic Enumeration Types
 // ===============================
 
 /**
- * 面试类别枚举
+ * Interview Category Enumeration
  */
 export enum InterviewCategory {
-    BEHAVIOURAL = "BEHAVIOURAL", // 行为面试 (英式拼写,与队友保持一致)
-    TECHNICAL = "TECHNICAL", // 技术面试
-    PSYCHOMETRIC = "PSYCHOMETRIC", // 心理测评
+    BEHAVIOURAL = "BEHAVIOURAL", // Behavioral interview (British spelling, consistent with teammates)
+    TECHNICAL = "TECHNICAL", // Technical interview
+    PSYCHOMETRIC = "PSYCHOMETRIC", // Psychometric assessment
 }
 
 /**
- * 评分维度枚举（从 interview_score 数组的 5 个维度）
+ * Score Dimension Enumeration (5 dimensions from interview_score array)
  */
 export enum ScoreDimension {
-    CLARITY_STRUCTURE = "CLARITY_STRUCTURE", // 清晰度和结构 (index 0)
-    RELEVANCE = "RELEVANCE", // 相关性 (index 1)
-    KEYWORD_ALIGNMENT = "KEYWORD_ALIGNMENT", // 关键词匹配 (index 2)
-    CONFIDENCE_DELIVERY = "CONFIDENCE_DELIVERY", // 自信表达 (index 3)
-    CONCISENESS_FOCUS = "CONCISENESS_FOCUS", // 简洁专注 (index 4)
+    CLARITY_STRUCTURE = "CLARITY_STRUCTURE", // Clarity and structure (index 0)
+    RELEVANCE = "RELEVANCE", // Relevance (index 1)
+    KEYWORD_ALIGNMENT = "KEYWORD_ALIGNMENT", // Keyword matching (index 2)
+    CONFIDENCE_DELIVERY = "CONFIDENCE_DELIVERY", // Confident delivery (index 3)
+    CONCISENESS_FOCUS = "CONCISENESS_FOCUS", // Conciseness and focus (index 4)
 }
 
 /**
- * 会话状态枚举
+ * Session Status Enumeration
  */
 export enum SessionStatus {
-    IN_PROGRESS = "IN_PROGRESS", // 进行中
-    COMPLETED = "COMPLETED", // 已完成
-    ABANDONED = "ABANDONED", // 已放弃
-    INTERRUPTED = "INTERRUPTED", // 中断
+    IN_PROGRESS = "IN_PROGRESS", // In progress
+    COMPLETED = "COMPLETED", // Completed
+    ABANDONED = "ABANDONED", // Abandoned
+    INTERRUPTED = "INTERRUPTED", // Interrupted
 }
 
 /**
- * 难度等级枚举
+ * Difficulty Level Enumeration
  */
 export enum DifficultyLevel {
-    BEGINNER = "BEGINNER", // 初级
-    INTERMEDIATE = "INTERMEDIATE", // 中级
-    ADVANCED = "ADVANCED", // 高级
-    EXPERT = "EXPERT", // 专家级
+    BEGINNER = "BEGINNER", // Beginner
+    INTERMEDIATE = "INTERMEDIATE", // Intermediate
+    ADVANCED = "ADVANCED", // Advanced
+    EXPERT = "EXPERT", // Expert
 }
 
 /**
- * 时间范围枚举（用于图表筛选）
+ * Time Range Enumeration (for chart filtering)
  */
 export enum TimeRange {
-    WEEKLY = "WEEKLY", // 周视图
-    MONTHLY = "MONTHLY", // 月视图
-    ALL_TIME = "ALL_TIME", // 全部时间
+    WEEKLY = "WEEKLY", // Week view
+    MONTHLY = "MONTHLY", // Month view
+    ALL_TIME = "ALL_TIME", // All time
 }
 
 // ===============================
-// 会话和答题相关接口
+// Session and Answer Related Interfaces
 // ===============================
 
 /**
- * 单个答题记录
+ * Single Answer Record
  */
 export interface AnswerRecord {
-    questionId: string; // 题目ID
-    question: string; // 题目内容
-    userAnswer: string; // 用户答案
-    aiFeedback?: string; // AI反馈（可选）
-    score: number; // 得分 (0-100)
-    category: InterviewCategory; // 题目类别
-    difficulty: DifficultyLevel; // 难度等级
-    timeSpent: number; // 答题用时（秒）
-    answeredAt: string; // 答题时间戳
+    questionId: string; // Question ID
+    question: string; // Question content
+    userAnswer: string; // User's answer
+    aiFeedback?: string; // AI feedback (optional)
+    score: number; // Score (0-100)
+    category: InterviewCategory; // Question category
+    difficulty: DifficultyLevel; // Difficulty level
+    timeSpent: number; // Time spent answering (seconds)
+    answeredAt: string; // Timestamp of answer
 }
 
 /**
- * 面试会话记录
+ * Interview Session Record
  */
 export interface SessionRecord {
-    // 基础信息
-    sessionId: string; // 会话ID
-    userId: string; // 用户ID
+    // Basic information
+    sessionId: string; // Session ID
+    userId: string; // User ID
 
-    // 会话配置
-    category: InterviewCategory; // 主要类别
-    difficulty: DifficultyLevel; // 难度等级
-    expectedDuration: number; // 预期时长（分钟）
+    // Session configuration
+    category: InterviewCategory; // Main category
+    difficulty: DifficultyLevel; // Difficulty level
+    expectedDuration: number; // Expected duration (minutes)
 
-    // 会话状态
-    status: SessionStatus; // 会话状态
-    startTime: string; // 开始时间
-    endTime?: string; // 结束时间（可选）
-    actualDuration?: number; // 实际时长（分钟）
+    // Session statusion status
+    status: SessionStatus; // Session status
+    startTime: string; // Start time
+    endTime?: string; // End time (optional)
+    actualDuration?: number; // Actual duration (minutes)
 
-    // 答题记录
-    answers: AnswerRecord[]; // 答题记录列表
-    totalQuestions: number; // 总题目数
-    answeredQuestions: number; // 已答题目数
+    // Answer recordser records
+    answers: AnswerRecord[]; // List of answer records
+    totalQuestions: number; // Total number of questions
+    answeredQuestions: number; // Number of answered questions
 
-    // 分数统计
-    overallScore: number; // 总体分数 (0-100)
-    categoryScores: CategoryScores; // 各类别分数
-    readinessScore: number; // 准备度分数 (0-100)
+    // Score statistics
+    overallScore: number; // Overall score (0-100)
+    categoryScores: CategoryScores; // Category scores
+    readinessScore: number; // Readiness score (0-100)
 
-    // 表现分析
-    strengths: string[]; // 优势领域
-    weaknesses: string[]; // 需要改进的领域
-    recommendations: string[]; // 推荐练习内容
+    // Performance analysisormance analysis
+    strengths: string[]; // Strength areas
+    weaknesses: string[]; // Areas for improvement
+    recommendations: string[]; // Recommended practice content
 
-    // 元数据
-    createdAt: string; // 创建时间
-    updatedAt: string; // 更新时间
+    // Metadata
+    createdAt: string; // Creation time
+    updatedAt: string; // Update time
 }
 
 /**
- * 类别分数统计
+ * Category Score Statistics
  */
 export interface CategoryScores {
-    [InterviewCategory.BEHAVIOURAL]: number; // 行为面试分数
-    [InterviewCategory.TECHNICAL]: number; // 技术面试分数
-    [InterviewCategory.PSYCHOMETRIC]: number; // 心理测评分数
+    [InterviewCategory.BEHAVIOURAL]: number; // Behavioral interview score
+    [InterviewCategory.TECHNICAL]: number; // Technical interview score
+    [InterviewCategory.PSYCHOMETRIC]: number; // Psychometric assessment score
 }
 
 /**
- * 类别表现详情
+ * Category Performance Details
  */
 export interface CategoryPerformance {
-    category: InterviewCategory; // 类别
-    currentScore: number; // 当前分数
-    averageScore: number; // 平均分数
-    bestScore: number; // 最高分数
-    improvementRate: number; // 改进率 (正数表示提升，负数表示下降)
-    isWeakArea: boolean; // 是否为弱项（低于阈值）
-    sessionsCount: number; // 该类别的会话次数
-    lastPracticed: string; // 最后练习时间
-    recommendations: string[]; // 针对性建议
+    category: InterviewCategory; // Category
+    currentScore: number; // Current score
+    averageScore: number; // Average score
+    bestScore: number; // Best score
+    improvementRate: number; // Improvement rate (positive for improvement, negative for decline)
+    isWeakArea: boolean; // Whether it's a weak area (below threshold)
+    sessionsCount: number; // Number of sessions in this category
+    lastPracticed: string; // Last practice time
+    recommendations: string[]; // Targeted recommendations
 }
 
 /**
- * 维度表现详情（新增：对应 API 返回的 5 个评分维度）
+ * Dimension Performance Details (new: corresponding to 5 scoring dimensions returned by API)
  */
 export interface DimensionPerformance {
-    dimension: ScoreDimension; // 维度类型
-    dimensionName: string; // 维度显示名称
-    averageScore: number; // 平均分数 (1-5)
-    percentage: number; // 百分比 (0-100)
-    isStrength: boolean; // 是否为优势项（>= 75%）
+    dimension: ScoreDimension; // Dimension type
+    dimensionName: string; // Dimension display name
+    averageScore: number; // Average score (1-5)
+    percentage: number; // Percentage (0-100)
+    isStrength: boolean; // Whether it's a strength (>= 75%)
 }
 
 // ===============================
-// 进度统计和分析接口
+// Progress Statistics and Analysis Interfaces
 // ===============================
 
 /**
- * 用户进度统计
+ * User Progress Statistics
  */
 export interface UserProgress {
-    // 基础信息
-    userId: string; // 用户ID
+    // Basic information
+    userId: string; // User ID
 
-    // 会话统计
-    sessions: SessionRecord[]; // 所有会话记录
-    totalSessions: number; // 总会话数
-    completedSessions: number; // 完成的会话数
-    completionRate: number; // 完成率 (0-100)
+    // Session statistics
+    sessions: SessionRecord[]; // All session records
+    totalSessions: number; // Total number of sessions
+    completedSessions: number; // Number of completed sessions
+    completionRate: number; // Completion rate (0-100)
 
-    // 分数统计
-    currentReadinessScore: number; // 当前准备度分数
-    averageReadinessScore: number; // 平均准备度分数
-    bestReadinessScore: number; // 最佳准备度分数
-    readinessScoreHistory: ReadinessScorePoint[]; // 准备度分数历史
+    // Score statistics
+    currentReadinessScore: number; // Current readiness score
+    averageReadinessScore: number; // Average readiness score
+    bestReadinessScore: number; // Best readiness score
+    readinessScoreHistory: ReadinessScorePoint[]; // Readiness score history
 
-    // 类别表现
-    categoryPerformances: CategoryPerformance[]; // 各类别表现详情
-    overallCategoryScores: CategoryScores; // 总体类别分数
+    // Category performance
+    categoryPerformances: CategoryPerformance[]; // Category performance details
+    overallCategoryScores: CategoryScores; // Overall category scores
 
-    // 时间统计
-    totalPracticeTime: number; // 总练习时间（分钟）
-    averageSessionDuration: number; // 平均会话时长（分钟）
-    practiceFrequency: number; // 练习频率（次/周）
+    // Time statistics
+    totalPracticeTime: number; // Total practice time (minutes)
+    averageSessionDuration: number; // Average session duration (minutes)
+    practiceFrequency: number; // Practice frequency (times/week)
 
-    // 趋势分析
-    improvementTrend: "IMPROVING" | "STABLE" | "DECLINING"; // 改进趋势
-    consistencyScore: number; // 练习一致性分数 (0-100)
+    // Trend analysis
+    improvementTrend: "IMPROVING" | "STABLE" | "DECLINING"; // Improvement trend
+    consistencyScore: number; // Practice consistency score (0-100)
 
-    // 目标和里程碑
-    targetReadinessScore?: number; // 目标准备度分数（可选）
-    nextMilestone?: string; // 下一个里程碑（可选）
+    // Goals and milestones
+    targetReadinessScore?: number; // Target readiness score (optional)
+    nextMilestone?: string; // Next milestone (optional)
 
-    // 时间戳
-    firstSessionDate: string; // 第一次会话日期
-    lastSessionDate: string; // 最后一次会话日期
-    lastUpdated: string; // 最后更新时间
+    // Timestamp
+    firstSessionDate: string; // First session date
+    lastSessionDate: string; // Last session date
+    lastUpdated: string; // Last update time
 }
 
 /**
- * 准备度分数时间点
+ * Readiness Score Time Point
  */
 export interface ReadinessScorePoint {
-    date: string; // 日期 (YYYY-MM-DD)
-    score: number; // 分数 (0-100)
-    sessionId: string; // 对应的会话ID
-    category: InterviewCategory; // 主要类别
+    date: string; // Date (YYYY-MM-DD)
+    score: number; // Score (0-100)
+    sessionId: string; // Corresponding session ID
+    category: InterviewCategory; // Main category
 }
 
 /**
- * 图表数据点（用于可视化）
+ * Chart Data Point (for visualization)
  */
 export interface ChartDataPoint {
-    x: string | number; // X轴数据（日期或索引）
-    y: number; // Y轴数据（分数）
-    label?: string; // 标签（可选）
-    category?: InterviewCategory; // 类别（可选）
+    x: string | number; // X-axis data (date or index)
+    y: number; // Y-axis data (score)
+    label?: string; // Label (optional)
+    category?: InterviewCategory; // Category (optional)
 }
 
 /**
- * 进度分析结果
+ * Progress Analysis Result
  */
 export interface ProgressAnalysis {
-    // 总体评估
-    overallAssessment: string; // 总体评估描述
-    readinessLevel: "LOW" | "MEDIUM" | "HIGH" | "EXCELLENT"; // 准备度等级
+    // Overall assessment
+    overallAssessment: string; // Overall assessment description
+    readinessLevel: "LOW" | "MEDIUM" | "HIGH" | "EXCELLENT"; // Readiness level
 
-    // 优势和弱项
-    topStrengths: string[]; // 主要优势
-    primaryWeaknesses: string[]; // 主要弱项
+    // Strengths and weaknesses
+    topStrengths: string[]; // Main strengths
+    primaryWeaknesses: string[]; // Main weaknesses
 
-    // 改进建议
-    priorityRecommendations: string[]; // 优先改进建议
-    practiceAreas: InterviewCategory[]; // 推荐练习的类别
+    // Improvement recommendations
+    priorityRecommendations: string[]; // Priority improvement recommendations
+    practiceAreas: InterviewCategory[]; // Recommended practice categories
 
-    // 预测和目标
-    projectedImprovement: number; // 预测改进幅度
-    estimatedTimeToTarget?: number; // 预计达到目标的时间（天）
+    // Predictions and goals
+    projectedImprovement: number; // Projected improvement
+    estimatedTimeToTarget?: number; // Estimated time to reach target (days)
 
-    // 比较数据
-    percentileRank?: number; // 百分位排名（可选）
-    benchmarkComparison?: string; // 基准比较（可选）
+    // Comparison data
+    percentileRank?: number; // Percentile rank (optional)
+    benchmarkComparison?: string; // Benchmark comparison (optional)
 }
