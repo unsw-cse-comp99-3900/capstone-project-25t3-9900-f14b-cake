@@ -800,7 +800,14 @@ export default function ProgressPage() {
                                             }
                                             className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm font-medium text-gray-700"
                                         >
-                                            <span>⚙️</span>
+                                            <img
+                                                src="/icons/settings.svg"
+                                                alt="Settings"
+                                                className="w-4 h-4"
+                                                style={{
+                                                    filter: "invert(30%) sepia(10%) saturate(500%) brightness(0.9)",
+                                                }}
+                                            />
                                             <span>
                                                 Set Target ({targetScore}/5)
                                             </span>
@@ -990,9 +997,14 @@ export default function ProgressPage() {
                                                 className="bg-gray-50 rounded-lg p-4 border border-gray-100"
                                             >
                                                 <div className="flex items-start gap-3 mb-3">
-                                                    <span className="text-2xl">
-                                                        💬
-                                                    </span>
+                                                    <img
+                                                        src="/icons/chat_bubble.svg"
+                                                        alt="Question"
+                                                        className="w-6 h-6 mt-1 flex-shrink-0"
+                                                        style={{
+                                                            filter: "invert(40%) sepia(50%) saturate(1000%) hue-rotate(200deg) brightness(0.9)",
+                                                        }}
+                                                    />
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between mb-2">
                                                             <h5 className="font-semibold text-gray-800">
@@ -1007,7 +1019,7 @@ export default function ProgressPage() {
                                                                     /5
                                                                 </span>
                                                                 <span
-                                                                    className={`text-xs px-3 py-1 rounded-full font-medium ${
+                                                                    className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${
                                                                         question.averageScore >=
                                                                         3.5
                                                                             ? "bg-green-100 text-green-700"
@@ -1015,9 +1027,32 @@ export default function ProgressPage() {
                                                                     }`}
                                                                 >
                                                                     {question.averageScore >=
-                                                                    3.5
-                                                                        ? "✓ Good"
-                                                                        : "⚠ Needs Work"}
+                                                                    3.5 ? (
+                                                                        <>
+                                                                            <img
+                                                                                src="/icons/check_circle.svg"
+                                                                                alt="Good"
+                                                                                className="w-3.5 h-3.5"
+                                                                                style={{
+                                                                                    filter: "invert(45%) sepia(100%) saturate(1000%) hue-rotate(100deg) brightness(0.9)",
+                                                                                }}
+                                                                            />
+                                                                            Good
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <img
+                                                                                src="/icons/warning.svg"
+                                                                                alt="Warning"
+                                                                                className="w-3.5 h-3.5"
+                                                                                style={{
+                                                                                    filter: "invert(50%) sepia(100%) saturate(2000%) hue-rotate(10deg) brightness(0.9)",
+                                                                                }}
+                                                                            />
+                                                                            Needs
+                                                                            Work
+                                                                        </>
+                                                                    )}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1044,13 +1079,23 @@ export default function ProgressPage() {
                                                             />
                                                         </div>
                                                         <div className="mt-3 p-3 bg-white rounded border border-gray-200">
-                                                            <p className="text-xs text-gray-700">
-                                                                <strong>
-                                                                    📝 Summary:
-                                                                </strong>{" "}
-                                                                {
-                                                                    question.overallSummary
-                                                                }
+                                                            <p className="text-xs text-gray-700 flex items-start gap-2">
+                                                                <img
+                                                                    src="/icons/description.svg"
+                                                                    alt="Summary"
+                                                                    className="w-4 h-4 mt-0.5 flex-shrink-0"
+                                                                    style={{
+                                                                        filter: "invert(30%) sepia(10%) saturate(500%) brightness(0.9)",
+                                                                    }}
+                                                                />
+                                                                <span>
+                                                                    <strong>
+                                                                        Summary:
+                                                                    </strong>{" "}
+                                                                    {
+                                                                        question.overallSummary
+                                                                    }
+                                                                </span>
                                                             </p>
                                                         </div>
                                                     </div>
