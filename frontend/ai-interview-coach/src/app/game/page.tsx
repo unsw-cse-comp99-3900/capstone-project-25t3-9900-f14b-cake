@@ -109,29 +109,36 @@ export default function GamePage() {
             <Navbar />
 
             <main className="flex-1 p-10 pt-24">
-                {/* Page Title and Daily Check-in Button */}
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                            Gamification System
-                        </h1>
-                        <p className="text-lg text-gray-600">
-                            Improve your interview skills through gamification
-                        </p>
-                    </div>
+                {/* Page Title */}
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                        Gamification System
+                    </h1>
+                    <p className="text-lg text-gray-600">
+                        Improve your interview skills through gamification
+                    </p>
+                </div>
 
-                    {/* Daily Check-in Button */}
-                    <button
-                        onClick={handleDailyCheckIn}
-                        disabled={hasCheckedInToday}
-                        className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                            hasCheckedInToday
-                                ? "bg-green-100 text-green-700 cursor-not-allowed"
-                                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg"
-                        }`}
-                    >
-                        {hasCheckedInToday ? "✓ Checked In" : "Daily Check-in"}
-                    </button>
+                {/* Daily Quote Display */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6 mb-8">
+                    <div className="flex items-start space-x-4">
+                        <img
+                            src="/icons/emoji_objects.svg"
+                            alt="Daily Inspiration"
+                            className="w-10 h-10 mt-1"
+                            style={{
+                                filter: "invert(47%) sepia(89%) saturate(1500%) hue-rotate(196deg) brightness(95%)",
+                            }}
+                        />
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold text-blue-600 mb-2">
+                                Daily Inspiration
+                            </h3>
+                            <p className="text-lg text-gray-800 leading-relaxed italic">
+                                "{todayQuote}"
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Badge Display Area */}
