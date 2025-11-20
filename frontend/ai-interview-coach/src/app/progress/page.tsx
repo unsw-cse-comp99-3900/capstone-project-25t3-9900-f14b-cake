@@ -249,26 +249,8 @@ export default function ProgressPage() {
     const averageScore =
         mockReadinessData.reduce((sum: number, d: any) => sum + d.score, 0) /
         mockReadinessData.length;
-
-    // Calculate improvement rate
-    // If minScore is 0 or very close to 0, use first non-zero score or calculate absolute improvement
-    let improvementRate: string;
-    if (minScore === 0 || minScore < 0.1) {
-        // If starting from 0, show absolute improvement from first to last
-        const firstScore = mockReadinessData[0]?.score || 0;
-        const lastScore =
-            mockReadinessData[mockReadinessData.length - 1]?.score || 0;
-        if (firstScore === 0) {
-            improvementRate = lastScore > 0 ? "100.0" : "0.0";
-        } else {
-            improvementRate = (
-                ((lastScore - firstScore) / firstScore) *
-                100
-            ).toFixed(1);
-        }
-    } else {
-        improvementRate = (((maxScore - minScore) / minScore) * 100).toFixed(1);
-    }
+    const lastScore =
+        mockReadinessData[mockReadinessData.length - 1]?.score || 0;
 
     // Get login/check-in statistics from backend data
     // These are calculated based on interview timestamps
@@ -378,7 +360,7 @@ export default function ProgressPage() {
                                         tickLine={false}
                                         axisLine={{ stroke: "#e5e7eb" }}
                                         label={{
-                                            value: "Interview Session Number",
+                                            value: "Interview Sessions",
                                             position: "insideBottom",
                                             offset: -10,
                                             style: {
@@ -387,7 +369,9 @@ export default function ProgressPage() {
                                                 fontWeight: 600,
                                             },
                                         }}
-                                        tickFormatter={(value) => `#${value}`}
+                                        tickFormatter={(value) =>
+                                            `Session ${value}`
+                                        }
                                     />
                                     <YAxis
                                         domain={[0, 5]}
@@ -399,16 +383,19 @@ export default function ProgressPage() {
                                         tickLine={false}
                                         axisLine={{ stroke: "#e5e7eb" }}
                                         label={{
-                                            value: "Readiness Score (1-5)",
+                                            value: "Readiness Score",
                                             angle: -90,
-                                            position: "insideLeft",
+                                            position: "center",
+                                            offset: 15,
                                             style: {
-                                                fontSize: "13px",
+                                                fontSize: "14px",
                                                 fill: "#374151",
                                                 fontWeight: 600,
+                                                textAnchor: "middle",
                                             },
                                         }}
                                         ticks={[0, 1, 2, 3, 4, 5]}
+                                        width={85}
                                     />
                                     <Tooltip
                                         contentStyle={{
@@ -459,9 +446,17 @@ export default function ProgressPage() {
                         </div>
 
                         {/* Statistics Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-blue-50 rounded-lg p-4">
-                                <div className="text-sm text-blue-600 font-medium mb-1">
+                                <div className="text-sm text-blue-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/star.svg"
+                                        alt="Current Score"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(200deg) brightness(0.9)",
+                                        }}
+                                    />
                                     Current Score
                                 </div>
                                 <div className="text-3xl font-bold text-blue-700">
@@ -473,7 +468,15 @@ export default function ProgressPage() {
                                 </div>
                             </div>
                             <div className="bg-green-50 rounded-lg p-4">
-                                <div className="text-sm text-green-600 font-medium mb-1">
+                                <div className="text-sm text-green-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/show_chart.svg"
+                                        alt="Average Score"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(50%) sepia(100%) saturate(1000%) hue-rotate(80deg) brightness(0.8)",
+                                        }}
+                                    />
                                     Average Score
                                 </div>
                                 <div className="text-3xl font-bold text-green-700">
@@ -481,37 +484,46 @@ export default function ProgressPage() {
                                 </div>
                             </div>
                             <div className="bg-purple-50 rounded-lg p-4">
-                                <div className="text-sm text-purple-600 font-medium mb-1">
+                                <div className="text-sm text-purple-600 font-medium mb-1 flex items-center gap-1.5">
+                                    <img
+                                        src="/icons/military_tech.svg"
+                                        alt="Best Score"
+                                        className="w-4 h-4"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(260deg) brightness(0.9)",
+                                        }}
+                                    />
                                     Best Score
                                 </div>
                                 <div className="text-3xl font-bold text-purple-700">
                                     {maxScore}
                                 </div>
                             </div>
-                            <div className="bg-orange-50 rounded-lg p-4">
-                                <div className="text-sm text-orange-600 font-medium mb-1">
-                                    Improvement
-                                </div>
-                                <div className="text-3xl font-bold text-orange-700">
-                                    +{improvementRate}%
-                                </div>
-                            </div>
                         </div>
 
                         {/* Detailed Analysis */}
                         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                            <h4 className="font-semibold text-blue-900 mb-2">
-                                📊 Performance Analysis
+                            <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                <img
+                                    src="/icons/assessment.svg"
+                                    alt="Analysis"
+                                    className="w-5 h-5"
+                                    style={{
+                                        filter: "invert(20%) sepia(100%) saturate(3000%) hue-rotate(200deg)",
+                                    }}
+                                />
+                                Performance Analysis
                             </h4>
                             <p className="text-sm text-blue-800">
-                                Your readiness score has improved from{" "}
-                                <strong>{minScore}</strong> to{" "}
-                                <strong>{maxScore}</strong> over{" "}
-                                {mockReadinessData.length} interview sessions.
-                                This represents a{" "}
-                                <strong>{improvementRate}%</strong> improvement,
-                                showing consistent progress in your interview
-                                skills. Keep up the great work!
+                                Over the selected {mockReadinessData.length}{" "}
+                                interview sessions, your average readiness score
+                                is <strong>{averageScore.toFixed(2)}</strong>,
+                                with a best score of{" "}
+                                <strong>{maxScore.toFixed(2)}</strong>. Your
+                                current score is{" "}
+                                <strong>{lastScore.toFixed(2)}</strong>, showing
+                                consistent progress in your interview skills.
+                                Keep up the great work!
                             </p>
                         </div>
                     </div>
@@ -660,7 +672,14 @@ export default function ProgressPage() {
                                             {loginStreakDays} days
                                         </div>
                                     </div>
-                                    <div className="text-3xl">🔥</div>
+                                    <img
+                                        src="/icons/local_fire_department.svg"
+                                        alt="Fire"
+                                        className="w-8 h-8"
+                                        style={{
+                                            filter: "invert(45%) sepia(100%) saturate(1000%) hue-rotate(100deg) brightness(0.9)",
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -672,7 +691,14 @@ export default function ProgressPage() {
                                             {maxLoginStreak} days
                                         </div>
                                     </div>
-                                    <div className="text-3xl">⚡</div>
+                                    <img
+                                        src="/icons/bolt.svg"
+                                        alt="Lightning"
+                                        className="w-8 h-8"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(200deg) brightness(0.9)",
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
@@ -684,17 +710,34 @@ export default function ProgressPage() {
                                             {totalLoginDays} days
                                         </div>
                                     </div>
-                                    <div className="text-3xl">📅</div>
+                                    <img
+                                        src="/icons/event.svg"
+                                        alt="Calendar"
+                                        className="w-8 h-8"
+                                        style={{
+                                            filter: "invert(40%) sepia(100%) saturate(1500%) hue-rotate(260deg) brightness(0.9)",
+                                        }}
+                                    />
                                 </div>
                             </div>
 
                             {/* Motivational Message */}
                             <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100">
-                                <p className="text-sm text-gray-700 italic">
-                                    💪 You&apos;ve maintained a{" "}
-                                    <strong>{loginStreakDays}-day</strong> login
-                                    streak. Consistent practice is the key to
-                                    interview success!
+                                <p className="text-sm text-gray-700 italic flex items-center gap-2">
+                                    <img
+                                        src="/icons/psychology.svg"
+                                        alt="Motivation"
+                                        className="w-5 h-5 flex-shrink-0"
+                                        style={{
+                                            filter: "invert(35%) sepia(50%) saturate(1000%) hue-rotate(150deg) brightness(0.9)",
+                                        }}
+                                    />
+                                    <span>
+                                        You&apos;ve maintained a{" "}
+                                        <strong>{loginStreakDays}-day</strong>{" "}
+                                        login streak. Consistent practice is the
+                                        key to interview success!
+                                    </span>
                                 </p>
                             </div>
                         </div>
@@ -757,7 +800,14 @@ export default function ProgressPage() {
                                             }
                                             className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm font-medium text-gray-700"
                                         >
-                                            <span>⚙️</span>
+                                            <img
+                                                src="/icons/settings.svg"
+                                                alt="Settings"
+                                                className="w-4 h-4"
+                                                style={{
+                                                    filter: "invert(30%) sepia(10%) saturate(500%) brightness(0.9)",
+                                                }}
+                                            />
                                             <span>
                                                 Set Target ({targetScore}/5)
                                             </span>
@@ -947,9 +997,14 @@ export default function ProgressPage() {
                                                 className="bg-gray-50 rounded-lg p-4 border border-gray-100"
                                             >
                                                 <div className="flex items-start gap-3 mb-3">
-                                                    <span className="text-2xl">
-                                                        💬
-                                                    </span>
+                                                    <img
+                                                        src="/icons/chat_bubble.svg"
+                                                        alt="Question"
+                                                        className="w-6 h-6 mt-1 flex-shrink-0"
+                                                        style={{
+                                                            filter: "invert(40%) sepia(50%) saturate(1000%) hue-rotate(200deg) brightness(0.9)",
+                                                        }}
+                                                    />
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between mb-2">
                                                             <h5 className="font-semibold text-gray-800">
@@ -964,7 +1019,7 @@ export default function ProgressPage() {
                                                                     /5
                                                                 </span>
                                                                 <span
-                                                                    className={`text-xs px-3 py-1 rounded-full font-medium ${
+                                                                    className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${
                                                                         question.averageScore >=
                                                                         3.5
                                                                             ? "bg-green-100 text-green-700"
@@ -972,9 +1027,32 @@ export default function ProgressPage() {
                                                                     }`}
                                                                 >
                                                                     {question.averageScore >=
-                                                                    3.5
-                                                                        ? "✓ Good"
-                                                                        : "⚠ Needs Work"}
+                                                                    3.5 ? (
+                                                                        <>
+                                                                            <img
+                                                                                src="/icons/check_circle.svg"
+                                                                                alt="Good"
+                                                                                className="w-3.5 h-3.5"
+                                                                                style={{
+                                                                                    filter: "invert(45%) sepia(100%) saturate(1000%) hue-rotate(100deg) brightness(0.9)",
+                                                                                }}
+                                                                            />
+                                                                            Good
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <img
+                                                                                src="/icons/warning.svg"
+                                                                                alt="Warning"
+                                                                                className="w-3.5 h-3.5"
+                                                                                style={{
+                                                                                    filter: "invert(50%) sepia(100%) saturate(2000%) hue-rotate(10deg) brightness(0.9)",
+                                                                                }}
+                                                                            />
+                                                                            Needs
+                                                                            Work
+                                                                        </>
+                                                                    )}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1001,13 +1079,23 @@ export default function ProgressPage() {
                                                             />
                                                         </div>
                                                         <div className="mt-3 p-3 bg-white rounded border border-gray-200">
-                                                            <p className="text-xs text-gray-700">
-                                                                <strong>
-                                                                    📝 Summary:
-                                                                </strong>{" "}
-                                                                {
-                                                                    question.overallSummary
-                                                                }
+                                                            <p className="text-xs text-gray-700 flex items-start gap-2">
+                                                                <img
+                                                                    src="/icons/description.svg"
+                                                                    alt="Summary"
+                                                                    className="w-4 h-4 mt-0.5 flex-shrink-0"
+                                                                    style={{
+                                                                        filter: "invert(30%) sepia(10%) saturate(500%) brightness(0.9)",
+                                                                    }}
+                                                                />
+                                                                <span>
+                                                                    <strong>
+                                                                        Summary:
+                                                                    </strong>{" "}
+                                                                    {
+                                                                        question.overallSummary
+                                                                    }
+                                                                </span>
                                                             </p>
                                                         </div>
                                                     </div>

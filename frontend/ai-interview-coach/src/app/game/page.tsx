@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { BadgeType, BADGE_CONFIGS } from "@/types";
+import { BadgeType, BADGE_CONFIGS, DAILY_QUOTES } from "@/types";
 import { getGamePageData } from "@/services";
-import { getTodayQuote } from "@/data/dailyQuotes";
 
 // ===== MOCK DATA - COMMENTED OUT FOR BACKEND TESTING =====
 // Mock user badge data - backend will provide real data
@@ -21,7 +20,12 @@ import { getTodayQuote } from "@/data/dailyQuotes";
 
 export default function GamePage() {
     const router = useRouter();
-    const [selectedBadge, setSelectedBadge] = useState<BadgeType | null>(null);
+    const [showDailyQuote, setShowDailyQuote] = useState(false);
+    const [selectedBadge, setSelectedBadge] = useState<{
+        badge: any;
+        iconPath: string;
+    } | null>(null);
+    const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
     const [gameData, setGameData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -53,26 +57,18 @@ export default function GamePage() {
         fetchData();
     }, []);
 
-    // Get today's quote using the new daily quote system
-    const todayQuote = getTodayQuote();
+    // Get today's quote
+    const todayQuote = DAILY_QUOTES[new Date().getDate() % DAILY_QUOTES.length];
+
+    // Handle daily check-in
+    const handleDailyCheckIn = () => {
+        setShowDailyQuote(true);
+        setHasCheckedInToday(true);
+    };
 
     // Navigate to Home page
     const handleStartPractice = () => {
         router.push("/home");
-    };
-
-    // 处理徽章点击
-    const handleBadgeClick = (badgeType: BadgeType) => {
-        setSelectedBadge(badgeType);
-    };
-
-    // 检查徽章是否已解锁 - Use real data from backend
-    const isBadgeUnlocked = (badgeType: BadgeType) => {
-        if (!gameData?.badges) return false;
-        return (
-            gameData.badges.find((b: any) => b.badgeType === badgeType)
-                ?.isUnlocked || false
-        );
     };
 
     // Show loading state
@@ -123,33 +119,24 @@ export default function GamePage() {
                     </p>
                 </div>
 
-                {/* Daily Quote Card */}
-                <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="text-5xl">🌟</div>
+                {/* Daily Quote Display */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6 mb-8">
+                    <div className="flex items-start space-x-4">
+                        <img
+                            src="/icons/emoji_objects.svg"
+                            alt="Daily Inspiration"
+                            className="w-10 h-10 mt-1"
+                            style={{
+                                filter: "invert(47%) sepia(89%) saturate(1500%) hue-rotate(196deg) brightness(95%)",
+                            }}
+                        />
                         <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                                <h3 className="text-lg font-bold text-gray-800">
-                                    Daily Quote
-                                </h3>
-                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                                    {todayQuote.category}
-                                </span>
-                            </div>
-                            <p className="text-gray-700 italic leading-relaxed mb-2">
-                                "{todayQuote.text}"
+                            <h3 className="text-sm font-semibold text-blue-600 mb-2">
+                                Daily Inspiration
+                            </h3>
+                            <p className="text-lg text-gray-800 leading-relaxed italic">
+                                "{todayQuote}"
                             </p>
-                            {todayQuote.author && (
-                                <p className="text-sm text-gray-500 mb-4">
-                                    — {todayQuote.author}
-                                </p>
-                            )}
-                            <button
-                                onClick={handleStartPractice}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                            >
-                                Start Practice →
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -185,42 +172,56 @@ export default function GamePage() {
                         {gameData?.badges?.map((badge: any) => {
                             const isUnlocked = badge.isUnlocked;
 
-                            // Assign icon based on badge ID
-                            const badgeIcons: { [key: number]: string } = {
-                                1: "🎯", // First Steps
-                                2: "❄️", // Ice Breaker
-                                3: "🌱", // Answer Rookie
-                                4: "⭐", // Answer Expert
-                                5: "👑", // Answer Master
-                                6: "🌙", // Night Owl
-                                7: "🌅", // Early Bird
+                            // Map badge names to SVG icons (case-insensitive matching)
+                            const badgeIconMap: { [key: string]: string } = {
+                                // XP Progression (4)
+                                "first steps": "/icons/badge/star.svg",
+                                "xp novice": "/icons/badge/trophy.svg",
+                                "xp expert":
+                                    "/icons/badge/workspace_premium.svg",
+                                "xp master": "/icons/badge/diamond.svg",
+
+                                // Answering Progress (4)
+                                "ice breaker": "/icons/badge/ac_unit.svg",
+                                "answer rookie": "/icons/badge/spa.svg",
+                                "answer expert": "/icons/badge/menu_book.svg",
+                                "answer master": "/icons/badge/school.svg",
+
+                                // Login Streaks (3)
+                                persistent:
+                                    "/icons/badge/local_fire_department.svg",
+                                dedicated: "/icons/badge/bolt.svg",
+                                relentless: "/icons/badge/fitness_center.svg",
+
+                                // Dimension Masters (5)
+                                "clarity champion": "/icons/badge/diamond.svg",
+                                "relevance expert":
+                                    "/icons/badge/my_location.svg",
+                                "keyword wizard": "/icons/badge/science.svg",
+                                "confidence king/queen":
+                                    "/icons/badge/workspace_premium.svg",
+                                "conciseness master":
+                                    "/icons/badge/star_rate.svg",
+
+                                // Special Achievements (3)
+                                "first session": "/icons/badge/celebration.svg",
+                                "night owl": "/icons/badge/nightlight.svg",
+                                "early bird": "/icons/badge/wb_sunny.svg",
                             };
 
-                            const icon = badgeIcons[badge.badgeId] || "🏆";
+                            const badgeName = (badge.name || "")
+                                .toLowerCase()
+                                .trim();
+                            const iconPath =
+                                badgeIconMap[badgeName] ||
+                                "/icons/badge/star.svg";
 
                             return (
                                 <button
                                     key={badge.badgeId}
                                     onClick={() => {
-                                        // Show badge details
-                                        const unlockDate = isUnlocked
-                                            ? new Date(
-                                                  badge.unlockedTimestamp * 1000
-                                              ).toLocaleDateString("en-US")
-                                            : "Locked";
-                                        alert(
-                                            `Badge: ${
-                                                badge.name ||
-                                                `Badge #${badge.badgeId}`
-                                            }\n\n${
-                                                badge.description ||
-                                                "No description"
-                                            }\n\n${
-                                                isUnlocked
-                                                    ? `✅ Unlocked on: ${unlockDate}`
-                                                    : "🔒 Not yet unlocked"
-                                            }`
-                                        );
+                                        // Show badge details in modal
+                                        setSelectedBadge({ badge, iconPath });
                                     }}
                                     className={`p-6 rounded-lg border-2 transition-all hover:scale-105 ${
                                         isUnlocked
@@ -230,13 +231,22 @@ export default function GamePage() {
                                 >
                                     <div className="text-center">
                                         <div
-                                            className={`text-4xl mb-3 ${
+                                            className={`mb-3 flex justify-center ${
                                                 isUnlocked
                                                     ? ""
                                                     : "grayscale opacity-50"
                                             }`}
                                         >
-                                            {icon}
+                                            <img
+                                                src={iconPath}
+                                                alt={badge.name}
+                                                className="w-12 h-12"
+                                                style={{
+                                                    filter: isUnlocked
+                                                        ? "invert(50%) sepia(100%) saturate(1000%) hue-rotate(30deg) brightness(1.1)"
+                                                        : "",
+                                                }}
+                                            />
                                         </div>
                                         <h3
                                             className={`font-semibold text-sm mb-1 ${
@@ -283,91 +293,85 @@ export default function GamePage() {
                 </div>
             </main>
 
+            {/* Daily Quote Modal */}
+            {showDailyQuote && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all border-4 border-blue-200">
+                        <div className="text-center">
+                            <div className="text-6xl mb-4">🌟</div>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                                Daily Quote
+                            </h3>
+                            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+                                "{todayQuote}"
+                            </p>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={handleStartPractice}
+                                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                >
+                                    Start Today's Practice
+                                </button>
+                                <button
+                                    onClick={() => setShowDailyQuote(false)}
+                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Badge Details Modal */}
             {selectedBadge && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8">
+                <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 pointer-events-auto">
                         <div className="text-center">
-                            <div className="text-6xl mb-4">
-                                {BADGE_CONFIGS[selectedBadge].icon}
+                            <div className="mb-4 flex justify-center">
+                                <img
+                                    src={selectedBadge.iconPath}
+                                    alt={selectedBadge.badge.name}
+                                    className="w-20 h-20"
+                                    style={{
+                                        filter: selectedBadge.badge.isUnlocked
+                                            ? "invert(50%) sepia(100%) saturate(1000%) hue-rotate(30deg) brightness(1.1)"
+                                            : "grayscale(100%) opacity(0.5)",
+                                    }}
+                                />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                                {BADGE_CONFIGS[selectedBadge].name}
+                                {selectedBadge.badge.name ||
+                                    `Badge #${selectedBadge.badge.badgeId}`}
                             </h3>
                             <p className="text-gray-600 mb-4">
-                                {BADGE_CONFIGS[selectedBadge].description}
+                                {selectedBadge.badge.description}
                             </p>
 
                             <div className="bg-gray-50 rounded-lg p-4 mb-6">
                                 <p className="text-sm text-gray-700">
                                     <span className="font-medium">
-                                        Unlock Requirement:{" "}
+                                        Status:{" "}
                                     </span>
-                                    {BADGE_CONFIGS[selectedBadge]
-                                        .requirement === 1
-                                        ? `Complete ${BADGE_CONFIGS[selectedBadge].description}`
-                                        : `Reach ${
-                                              BADGE_CONFIGS[selectedBadge]
-                                                  .requirement
-                                          } ${
-                                              BADGE_CONFIGS[selectedBadge]
-                                                  .category === "xp"
-                                                  ? "XP"
-                                                  : BADGE_CONFIGS[selectedBadge]
-                                                        .category === "answers"
-                                                  ? "answers"
-                                                  : BADGE_CONFIGS[selectedBadge]
-                                                        .category === "login"
-                                                  ? "days streak"
-                                                  : BADGE_CONFIGS[selectedBadge]
-                                                        .category === "category"
-                                                  ? "category score"
-                                                  : "times"
-                                          }`}
+                                    {selectedBadge.badge.isUnlocked ? (
+                                        <span className="text-green-600 font-semibold">
+                                            ✓ Unlocked on{" "}
+                                            {new Date(
+                                                selectedBadge.badge.unlockedTimestamp
+                                            ).toLocaleDateString("en-US")}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-500 font-semibold">
+                                            🔒 Locked
+                                        </span>
+                                    )}
                                 </p>
-                            </div>
-
-                            <div className="mb-6">
-                                {isBadgeUnlocked(selectedBadge) ? (
-                                    <div className="flex items-center justify-center space-x-2 text-green-600">
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                        <span className="font-medium">
-                                            Badge Unlocked
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center space-x-2 text-gray-500">
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                        <span className="font-medium">
-                                            Not Unlocked
-                                        </span>
-                                    </div>
-                                )}
                             </div>
 
                             <button
                                 onClick={() => setSelectedBadge(null)}
-                                className="px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium w-full"
                             >
                                 Close
                             </button>
