@@ -319,8 +319,8 @@ export default function GamePage() {
 
             {/* Badge Details Modal */}
             {selectedBadge && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8">
+                <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 pointer-events-auto">
                         <div className="text-center">
                             <div className="mb-4 flex justify-center">
                                 <img
@@ -351,8 +351,7 @@ export default function GamePage() {
                                         <span className="text-green-600 font-semibold">
                                             ✓ Unlocked on{" "}
                                             {new Date(
-                                                selectedBadge.badge
-                                                    .unlockedTimestamp * 1000
+                                                selectedBadge.badge.unlockedTimestamp
                                             ).toLocaleDateString("en-US")}
                                         </span>
                                     ) : (
