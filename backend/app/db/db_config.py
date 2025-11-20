@@ -21,8 +21,16 @@ DB_HOST = os.getenv("POSTGRES_HOST")
 DB_PORT = os.getenv("POSTGRES_PORT")
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Creating the SQLAlchemy engine
-engine = create_engine(DATABASE_URL, echo=False)
+# Get DATABASE_URL from environment (Render provides this)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://admin:123456@db:5432/mydb"  # Fallback for local docker-compose
+)
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(DATABASE_URL)
 
 # Create a SessionLocal for use in dependency injection or business logic.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
