@@ -1,9 +1,12 @@
 /**
  * Base API configuration
  * Centralized API endpoint management
+ * Read from environment variable (set in render.yaml for production)
+ * Falls back to localhost:9000 for local development
+ * This value is configured in render.yaml under frontend service envVars
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000";
 
 /**
  * API endpoints for the application

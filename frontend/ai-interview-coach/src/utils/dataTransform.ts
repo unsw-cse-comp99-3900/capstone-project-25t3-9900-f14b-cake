@@ -22,6 +22,13 @@ export const transformInterviewToRecord = (
     {
       text: string | null;
       scores: number[] | null;
+      feedbacks?: {
+        clarity_structure_feedback: string | null;
+        relevance_feedback: string | null;
+        keyword_alignment_feedback: string | null;
+        confidence_feedback: string | null;
+        conciseness_feedback: string | null;
+      } | null;
       error: boolean;
       loading: boolean;
     }
@@ -49,6 +56,13 @@ export const transformInterviewToRecord = (
     feedbacks[index] = {
       text: feedback.overall_summary || null,
       scores: questionScores.length > 0 ? questionScores : null,
+      feedbacks: {
+        clarity_structure_feedback: feedback.clarity_structure_feedback || null,
+        relevance_feedback: feedback.relevance_feedback || null,
+        keyword_alignment_feedback: feedback.keyword_alignment_feedback || null,
+        confidence_feedback: feedback.confidence_feedback || null,
+        conciseness_feedback: feedback.conciseness_feedback || null,
+      },
       error: false,
       loading: false,
     };
