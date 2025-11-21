@@ -1,13 +1,8 @@
-/**
- * Interview Page Tests
- * Tests cover: form inputs, validation, modal interactions, and navigation
- */
-
 /// <reference types="@testing-library/jest-dom" />
 
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import InterviewPage from "../page";
+import InterviewPage from "@/app/interview/page";
 
 // Mock Next.js router
 const mockPush = jest.fn();

@@ -1,13 +1,8 @@
-/**
- * Login Page Tests
- * Tests cover: Google login, email login, error handling, and UI interactions
- */
-
 /// <reference types="@testing-library/jest-dom" />
 
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import LoginPage from "../page";
+import LoginPage from "@/app/login/page";
 
 // Mock Next.js router
 const mockPush = jest.fn();

@@ -1,15 +1,10 @@
-/**
- * Bank History Page Tests
- * Tests cover: record loading, pagination, favorite toggling, and navigation
- */
-
 /// <reference types="@testing-library/jest-dom" />
 
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import HistoryPage from "../page";
+import HistoryPage from "@/app/bank/history/page";
 import { bankService } from "@/features/bank/services";
-import type { InterviewRecord } from "../type";
+import type { InterviewRecord } from "@/app/bank/history/type";
 
 // Mock Next.js router and navigation
 const mockPush = jest.fn();
