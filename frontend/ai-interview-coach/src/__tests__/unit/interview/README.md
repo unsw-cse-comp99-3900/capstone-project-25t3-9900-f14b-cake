@@ -4,7 +4,16 @@
 
 Tests for the Interview Setup Page component (`src/app/interview/page.tsx`).
 
+## Test Methods
 
+- `render` - Render React components for testing
+- `screen` - Query elements from the rendered component
+- `waitFor` - Wait for asynchronous operations to complete
+- `fireEvent` - Simulate DOM events (click, change, mouseDown, etc.)
+- `userEvent` - Simulate user interactions (type, etc.)
+- `jest.mock` - Mock modules and dependencies
+- `jest.fn` - Create mock functions
+- `jest.clearAllMocks` - Clear all mocks between tests
 
 ## Rendering (5 tests)
 

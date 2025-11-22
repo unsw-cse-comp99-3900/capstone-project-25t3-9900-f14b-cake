@@ -4,7 +4,17 @@
 
 Tests for the Login Page component (`src/app/login/page.tsx`).
 
+## Test Methods
 
+- `render` - Render React components for testing
+- `screen` - Query elements from the rendered component
+- `waitFor` - Wait for asynchronous operations to complete
+- `fireEvent` - Simulate DOM events (click, etc.)
+- `userEvent` - Simulate user interactions (type, etc.)
+- `jest.mock` - Mock modules and dependencies
+- `jest.fn` - Create mock functions
+- `jest.clearAllMocks` - Clear all mocks between tests
+- `global.fetch` - Mock fetch API calls
 
 ## Rendering (3 tests)
 

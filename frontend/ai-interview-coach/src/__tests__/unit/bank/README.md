@@ -4,7 +4,16 @@
 
 Tests for the Bank History Page component (`src/app/bank/history/page.tsx`).
 
+## Test Methods
 
+- `render` - Render React components for testing
+- `screen` - Query elements from the rendered component
+- `waitFor` - Wait for asynchronous operations to complete
+- `fireEvent` - Simulate DOM events (click, change, etc.)
+- `userEvent` - Simulate user interactions (type, click, etc.)
+- `jest.mock` - Mock modules and dependencies
+- `jest.fn` - Create mock functions
+- `jest.clearAllMocks` - Clear all mocks between tests
 
 ## Rendering (4 tests)
 

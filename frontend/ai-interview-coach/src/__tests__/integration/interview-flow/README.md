@@ -4,6 +4,21 @@
 
 Integration tests for the complete interview flow across multiple pages.
 
+## Test Methods
+
+- `render` - Render React components for testing
+- `screen` - Query elements from the rendered component
+- `waitFor` - Wait for asynchronous operations to complete
+- `fireEvent` - Simulate DOM events (click, change, mouseDown, etc.)
+- `userEvent` - Simulate user interactions (type, etc.)
+- `rerender` - Re-render components with new props
+- `jest.mock` - Mock modules and dependencies
+- `jest.fn` - Create mock functions
+- `jest.clearAllMocks` - Clear all mocks between tests
+- `global.fetch` - Mock fetch API calls
+- `mockSessionStorage` - Mock sessionStorage for data persistence
+- `Storage.prototype.getItem/setItem` - Mock localStorage operations
+
 ## Complete Interview Flow (6 tests)
 
 - Full flow: login -> setup -> answer -> feedback -> history
