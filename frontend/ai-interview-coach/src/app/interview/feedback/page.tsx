@@ -205,9 +205,6 @@ function FeedbackContent() {
                   </button>
                 )}
               </div>
-              <div className="text-lg text-gray-600">
-                Total Time: {formatTime(timeElapsed)}
-              </div>
             </div>
             <div className="flex items-center text-sm text-gray-600 gap-4">
               <span>Mode: {mode === "audio" ? "Audio" : "Text"}</span>
@@ -275,23 +272,35 @@ function FeedbackContent() {
                     </div>
                   </div>
 
-                  {feedback.text && (
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-gray-500 mb-2">Feedback:</h3>
-                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                          {feedback.text}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
                   {feedback.scores && feedback.scores.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-gray-500 mb-3">Performance Scores</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {feedback.scores.map((score, scoreIndex) => {
                           const label = scoreLabels[scoreIndex] || { name: `Criterion ${scoreIndex + 1}`, description: "" };
+                          
+                          // Get corresponding detailed feedback text
+                          let detailedFeedback: string | null = null;
+                          if (feedback.feedbacks) {
+                            switch (scoreIndex) {
+                              case 0:
+                                detailedFeedback = feedback.feedbacks.clarity_structure_feedback;
+                                break;
+                              case 1:
+                                detailedFeedback = feedback.feedbacks.relevance_feedback;
+                                break;
+                              case 2:
+                                detailedFeedback = feedback.feedbacks.keyword_alignment_feedback;
+                                break;
+                              case 3:
+                                detailedFeedback = feedback.feedbacks.confidence_feedback;
+                                break;
+                              case 4:
+                                detailedFeedback = feedback.feedbacks.conciseness_feedback;
+                                break;
+                            }
+                          }
+                          
                           return (
                             <div key={scoreIndex} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                               <div className="flex items-center justify-between mb-2">
@@ -302,23 +311,37 @@ function FeedbackContent() {
                                   </span>
                                 </div>
                               </div>
-                              <p className="text-xs text-gray-600">{label.description}</p>
-                              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                              <p className="text-xs text-gray-600 mb-2">{label.description}</p>
+                              <div className="mt-2 w-full bg-gray-200 rounded-full h-2 mb-3">
                                 <div 
                                   className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(score)}`}
                                   style={{ width: `${(score / 5) * 100}%` }}
                                 ></div>
                               </div>
+                              {detailedFeedback && (
+                                <div className="mt-3 pt-3 border-t border-blue-200">
+                                  <p className="text-xs text-gray-700 leading-relaxed">
+                                    {detailedFeedback}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                       </div>
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-blue-800">Overall Performance</span>
-                          <span className="text-lg font-bold text-blue-900">
-                            {avgScore}/5
-                          </span>
+                      <div className="mt-4">
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-blue-800">Overall Performance</span>
+                            <span className="text-lg font-bold text-blue-900">
+                              {avgScore}/5
+                            </span>
+                          </div>
+                          {feedback.text && (
+                            <p className="text-sm text-gray-700 mt-2 leading-relaxed">
+                              {feedback.text}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>

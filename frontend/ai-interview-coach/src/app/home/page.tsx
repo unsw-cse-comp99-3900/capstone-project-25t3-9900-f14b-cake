@@ -93,10 +93,6 @@ export default function HomePage() {
           console.log(`Date ${dateKey} not in 7-day range. Available dates:`, Array.from(dataMap.keys()));
         }
       });
-    } else {
-      chartDataArray.forEach((entry) => {
-        entry.count = Math.floor(Math.random() * 3) + 1;
-      });
     }
 
     return chartDataArray;
@@ -109,6 +105,18 @@ export default function HomePage() {
     }
     return chartData.reduce((sum, dataPoint) => sum + dataPoint.count, 0);
   }, [chartData]);
+
+  // Calculate saved (favorite) interviews count
+  const savedCount = useMemo(() => {
+    return records.filter((record) => 
+      record.is_like === true || record.is_like === 1
+    ).length;
+  }, [records]);
+
+  // Calculate total interviews count
+  const totalInterviewCount = useMemo(() => {
+    return records.length;
+  }, [records]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -130,9 +138,9 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {[
-              { label: 'Saved', count: 0, icon: 'bookmark', color: 'green' },
+              { label: 'Saved', count: savedCount, icon: 'bookmark', color: 'green' },
               { label: 'Applied', count: 0, icon: 'send', color: 'blue' },
-              { label: 'Interview', count: 0, icon: 'headset_mic', color: 'purple' },
+              { label: 'Interview', count: totalInterviewCount, icon: 'headset_mic', color: 'purple' },
               { label: 'Offers', count: 0, icon: 'emoji_events', color: 'yellow' },
             ].map(({ label, count, icon, color }) => (
               <div key={label} className="modern-card p-6">
