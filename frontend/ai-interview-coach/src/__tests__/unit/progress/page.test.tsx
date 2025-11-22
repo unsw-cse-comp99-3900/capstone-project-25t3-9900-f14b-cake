@@ -5,7 +5,7 @@
 
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ProgressPage from "../page";
+import ProgressPage from "@/app/progress/page";
 import { getProgressPageData, getUserTarget, setUserTarget } from "@/services";
 
 // Mock the services
