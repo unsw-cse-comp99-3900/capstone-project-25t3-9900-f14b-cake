@@ -40,6 +40,8 @@ services:
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://interview-api-i4oo.onrender.com
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        value: 205444288447-54r4a3edjrg55qd5bc42lrqvmih0sf80.apps.googleusercontent.com
 
 databases:
   - name: interview-db
