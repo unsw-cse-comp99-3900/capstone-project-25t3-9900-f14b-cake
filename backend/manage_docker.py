@@ -92,12 +92,19 @@ def logs():
     run_command(f"docker logs {BACKEND_CONTAINER} -f")
 
 
-def test():
-    """Run all backend unit tests inside the container."""
-    print("Running unit tests inside backend container...")
-    run_command(f"docker exec -it {BACKEND_CONTAINER} python -m unittest discover -s app/tests")
-    print("Tests completed.")
+# def test():
+#     """Run all backend unit tests inside the container."""
+#     print("Running unit tests inside backend container...")
+#     run_command(f"docker exec -it {BACKEND_CONTAINER} python -m unittest discover -s app/tests")
+#     print("Tests completed.")
 
+def test():
+    """Run all backend pytest tests with coverage."""
+    print("Running pytest inside backend container...")
+    run_command(
+         f"docker exec -it {BACKEND_CONTAINER} bash -c \"export TESTING=1 && pytest -vv --disable-warnings\""
+    )
+    print("Tests completed.")
 
 def run_file(file_path):
     """

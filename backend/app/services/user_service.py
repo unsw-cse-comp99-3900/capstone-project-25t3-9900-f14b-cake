@@ -275,6 +275,7 @@ def get_user_interview_summary(token: str, db = None):
     user_id = id_email.get("id")
     user = get_user_basic(user_id, db)
     if not user:
+        print(f"User: {user_id} does not exist in the database.")
         return None
     
     questions_number = float(user.total_questions)
@@ -444,6 +445,10 @@ def get_user_statistics(user_id: str, db = None):
     Returns:
         UserStatistics: A UserStatistics entity containing user information.
     """
+    user = get_user_basic(user_id, db)
+    if not user:
+        print(f"User: {user_id} does not exist in the database.")
+        return None
     user_statistics = UserStatistics.from_db(user_id, db)
     return user_statistics
 
@@ -465,6 +470,9 @@ def like_interview(token: str, interview_id: str, db = None):
     id_email = get_user_id_and_email(token)
     user_id = id_email.get("id")
     interview = update_interview_like(interview_id, db)
+    if not interview:
+        print(f"Interview: {interview_id} does not exist in the database.")
+        return None
     
     print(f"User: {user_id} change interview {interview_id} is_like value to {interview.is_like}.")
     result = {
@@ -502,6 +510,7 @@ def set_user_target(token: str, target: dict, db = None):
 
     user = update_user(user_id, update_data, db)
     if not user:
+        print(f"User: {user_id} does not exist in the database.")
         return None
     
     result = {
@@ -533,6 +542,7 @@ def get_user_target(token: str, db = None):
     user_id = id_email.get("id")
     user = get_user_basic(user_id, db)
     if not user:
+        print(f"User: {user_id} does not exist in the database.")
         return None
     result = {
         "user_id": user.user_id,

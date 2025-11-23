@@ -2,7 +2,6 @@ from textwrap import dedent
 
 def build_answer_prompt(
     question: str,
-    answer: str,
     user_info: dict | None = None,
     job_description: str | None = None
 ) -> str:
