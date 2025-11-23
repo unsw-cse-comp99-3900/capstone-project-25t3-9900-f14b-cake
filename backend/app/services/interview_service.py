@@ -259,6 +259,10 @@ def interview_start(token: str, job_description: str, question_type: str, db = N
 
     id_email = get_user_id_and_email(token)
     user_id = id_email["id"]
+    user = get_user_basic(user_id, db)
+    if not user:
+        print(f"User: {user_id} does not exist in the database.")
+        return None
     interview_id = str(uuid.uuid4())
     save_interview(user_id=user_id, 
                    interview_id=interview_id, 
@@ -311,6 +315,10 @@ def interview_feedback(token: str, interview_id: str, interview_type: str, inter
 
     id_email = get_user_id_and_email(token)
     user_id = id_email["id"]
+    user = get_user_basic(user_id, db)
+    if not user:
+        print(f"User: {user_id} does not exist in the database.")
+        return None
     save_question(user_id, interview_id, interview_type, interview_question, interview_answer, parsed_feedback, db)
 
     return {
