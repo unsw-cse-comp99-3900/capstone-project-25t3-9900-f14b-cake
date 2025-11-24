@@ -129,8 +129,9 @@ export default function ProgressPage() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Get token from localStorage (set during login)
-                const token = localStorage.getItem("auth_token");
+                // Get token from tokenManager (automatically checks expiration)
+                const { getToken } = await import('@/lib/tokenManager');
+                const token = getToken();
 
                 if (!token) {
                     setError("Please login first");
@@ -224,7 +225,8 @@ export default function ProgressPage() {
     const handleSaveTarget = async () => {
         try {
             setSavingTarget(true);
-            const token = localStorage.getItem("auth_token");
+            const { getToken } = await import('@/lib/tokenManager');
+            const token = getToken();
             if (!token) {
                 alert("Please login first");
                 return;

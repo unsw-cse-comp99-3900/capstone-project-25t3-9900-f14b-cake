@@ -1,17 +1,17 @@
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/constants";
 import type { RequestConfig } from "@/lib/type";
+import { getToken } from "@/lib/tokenManager";
 
 // Default token for unauthenticated users
 const DEFAULT_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjIxNjkwOTA4ODl4ODY2MTgyMjY3NDI0ODY3MDAwIiwiZW1haWwiOiJyYXlyYXloZTA4QGdtYWlsLmNvbSIsImlhdCI6MTc2MjQwMTUwMCwibmJmIjoxNzYyNDAxNTAwLCJleHAiOjE3NjI0ODc5MDB9.40DwUf_5039YKy2k41LSnQ_xm7K2IUBnzjMpF7r89Sk";
 
-// Get API token from localStorage (obtained from backend /login endpoint)
+// Get API token from tokenManager (automatically checks expiration)
 const getAuthToken = (): string => {
   if (typeof window === "undefined") return DEFAULT_TOKEN;
 
-  // Get token from localStorage (stored after successful backend login)
-  const token = localStorage.getItem("auth_token");
+  const token = getToken();
   return token || DEFAULT_TOKEN;
 };
 

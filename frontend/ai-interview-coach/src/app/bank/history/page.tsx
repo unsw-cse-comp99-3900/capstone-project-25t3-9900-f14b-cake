@@ -34,7 +34,6 @@ function HistoryContent() {
         });
         setRecords(sortedRecords);
       } catch (e) {
-        console.error('Failed to load interview history from API', e);
         const stored = localStorage.getItem('interview_history');
         if (stored) {
           try {
@@ -51,7 +50,6 @@ function HistoryContent() {
             });
             setRecords(sortedData);
           } catch (parseError) {
-            console.error('Failed to parse interview history from localStorage', parseError);
           }
         }
       } finally {
@@ -130,7 +128,6 @@ function HistoryContent() {
       });
       setRecords(sortedRecords);
     } catch (e) {
-      console.error('Failed to toggle favorite', e);
       const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
       const index = favorites.findIndex((f: InterviewRecord) => f.id === record.id);
       
@@ -208,7 +205,6 @@ function HistoryContent() {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Question Type</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Duration</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wider">Total Score</th>
                       <th className="px-6 py-3 text-center text-xs font-semibold text-blue-600 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -221,9 +217,6 @@ function HistoryContent() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {formatDate(record)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {formatTime(record.timeElapsed)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
