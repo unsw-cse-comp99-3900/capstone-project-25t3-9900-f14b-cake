@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '205444288447-54r4a3edjrg55qd5bc42lrqvmih0sf80.apps.googleusercontent.com';
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
     if (!clientId) {
       setError('Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID');
       return;

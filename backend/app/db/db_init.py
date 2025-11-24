@@ -37,7 +37,7 @@ def init_db(reset: bool = False):
 
 
 if __name__ == "__main__":
-    reset_all()
+    # reset_all()
     if len(sys.argv) > 1 and sys.argv[1] == "reset":
         init_db(reset=True)
     else:
