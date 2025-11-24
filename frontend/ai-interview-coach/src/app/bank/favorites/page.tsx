@@ -6,12 +6,15 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
 import { bankService } from '@/features/bank/services';
+import { useAuth } from '@/hooks/useAuth';
 
 const ITEMS_PER_PAGE = 10;
 
 function FavoritesContent() {
   const router = useRouter();
+  useAuth();
   const [records, setRecords] = useState<InterviewRecord[]>([]);
+  const [invalidRecordsCount, setInvalidRecordsCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<InterviewRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,8 +25,15 @@ function FavoritesContent() {
       try {
         setLoading(true);
         const favoriteRecords = await bankService.getFavorites();
-        // Sort by timestamp (newest first)
-        const sortedRecords = favoriteRecords.sort((a, b) => {
+        
+        const validRecords = favoriteRecords.filter(record => 
+          record.questions && record.questions.length > 0 && 
+          record.questions.some(q => q && q.trim().length > 0)
+        );
+        const invalidCount = favoriteRecords.length - validRecords.length;
+        setInvalidRecordsCount(invalidCount);
+        
+        const sortedRecords = validRecords.sort((a, b) => {
           const getTimestamp = (record: InterviewRecord): number => {
             if (record.timestamp) {
               return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
@@ -38,8 +48,16 @@ function FavoritesContent() {
         if (stored) {
           try {
             const data = JSON.parse(stored);
-            // Sort by timestamp (newest first)
-            const sortedData = data.sort((a: InterviewRecord, b: InterviewRecord) => {
+            
+            // Filter out records with empty questions
+            const validRecords = data.filter((record: InterviewRecord) => 
+              record.questions && record.questions.length > 0 && 
+              record.questions.some((q: string) => q && q.trim().length > 0)
+            );
+            const invalidCount = data.length - validRecords.length;
+            setInvalidRecordsCount(invalidCount);
+            
+            const sortedData = validRecords.sort((a: InterviewRecord, b: InterviewRecord) => {
               const getTimestamp = (record: InterviewRecord): number => {
                 if (record.timestamp) {
                   return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
@@ -109,8 +127,17 @@ function FavoritesContent() {
     try {
       await bankService.toggleLike(recordId);
       const favoriteRecords = await bankService.getFavorites();
-      // Sort by timestamp (newest first)
-      const sortedRecords = favoriteRecords.sort((a, b) => {
+      
+      // Filter out records with empty questions
+      const validRecords = favoriteRecords.filter(record => 
+        record.questions && record.questions.length > 0 && 
+        record.questions.some(q => q && q.trim().length > 0)
+      );
+      const invalidCount = favoriteRecords.length - validRecords.length;
+      setInvalidRecordsCount(invalidCount);
+      
+      // Sort by timestamp 
+      const sortedRecords = validRecords.sort((a, b) => {
         const getTimestamp = (record: InterviewRecord): number => {
           if (record.timestamp) {
             return record.timestamp < 1e12 ? record.timestamp * 1000 : record.timestamp;
@@ -178,6 +205,11 @@ function FavoritesContent() {
           ) : records.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-600 text-lg">No favorite records yet.</p>
+              {invalidRecordsCount > 0 && (
+                <p className="text-gray-500 text-sm mt-2">
+                  ({invalidRecordsCount} invalid record{invalidRecordsCount !== 1 ? 's' : ''} not shown)
+                </p>
+              )}
               <Link href="/bank/history" className="text-blue-600 hover:underline mt-4 inline-block">
                 Browse history to add favorites
               </Link>
@@ -239,42 +271,59 @@ function FavoritesContent() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {(totalPages > 1 || invalidRecordsCount > 0) && (
                 <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-gray-700">
-                    Showing {startIndex + 1} to {Math.min(endIndex, records.length)} of {records.length} records
+                    {totalPages > 1 ? (
+                      <>
+                        Showing {startIndex + 1} to {Math.min(endIndex, records.length)} of {records.length} records
+                        {invalidRecordsCount > 0 && (
+                          <span className="ml-2 text-gray-500">
+                            ({invalidRecordsCount} invalid record{invalidRecordsCount !== 1 ? 's' : ''} not shown)
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      invalidRecordsCount > 0 && (
+                        <span className="text-gray-500">
+                          {invalidRecordsCount} invalid record{invalidRecordsCount !== 1 ? 's' : ''} not shown
+                        </span>
+                      )
+                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      Previous
-                    </button>
-                    <div className="flex gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`px-4 py-2 rounded-lg ${
-                            currentPage === page
-                              ? 'bg-blue-600 text-white'
-                              : 'border border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
+                  {totalPages > 1 && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <div className="flex gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-4 py-2 rounded-lg ${
+                              currentPage === page
+                                ? 'bg-blue-600 text-white'
+                                : 'border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      Next
-                    </button>
-                  </div>
+                  )}
                 </div>
               )}
             </>

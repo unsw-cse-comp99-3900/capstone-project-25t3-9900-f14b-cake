@@ -8,10 +8,12 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Check token expiration on mount
     if (isTokenExpired()) {
       clearToken();
+      router.push('/login');
+      return;
     }
-
     const checkInterval = setInterval(() => {
       if (isTokenExpired()) {
         clearToken();
@@ -19,7 +21,7 @@ export default function RootPage() {
           router.push('/login');
         }
       }
-    }, 5 * 60 * 1000); 
+    }, 5 * 60 * 1000);
 
     const token = getToken();
     const sessionToken = sessionStorage.getItem('auth_token');
