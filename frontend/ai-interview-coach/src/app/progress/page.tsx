@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
 import { ScoreDimension } from "@/types";
 import { SCORE_DIMENSION_CONFIGS } from "@/types/common";
 import Calendar from "react-calendar";
@@ -116,6 +117,7 @@ const radarChartData = mockCategoryPerformance.map((dim) => ({
 // ===== END OF MOCK DATA =====
 
 export default function ProgressPage() {
+    useAuth();
     const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.RECENT_7);
     const [progressData, setProgressData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -130,12 +132,12 @@ export default function ProgressPage() {
             try {
                 setLoading(true);
                 // Get token from tokenManager (automatically checks expiration)
-                const { getToken } = await import('@/lib/tokenManager');
+                const { getToken, isTokenExpired, clearToken } = await import('@/lib/tokenManager');
                 const token = getToken();
 
-                if (!token) {
-                    setError("Please login first");
-                    setLoading(false);
+                if (!token || isTokenExpired()) {
+                    clearToken();
+                    window.location.href = '/login';
                     return;
                 }
 

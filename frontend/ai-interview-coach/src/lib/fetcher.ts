@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/constants";
 import type { RequestConfig } from "@/lib/type";
-import { getToken } from "@/lib/tokenManager";
+import { getToken, clearToken, isTokenExpired } from "@/lib/tokenManager";
 
 // Default token for unauthenticated users
 const DEFAULT_TOKEN =
@@ -33,10 +33,21 @@ instance.interceptors.request.use((config: any) => {
   } as any;
 });
 
-// You can customize global response handling here if needed
+// Handle response errors - redirect to login if token expired or unauthorized
 instance.interceptors.response.use(
   (response: any) => response,
-  (error: any) => Promise.reject(error)
+  (error: any) => {
+    if (error.response?.status === 401 || isTokenExpired()) {
+      clearToken();
+      if (
+        typeof window !== "undefined" &&
+        window.location.pathname !== "/login"
+      ) {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 type Config = RequestConfig | undefined;

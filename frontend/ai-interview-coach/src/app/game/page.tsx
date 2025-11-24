@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { BadgeType, BADGE_CONFIGS, DAILY_QUOTES } from "@/types";
 import { getGamePageData } from "@/services";
+import { useAuth } from "@/hooks/useAuth";
 
 // ===== MOCK DATA - COMMENTED OUT FOR BACKEND TESTING =====
 // Mock user badge data - backend will provide real data
@@ -20,6 +21,7 @@ import { getGamePageData } from "@/services";
 
 export default function GamePage() {
     const router = useRouter();
+    useAuth();
     const [showDailyQuote, setShowDailyQuote] = useState(false);
     const [selectedBadge, setSelectedBadge] = useState<{
         badge: any;
@@ -35,12 +37,12 @@ export default function GamePage() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const { getToken } = await import('@/lib/tokenManager');
+                const { getToken, isTokenExpired, clearToken } = await import('@/lib/tokenManager');
                 const token = getToken();
 
-                if (!token) {
-                    setError("Please login first");
-                    setLoading(false);
+                if (!token || isTokenExpired()) {
+                    clearToken();
+                    router.push('/login');
                     return;
                 }
                 const data = await getGamePageData(token);

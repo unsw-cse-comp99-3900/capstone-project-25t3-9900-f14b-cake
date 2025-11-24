@@ -6,11 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { interviewService } from "@/features/interview/services";
 import { speechToTextService } from "@/utils/speechToText";
+import { useAuth } from "@/hooks/useAuth";
 import "./type";
 
 function AnsweringContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  useAuth();
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [questions, setQuestions] = useState<string[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);

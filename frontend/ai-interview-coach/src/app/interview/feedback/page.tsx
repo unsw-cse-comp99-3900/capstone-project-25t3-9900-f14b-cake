@@ -4,10 +4,12 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { bankService } from "@/features/bank/services";
+import { useAuth } from "@/hooks/useAuth";
 import type { FeedbackData } from "./type";
 
 function FeedbackContent() {
   const router = useRouter();
+  useAuth();
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [recordId, setRecordId] = useState<string | null>(null);

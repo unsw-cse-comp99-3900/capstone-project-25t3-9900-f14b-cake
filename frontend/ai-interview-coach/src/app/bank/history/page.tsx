@@ -6,11 +6,13 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import type { InterviewRecord } from './type';
 import { bankService } from '@/features/bank/services';
+import { useAuth } from '@/hooks/useAuth';
 
 const ITEMS_PER_PAGE = 10;
 
 function HistoryContent() {
   const router = useRouter();
+  useAuth();
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<InterviewRecord | null>(null);

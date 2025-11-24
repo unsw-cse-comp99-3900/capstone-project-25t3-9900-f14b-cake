@@ -7,9 +7,11 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaCh
 import type { InterviewRecord } from '@/app/bank/history/type';
 import { getUserDetail } from '@/features/user/services';
 import { transformInterviewsToRecords } from '@/utils/dataTransform';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
   const router = useRouter();
+  useAuth();
   const [records, setRecords] = useState<InterviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function InterviewPage() {
   const router = useRouter();
+  useAuth();
   const [jobDescription, setJobDescription] = useState("");
   const [questionType, setQuestionType] = useState("");
   const [showModal, setShowModal] = useState(false);
