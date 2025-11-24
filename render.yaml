@@ -12,7 +12,7 @@ services:
           name: interview-db
           property: connectionString
       
-      # API URLs - Set these manually in Render dashboard
+      # API URLs - Set these manually
       - key: GPT_ACCESS_URL
         sync: false
       - key: FAQ_ACCESS_URL
@@ -29,6 +29,10 @@ services:
       # Test JWT - Set manually
       - key: TEST_JWT
         sync: false
+
+      # Frontend URL - Set manually
+      - key: FRONTEND_URL
+        value: https://interview-frontend-kukr.onrender.com 
 
   # Frontend Service
   - type: web
