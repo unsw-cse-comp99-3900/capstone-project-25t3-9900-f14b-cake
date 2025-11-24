@@ -3,7 +3,8 @@
 """
 Initialize PostgreSQL tables using SQLAlchemy ORM.
 Usage:
-    python -m app.db.db_init
+    python -m app.db.db_init        # Creates table if not exist
+    python -m app.db.db_init reset  # Drops all tables
 """
 from sqlalchemy import text
 from app.db.db_config import engine, Base

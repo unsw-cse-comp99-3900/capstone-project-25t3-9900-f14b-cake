@@ -1,4 +1,5 @@
 # app/main.py
+import os
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,14 +7,15 @@ from app.api.router import register_routers
 
 app = FastAPI(title="Interview API", version="1.0.0")
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 # --- CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://interview-frontend-kukr.onrender.com",               # Frontend
+        FRONTEND_URL,
         "http://localhost:3000",                                      # Local development
         "http://172.19.0.2:3000",                                     # Docker local
-        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
