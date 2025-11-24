@@ -243,6 +243,13 @@ def interview_start(token: str, job_description: str, question_type: str, db = N
     Returns:
         dict: A dict interview_id and a list of interview questions.
     """
+    id_email = get_user_id_and_email(token)
+    user_id = id_email["id"]
+    user = get_user_basic(user_id, db)
+    if not user:
+        print(f"User: {user_id} does not exist in the database.")
+        return None
+
     gpt = GPTAccessClient(token)
     prompt = build_question_prompt(job_description, question_type)
     result = gpt.send_prompt(prompt)
@@ -257,8 +264,6 @@ def interview_start(token: str, job_description: str, question_type: str, db = N
     while len(items) < 3:
         items.append("")
 
-    id_email = get_user_id_and_email(token)
-    user_id = id_email["id"]
     interview_id = str(uuid.uuid4())
     save_interview(user_id=user_id, 
                    interview_id=interview_id, 
@@ -285,6 +290,16 @@ def interview_feedback(token: str, interview_id: str, interview_type: str, inter
     Returns:
         dict: A dict interview_feedback, this is actually a feedback on only one question.
     """
+    if not interview_answer:
+        return None
+    
+    id_email = get_user_id_and_email(token)
+    user_id = id_email["id"]
+    user = get_user_basic(user_id, db)
+    if not user:
+        print(f"User: {user_id} does not exist in the database.")
+        return None
+
     user_info: Dict[str, Any] = {}
     try:
         # faq_client = FAQAccessClient(token)
@@ -309,8 +324,6 @@ def interview_feedback(token: str, interview_id: str, interview_type: str, inter
     except Exception:
         parsed_feedback = {}
 
-    id_email = get_user_id_and_email(token)
-    user_id = id_email["id"]
     save_question(user_id, interview_id, interview_type, interview_question, interview_answer, parsed_feedback, db)
 
     return {

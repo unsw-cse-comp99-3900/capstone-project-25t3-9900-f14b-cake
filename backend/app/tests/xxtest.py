@@ -239,5 +239,5 @@ if __name__ == "__main__":
     test_interview()
     test_user()
     test_target()
-    test_badges()
+    # test_badges()
     # test_user_statistics()

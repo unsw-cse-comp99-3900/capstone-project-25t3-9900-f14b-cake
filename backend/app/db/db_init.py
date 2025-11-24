@@ -11,15 +11,36 @@ from app.db.db_config import engine, Base
 from app.db import models
 import sys
 
+# def reset_table(table_name: str):
+#     """Clear the specified table"""
+#     with engine.connect() as conn:
+#         conn.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;"))
+#         conn.commit()
+#         print(f"Table '{table_name}' has been truncated.")
+
 def reset_table(table_name: str):
-    """Clear the specified table"""
+    """Clear the specified table. Use TRUNCATE in PostgreSQL, DELETE in SQLite."""
     with engine.connect() as conn:
-        conn.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;"))
-        conn.commit()
-        print(f"Table '{table_name}' has been truncated.")
+        if engine.dialect.name == "sqlite":
+            # SQLite: TRUNCATE not supported
+            conn.execute(text(f"DELETE FROM {table_name};"))
+            conn.commit()
+            print(f"[SQLite] Table '{table_name}' cleared with DELETE.")
+        else:
+            # PostgreSQL or others
+            conn.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;"))
+            conn.commit()
+            print(f"[PostgreSQL] Table '{table_name}' truncated.")
+
+# def reset_all():
+#     """Rebuild all tables"""
+#     print("Dropping and recreating all tables...")
+#     Base.metadata.drop_all(bind=engine)
+#     Base.metadata.create_all(bind=engine)
+#     print("All tables reset.")
 
 def reset_all():
-    """Rebuild all tables"""
+    """Rebuild all tables safely across SQLite/PostgreSQL."""
     print("Dropping and recreating all tables...")
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
