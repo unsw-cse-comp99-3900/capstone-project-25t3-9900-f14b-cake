@@ -47,9 +47,9 @@ export default function Navbar({
               { label: 'Home', href: '/home', icon: 'home' },
               { label: 'Game', href: '/game', icon: 'sports_esports' },
               { label: 'Progress', href: '/progress', icon: 'trending_up' },
-              { label: 'Bank', href: '/bank', icon: 'account_balance' },
+              { label: 'History', href: '/bank/history', icon: 'history' },
             ].map(({ label, href, icon }) => {
-              const isActive = href === '/bank' 
+              const isActive = href === '/bank/history' 
                 ? pathname.startsWith('/bank')
                 : pathname === href;
               return (
