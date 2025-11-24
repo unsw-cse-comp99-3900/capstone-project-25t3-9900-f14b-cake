@@ -52,6 +52,7 @@ function AnsweringContent() {
   const [showTranscriptionModal, setShowTranscriptionModal] = useState(false);
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const startedParamsRef = useRef<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -98,30 +99,51 @@ function AnsweringContent() {
   }, [currentQuestionIndex]);
 
   useEffect(() => {
+    const paramsKey = `${questionType}-${jobDescription}`;
+    
+    if (startedParamsRef.current === paramsKey) {
+      return;
+    }
+    
+    startedParamsRef.current = paramsKey;
     let isCancelled = false;
+    
     (async () => {
       try {
         const res = await interviewService.start({
           question_type: questionType as any,
           job_description: jobDescription,
         });
-        if (!isCancelled) {
-          setQuestions(res.interview_questions || []);
+        
+        const shouldUpdate = !isCancelled && startedParamsRef.current === paramsKey;
+        
+        if (shouldUpdate) {
+          const questionsList = res.interview_questions || [];
+          setQuestions(questionsList);
           setInterviewId(res.interview_id);
-          setInterviewType(questionType); // 使用 URL 参数中的 questionType 作为 interview_type
+          setInterviewType(questionType);
+          setLoading(false);
         }
       } catch (e) {
-        if (!isCancelled) {
+        if (!isCancelled && startedParamsRef.current === paramsKey) {
           setQuestions([]);
+          setLoading(false);
         }
-      } finally {
-        if (!isCancelled) setLoading(false);
       }
     })();
+    
     return () => {
-      isCancelled = true;
+      if (startedParamsRef.current !== paramsKey) {
+        isCancelled = true;
+      }
     };
   }, [questionType, jobDescription]);
+
+  useEffect(() => {
+    if (questions.length > 0 && loading) {
+      setLoading(false);
+    }
+  }, [questions, loading]);
 
   useEffect(() => {
     return () => {
@@ -163,7 +185,6 @@ function AnsweringContent() {
       setShowTranscriptionModal(false);
       setIsTranscribing(false);
     } catch (err) {
-      console.error('Failed to start transcription', err);
       setShowTranscriptionModal(false);
       setIsTranscribing(false);
     }
@@ -235,7 +256,6 @@ function AnsweringContent() {
           resolve(result.transcript);
         })
         .catch((error) => {
-          console.warn('Real-time transcription failed:', error);
           setShowTranscriptionModal(false);
           setIsTranscribing(false);
           reject(error);

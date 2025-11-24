@@ -2,19 +2,37 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getToken, isTokenExpired, clearToken } from '@/lib/tokenManager';
 
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const persistentToken = localStorage.getItem('auth_token');
+    if (isTokenExpired()) {
+      clearToken();
+    }
+
+    const checkInterval = setInterval(() => {
+      if (isTokenExpired()) {
+        clearToken();
+        if (window.location.pathname !== '/login') {
+          router.push('/login');
+        }
+      }
+    }, 5 * 60 * 1000); 
+
+    const token = getToken();
     const sessionToken = sessionStorage.getItem('auth_token');
     
-    if (persistentToken || sessionToken) {
+    if (token || sessionToken) {
       router.push('/home');
     } else {
       router.push('/login');
     }
+
+    return () => {
+      clearInterval(checkInterval);
+    };
   }, [router]);
 
   return (

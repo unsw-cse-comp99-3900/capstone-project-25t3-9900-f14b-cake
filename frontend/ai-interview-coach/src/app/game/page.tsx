@@ -35,8 +35,8 @@ export default function GamePage() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Get token from localStorage (set during login)
-                const token = localStorage.getItem("auth_token");
+                const { getToken } = await import('@/lib/tokenManager');
+                const token = getToken();
 
                 if (!token) {
                     setError("Please login first");

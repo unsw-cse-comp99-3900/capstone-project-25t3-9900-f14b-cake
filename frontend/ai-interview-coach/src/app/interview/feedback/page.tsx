@@ -42,7 +42,6 @@ function FeedbackContent() {
           setRecordId(id);
         }
       } catch (e) {
-        console.error("Failed to parse feedback data", e);
       }
     }
   }, []);
@@ -62,7 +61,6 @@ function FeedbackContent() {
           setIsFavorite(interview.is_like === true || interview.is_like === 1);
         }
       } catch (e) {
-        console.error('Failed to load favorite status from API', e);
         const favorites = JSON.parse(localStorage.getItem('interview_favorites') || '[]');
         setIsFavorite(favorites.some((f: any) => f.id === recordId));
       }
@@ -163,7 +161,6 @@ function FeedbackContent() {
                           setIsFavorite(!isFavorite);
                         }
                       } catch (e) {
-                        console.error('Failed to toggle favorite', e);
                         if (!feedbackData) return;
                         
                         const calculateTotalScore = (feedbacks: Record<number, { scores: number[] | null }>): number => {

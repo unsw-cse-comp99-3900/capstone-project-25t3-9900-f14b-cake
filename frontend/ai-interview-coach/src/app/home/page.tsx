@@ -19,20 +19,15 @@ export default function HomePage() {
       try {
         setLoading(true);
         const userData = await getUserDetail();
-        console.log('User data from API:', userData);
-        console.log('Interviews count:', userData.interviews?.length || 0);
         const transformedRecords = transformInterviewsToRecords(userData.interviews || []);
-        console.log('Transformed records:', transformedRecords);
         setRecords(transformedRecords);
       } catch (e) {
-        console.error('Failed to load interview history from API', e);
         const stored = localStorage.getItem('interview_history');
         if (stored) {
           try {
             const data = JSON.parse(stored);
             setRecords(data);
           } catch (parseError) {
-            console.error('Failed to parse interview history from localStorage', parseError);
           }
         }
       } finally {
@@ -70,7 +65,6 @@ export default function HomePage() {
     }
 
     if (records && records.length > 0) {
-      console.log('Processing records for chart:', records.length);
       records.forEach((record) => {
         let timestamp: number;
         if (record.timestamp) {
@@ -83,14 +77,9 @@ export default function HomePage() {
         recordDate.setHours(0, 0, 0, 0); 
         const dateKey = recordDate.toISOString().split('T')[0];
         
-        console.log(`Record date: ${dateKey}, timestamp: ${record.timestamp}, converted: ${timestamp}, createdAt: ${record.createdAt}`);
-        
         if (dataMap.has(dateKey)) {
           const existing = dataMap.get(dateKey)!;
           existing.count += 1;
-          console.log(`Matched date ${dateKey}, count now: ${existing.count}`);
-        } else {
-          console.log(`Date ${dateKey} not in 7-day range. Available dates:`, Array.from(dataMap.keys()));
         }
       });
     }

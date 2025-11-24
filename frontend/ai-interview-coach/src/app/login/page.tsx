@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { API_BASE_URL } from '@/lib/constants';
+import { setToken } from '@/lib/tokenManager';
 
 declare global {
   interface Window {
@@ -87,8 +88,8 @@ export default function LoginPage() {
 
               const loginData = await loginResponse.json();
               
-              // Store the backend token
-              localStorage.setItem('auth_token', loginData.token);
+              // Store the backend token with timestamp
+              setToken(loginData.token);
               
               // Store user_id if needed
               if (loginData.user_id) {
@@ -154,7 +155,8 @@ export default function LoginPage() {
 
       const loginData = await loginResponse.json();
       
-      localStorage.setItem('auth_token', loginData.token);
+      // Store the backend token with timestamp
+      setToken(loginData.token);
       
       if (loginData.user_id) {
         localStorage.setItem('user_id', loginData.user_id);
