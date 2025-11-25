@@ -185,9 +185,11 @@ def test_like_interview(mock_update_like, mock_get_id):
 # set_user_target
 # ============================================================
 
-@patch("app.services.auth_service.get_user_id_and_email")
+@patch("app.services.utils.with_db_session", lambda f: f)   # no mock argument
+@patch("app.services.user_service.get_user_basic")
 @patch("app.services.user_service.update_user")
-def test_set_user_target(mock_update, mock_get_id):
+@patch("app.services.auth_service.get_user_id_and_email")
+def test_set_user_target(mock_get_id, mock_update, mock_basic):
     
     fake_user = MagicMock()
     fake_user.user_id = FAKE_USER_ID

@@ -120,7 +120,8 @@ def run_file(file_path):
     file_path = file_path.strip().lstrip("./")
 
     # Convert to module path
-    module_path = file_path.replace("/", ".").replace(".py", "")
+    # module_path = file_path.replace("/", ".").replace(".py", "")
+    module_path = file_path.replace(os.sep, ".").replace(".py", "")
 
     print(f"Running module '{module_path}' inside container '{BACKEND_CONTAINER}'...")
 
