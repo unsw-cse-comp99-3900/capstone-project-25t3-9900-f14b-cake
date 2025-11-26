@@ -50,7 +50,6 @@ def reset():
     print("Performing full reset (containers + volumes)...")
     run_command(f"docker compose -f {COMPOSE_FILE} down -v")
 
-    # 等待端口释放
     port = 9000
     print(f"Checking if port {port} is free...")
     for _ in range(10):
