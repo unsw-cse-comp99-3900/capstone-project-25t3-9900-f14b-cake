@@ -101,9 +101,6 @@ Ensure **Docker Desktop** is running and **Python** is available on your machine
 
 ## Frontend Deployment
 
-Full reference:  
-https://github.com/unsw-cse-comp99-3900/capstone-project-25t3-9900-f14b-cake/tree/main/frontend/ai-interview-coach
-
 ### Prerequisites
 
 - [Docker](https://www.docker.com/get-started) (version 20.10 or higher)
