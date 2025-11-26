@@ -4,7 +4,7 @@
 
 1. After login to render account, go to **Blueprints** tab.
 2. Click on the **+ New Blueprint Instance** button on the top right corner.
-<img width="1038" height="470" alt="df1c2e4a5ab4a941e0370c9432055406" src="https://github.com/user-attachments/assets/2956741a-4130-4b51-9051-4782f84e2958" />
+<img width="1094" height="507" alt="c274a3bb093a1ce95962802b450fd08f" src="https://github.com/user-attachments/assets/ab80b643-9118-4f27-ba20-50e8be3ecab1" />
 
 3. Enter the project Git Repository:  
    `https://github.com/unsw-cse-comp99-3900/capstone-project-25t3-9900-f14b-cake`  
