@@ -50,7 +50,6 @@ def reset():
     print("Performing full reset (containers + volumes)...")
     run_command(f"docker compose -f {COMPOSE_FILE} down -v")
 
-    # 等待端口释放
     port = 9000
     print(f"Checking if port {port} is free...")
     for _ in range(10):
@@ -65,6 +64,8 @@ def reset():
 
     print("Rebuilding and restarting containers...")
     run_command(f"docker compose -f {COMPOSE_FILE} up -d --build")
+    print("Waiting for PostgreSQL to initialize (10 seconds)...")
+    time.sleep(10)
     print("Reset completed successfully.")
 
 def init_db():
@@ -120,7 +121,8 @@ def run_file(file_path):
     file_path = file_path.strip().lstrip("./")
 
     # Convert to module path
-    module_path = file_path.replace("/", ".").replace(".py", "")
+    # module_path = file_path.replace("/", ".").replace(".py", "")
+    module_path = file_path.replace(os.sep, ".").replace(".py", "")
 
     print(f"Running module '{module_path}' inside container '{BACKEND_CONTAINER}'...")
 
