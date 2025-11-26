@@ -64,6 +64,8 @@ def reset():
 
     print("Rebuilding and restarting containers...")
     run_command(f"docker compose -f {COMPOSE_FILE} up -d --build")
+    print("Waiting for PostgreSQL to initialize (10 seconds)...")
+    time.sleep(10)
     print("Reset completed successfully.")
 
 def init_db():
